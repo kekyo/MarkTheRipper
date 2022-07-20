@@ -14,6 +14,31 @@ MarkTheRipper - Fantastic faster generates static site comes from simply Markdow
 
 TODO:
 
+```bash
+$ dotnet tool install -g MarkTheRipper
+You can invoke the tool using the following command: mtr
+Tool 'marktheripper' (version '0.0.1') was successfully installed.
+
+$ mtr --help
+MarkTheRipper [0.0.2, net6.0]
+  Fantastic faster generates static site comes from simply Markdowns.
+  Copyright (c) Kouji Matsui.
+usage: mtr.exe [options] [<rendered dir path> [<contents dir path> ...]]
+      --template=VALUE       Template html path
+  -h, --help                 Print this help
+
+$ mtr
+MarkTheRipper [0.0.2, net6.0]
+  Fantastic faster generates static site comes from simply Markdowns.
+  Copyright (c) Kouji Matsui.
+
+Contents base path: contents
+Store to base path: docs
+
+
+Finished: Contents=0
+```
+
 ----
 
 ## License
