@@ -27,7 +27,7 @@
     <Authors>Kouji Matsui (@kozy_kekyo, @kekyo@mastodon.cloud)</Authors>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/kekyo/MarkTheRipper</PackageProjectUrl>
-    <!-- <PackageIcon>MarkTheRipper.100.png</PackageIcon> -->
+    <PackageIcon>MarkTheRipper.100.png</PackageIcon>
     <PackageTags>markdown;blog;static;generator</PackageTags>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <IsPackable>false</IsPackable>

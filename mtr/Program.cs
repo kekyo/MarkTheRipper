@@ -34,7 +34,7 @@ public static class Program
 
             var extras = options.Parse(args);
 
-            Console.Out.WriteLine($"MarkTheRipper [{ThisAssembly.AssemblyVersion}]");
+            Console.Out.WriteLine($"MarkTheRipper [{ThisAssembly.AssemblyVersion}, {ThisAssembly.AssemblyMetadata.TargetFramework}]");
             Console.Out.WriteLine("  Fantastic faster generates static site comes from simply Markdowns.");
             Console.Out.WriteLine("  Copyright (c) Kouji Matsui.");
 
@@ -60,6 +60,10 @@ public static class Program
                     ToArray();
                 var baseMetadata = new Dictionary<string, string>();
 
+                Console.Out.WriteLine($"Contents base path: {string.Join(", ", contentsBasePathList)}");
+                Console.Out.WriteLine($"Store to base path: {storeToBasePath}");
+                Console.Out.WriteLine();
+
                 var generator = new Ripper(
                     storeToBasePath, template, baseMetadata);
                 var count = await generator.RipOffAsync(
@@ -69,11 +73,15 @@ public static class Program
                         return default;
                     },
                     contentsBasePathList);
+
+                Console.Out.WriteLine();
+                Console.Out.WriteLine($"Finished: Contents={count}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            Console.Out.WriteLine();
+            Console.Out.WriteLine(ex.ToString());
             return Marshal.GetHRForException(ex);
         }
 
