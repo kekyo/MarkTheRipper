@@ -8,9 +8,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		build-nupkg.bat = build-nupkg.bat
 		build-nupkg.sh = build-nupkg.sh
+		.github\workflows\build.yaml = .github\workflows\build.yaml
+		.github\dependabot.yml = .github\dependabot.yml
 		Directory.Build.props = Directory.Build.props
 		LICENSE = LICENSE
+		NuGet.Config = NuGet.Config
 		README.md = README.md
+		README_ja.md = README_ja.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkTheRipper.Core", "MarkTheRipper.Core\MarkTheRipper.Core.csproj", "{7478E169-20DC-4B97-881C-75B2AC02EF03}"

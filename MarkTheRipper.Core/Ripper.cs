@@ -57,7 +57,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -81,7 +81,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -134,7 +134,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -152,7 +152,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
 
             // EOF
@@ -168,6 +168,14 @@ public sealed class Ripper
         return new(metadata, sb.ToString());
     }
 
+    /// <summary>
+    /// Rip off and generate from Markdown content.
+    /// </summary>
+    /// <param name="markdown">Markdown content</param>
+    /// <param name="template">Template content</param>
+    /// <param name="baseMetadata">Base metadata dictionary</param>
+    /// <param name="ct">CancellationToken</param>
+    /// <returns>Generated HTML content</returns>
     public static async ValueTask<string> RipOffContentAsync(
         TextReader markdown, string template,
         IReadOnlyDictionary<string, string> baseMetadata,
@@ -179,13 +187,13 @@ public sealed class Ripper
 
         var markdownDocument = MarkdownParser.Parse(markdownContent.Body);
 
-        var body = new StringBuilder();
-        var renderer = new HtmlRenderer(new StringWriter(body));
+        var contentBody = new StringBuilder();
+        var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
         var capacityHint =
             template.Length +
-            body.Length +
+            contentBody.Length +
             markdownContent.Metadata.Sum(kv => kv.Value.Length - kv.Key.Length) +
             100;
         var html = new StringBuilder(template, capacityHint);
@@ -193,11 +201,19 @@ public sealed class Ripper
         {
             html.Replace($"{{{kv.Key}}}", kv.Value);
         }
-        html.Replace("{body}", body.ToString());
+        html.Replace("{contentBody}", contentBody.ToString());
 
         return html.ToString();
     }
 
+    /// <summary>
+    /// Rip off and generate from Markdown content.
+    /// </summary>
+    /// <param name="markdown">Markdown content</param>
+    /// <param name="template">Template content</param>
+    /// <param name="baseMetadata">Base metadata dictionary</param>
+    /// <param name="ct">CancellationToken</param>
+    /// <returns>Generated HTML content</returns>
     public static ValueTask<string> RipOffContentAsync(
         string markdown, string template,
         IReadOnlyDictionary<string, string> baseMetadata,
@@ -205,9 +221,17 @@ public sealed class Ripper
         RipOffContentAsync(
             new StringReader(markdown), template, baseMetadata, ct);
 
+    /// <summary>
+    /// Rip off and generate from Markdown content.
+    /// </summary>
+    /// <param name="markdown">Markdown content</param>
+    /// <param name="template">Template content</param>
+    /// <param name="outputHtml">Generated html content</param>
+    /// <param name="baseMetadata">Base metadata dictionary</param>
+    /// <param name="ct">CancellationToken</param>
     public static async ValueTask RipOffContentAsync(
         TextReader markdown, string template,
-        TextWriter html,
+        TextWriter outputHtml,
         IReadOnlyDictionary<string, string> baseMetadata,
         CancellationToken ct)
     {
@@ -217,10 +241,18 @@ public sealed class Ripper
             markdown, template, baseMetadata, ct).
             ConfigureAwait(false);
 
-        await html.WriteAsync(htmlContent).
+        await outputHtml.WriteAsync(htmlContent).
             ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Rip off and generate from Markdown content.
+    /// </summary>
+    /// <param name="markdownPath">Markdown content path</param>
+    /// <param name="template">Template content</param>
+    /// <param name="outputHtmlPath">Generated html content path</param>
+    /// <param name="baseMetadata">Base metadata dictionary</param>
+    /// <param name="ct">CancellationToken</param>
     public static async ValueTask RipOffContentAsync(
         string markdownPath, string template,
         string outputHtmlPath,
@@ -248,27 +280,34 @@ public sealed class Ripper
             ConfigureAwait(false);
     }
 
-    private ValueTask RipOffRelativeContentAsync(
+    private async ValueTask<string> RipOffRelativeContentAsync(
         string relativeContentPath, string contentsBasePath, CancellationToken ct)
     {
         var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
-        var storeToRelativeBasePath = Path.GetDirectoryName(
+        var storeToBasePath = Path.GetDirectoryName(
             Path.Combine(this.storeToBasePath, relativeContentPath))!;
         var storeToFileName = Path.GetFileNameWithoutExtension(relativeContentPath);
-        var storeToPath = Path.Combine(storeToRelativeBasePath, storeToFileName + ".html");
+        var storeToPath = Path.Combine(storeToBasePath, storeToFileName + ".html");
+        var storeToRelativePath = storeToPath.Substring(this.storeToBasePath.Length + 1);
 
-        return RipOffContentAsync(
-            contentPath, this.template, storeToPath, this.baseMetadata, ct);
+        await RipOffContentAsync(
+            contentPath, this.template, storeToPath, this.baseMetadata, ct).
+            ConfigureAwait(false);
+
+        return storeToRelativePath;
     }
 
-    private async ValueTask CopyRelativeContentAsync(
-        string relativeContentPath, string contentsBasePath, CancellationToken ct)
+    /// <summary>
+    /// Copy content into target path.
+    /// </summary>
+    /// <param name="cs">Content stream</param>
+    /// <param name="storeToPath">Store to path</param>
+    /// <param name="ct">CancellationToken</param>
+    public static async ValueTask CopyContentToAsync(
+        Stream cs, string storeToPath, CancellationToken ct)
     {
-        var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
-        var storeToPath = Path.Combine(this.storeToBasePath, relativeContentPath);
-
-        using var cs = new FileStream(contentPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
-        using var ss = new FileStream(storeToPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, true);
+        using var ss = new FileStream(
+            storeToPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, true);
 
         var buffer = new byte[65536];
         while (true)
@@ -289,20 +328,47 @@ public sealed class Ripper
     }
 
     /// <summary>
+    /// Copy content into target path.
+    /// </summary>
+    /// <param name="relativeContentPath">Relative content path</param>
+    /// <param name="contentsBasePath">Content base path</param>
+    /// <param name="storeToBasePath">Store to path</param>
+    /// <param name="ct">CancellationToken</param>
+    public static async ValueTask CopyRelativeContentAsync(
+        string relativeContentPath, string contentsBasePath, string storeToBasePath,
+        CancellationToken ct)
+    {
+        var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
+        var storeToPath = Path.Combine(storeToBasePath, relativeContentPath);
+
+        using var cs = new FileStream(contentPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+
+        await CopyContentToAsync(cs, storeToPath, ct).
+            ConfigureAwait(false);
+    }
+
+    private ValueTask CopyRelativeContentAsync(
+        string relativeContentPath, string contentsBasePath, CancellationToken ct) =>
+        CopyRelativeContentAsync(
+            relativeContentPath, contentsBasePath, this.storeToBasePath, ct);
+
+    /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
-    public ValueTask<int> RipOffAsync(
+    /// <remarks>Coverage</remarks>
+    public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         params string[] contentsBasePathList) =>
-        this.RipOffAsync(contentsBasePathList, (_, _) => default, default);
+        this.RipOffAsync(contentsBasePathList, (_, _, _) => default, default);
 
     /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
     /// <param name="generated">Generated callback</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
-    public ValueTask<int> RipOffAsync(
-        Func<string, string, ValueTask> generated,
+    /// <remarks>Coverage</remarks>
+    public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
+        Func<string, string, string, ValueTask> generated,
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, default);
 
@@ -312,8 +378,9 @@ public sealed class Ripper
     /// <param name="generated">Generated callback</param>
     /// <param name="ct">CancellationToken</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
-    public ValueTask<int> RipOffAsync(
-        Func<string, string, ValueTask> generated,
+    /// <remarks>Coverage</remarks>
+    public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
+        Func<string, string, string, ValueTask> generated,
         CancellationToken ct, params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, ct);
 
@@ -323,23 +390,26 @@ public sealed class Ripper
     /// <param name="contentsBasePathList">Markdown content placed directory path iterator</param>
     /// <param name="generated">Generated callback</param>
     /// <param name="ct">CancellationToken</param>
-    public async ValueTask<int> RipOffAsync(
+    /// <remarks>Coverage</remarks>
+    public async ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         IEnumerable<string> contentsBasePathList,
-        Func<string, string, ValueTask> generated,
+        Func<string, string, string, ValueTask> generated,
         CancellationToken ct)
     {
-        var dc = new DirectoryCreator();
+        var dc = new SafeDirectoryCreator();
 
         var candidates = contentsBasePathList.
+            Select(contentsBasePath => Path.GetFullPath(contentsBasePath)).
             Where(contentsBasePath => Directory.Exists(contentsBasePath)).
             SelectMany(contentsBasePath => Directory.EnumerateFiles(
                 contentsBasePath, "*.*", SearchOption.AllDirectories).
                 Select(path => (contentsBasePath, path)));
 
-        async Task RunOnceAsync(string contentsBasePath, string contentsPath)
+        async ValueTask RunOnceAsync(string contentsBasePath, string contentsPath)
         {
-            var relativeContentPath =
-                contentsPath.Substring(0, contentsBasePath.Length + 1);
+            var relativeContentPath = contentsPath.Substring(
+                contentsBasePath.Length +
+                (contentsBasePath.EndsWith(Path.DirectorySeparatorChar.ToString()) ? 0 : 1));
 
             var storeToPath = Path.Combine(this.storeToBasePath, relativeContentPath);
             var storeToDirPath = Path.GetDirectoryName(storeToPath)!;
@@ -349,8 +419,11 @@ public sealed class Ripper
 
             if (Path.GetExtension(relativeContentPath) == ".md")
             {
-                await this.RipOffRelativeContentAsync(
+                var relativeGeneratedPath = await this.RipOffRelativeContentAsync(
                     relativeContentPath, contentsBasePath, ct).
+                    ConfigureAwait(false);
+
+                await generated(relativeContentPath, relativeGeneratedPath, contentsBasePath).
                     ConfigureAwait(false);
             }
             else
@@ -359,24 +432,43 @@ public sealed class Ripper
                     relativeContentPath, contentsBasePath, ct).
                     ConfigureAwait(false);
             }
-
-            await generated(relativeContentPath, contentsBasePath).
-                ConfigureAwait(false);
         }
 
         var count = 0;
-#if DEBUG
-        foreach (var candidate in candidates)
+        var concurrentProcessing = 0;
+        var maxConcurrentProcessing = 0;
+        async Task RunOnceWithCoverAsync(string contentsBasePath, string contentsPath)
         {
             count++;
-            await RunOnceAsync(candidate.contentsBasePath, candidate.path).
+            var cp = Interlocked.Increment(ref concurrentProcessing);
+            maxConcurrentProcessing = Math.Max(maxConcurrentProcessing, cp);
+
+            try
+            {
+                await RunOnceAsync(contentsBasePath, contentsPath).
+                    ConfigureAwait(false);
+            }
+            catch
+            {
+                Interlocked.Decrement(ref concurrentProcessing);
+                throw;
+            }
+
+            Interlocked.Decrement(ref concurrentProcessing);
+        }
+
+#if !DEBUG
+        foreach (var candidate in candidates)
+        {
+            await RunOnceWithCoverAsync(candidate.contentsBasePath, candidate.path).
                 ConfigureAwait(false);
         }
 #else
         await Task.WhenAll(candidates.
-            Select(candidate => { count++; return RunOnceAsync(candidate.contentsBasePath, candidate.path); })).
+            Select(candidate => RunOnceWithCoverAsync(candidate.contentsBasePath, candidate.path))).
             ConfigureAwait(false);
 #endif
-        return count;
+
+        return (count, maxConcurrentProcessing);
     }
 }

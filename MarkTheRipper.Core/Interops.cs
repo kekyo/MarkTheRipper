@@ -12,24 +12,63 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper;
 
-#if !NET6_0_OR_GREATER
 internal static class Interops
 {
-    public static async ValueTask<T> WaitAsync<T>(
+    public static ValueTask WithCancellation(
+        this Task task, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        if (task.IsCompleted)
+        {
+            return default;
+        }
+
+        var tcs = new TaskCompletionSource<bool>();
+        CancellationTokenRegistration? cr =
+            ct.Register(() => tcs.TrySetCanceled());
+
+        task.ContinueWith(t =>
+        {
+            cr?.Dispose();
+            cr = null;
+
+            if (t.IsCanceled)
+            {
+                tcs.TrySetCanceled();
+            }
+            else if (t.IsFaulted)
+            {
+                tcs.TrySetException(t.Exception!.InnerExceptions);
+            }
+            else
+            {
+                tcs.TrySetResult(true);
+            }
+        });
+
+        return new ValueTask(tcs.Task);
+    }
+
+    public static ValueTask<T> WithCancellation<T>(
         this Task<T> task, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
         if (task.IsCompleted)
         {
-            return task.Result;
+            return new ValueTask<T>(task.Result);
         }
         
         var tcs = new TaskCompletionSource<T>();
-        using var _ = ct.Register(() => tcs.TrySetCanceled());
+        CancellationTokenRegistration? cr =
+            ct.Register(() => tcs.TrySetCanceled());
 
-        var __ = task.ContinueWith(t =>
+        task.ContinueWith(t =>
         {
+            cr?.Dispose();
+            cr = null;
+
             if (t.IsCanceled)
             {
                 tcs.TrySetCanceled();
@@ -44,8 +83,6 @@ internal static class Interops
             }
         });
 
-        return await tcs.Task.
-            ConfigureAwait(false);
+        return new ValueTask<T>(tcs.Task);
     }
 }
-#endif

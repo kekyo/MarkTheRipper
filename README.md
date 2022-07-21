@@ -5,38 +5,163 @@
 MarkTheRipper - Fantastic faster generates static site comes from simply Markdowns.
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![NuGet MarkTheRipper](https://img.shields.io/nuget/v/MarkTheRipper.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper)
-[![NuGet MarkTheRipper.Core](https://img.shields.io/nuget/v/MarkTheRipper.Core.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Core)
+
+## NuGet
+
+| Package  | NuGet                                                                                                                |
+|:---------|:---------------------------------------------------------------------------------------------------------------------|
+| MarkTheRipper | [![NuGet MarkTheRipper](https://img.shields.io/nuget/v/MarkTheRipper.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper) |
+| MarkTheRipper.Core | [![NuGet MarkTheRipper.Core](https://img.shields.io/nuget/v/MarkTheRipper.Core.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Core) |
+
+## CI
+
+| main                                                                                                                                                                 | develop                                                                                                                                                                       |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![MarkTheRipper CI build (main)](https://github.com/kekyo/MarkTheRipper/workflows/.NET/badge.svg?branch=main)](https://github.com/kekyo/MarkTheRipper/actions?query=branch%3Amain) | [![MarkTheRipper CI build (develop)](https://github.com/kekyo/MarkTheRipper/workflows/.NET/badge.svg?branch=develop)](https://github.com/kekyo/MarkTheRipper/actions?query=branch%3Adevelop) |
 
 ----
+
+[![Japanese language](Images/Japanese.256.png)](https://github.com/kekyo/MarkTheRipper/blob/main/README_ja.md)
 
 ## What is this?
 
 TODO:
 
+MarkTheRipper is a very simple and fast static site generator
+that allows you to write content in markdown.
+The main intended use is for blog sites,
+but we have eliminated the need for complex structures and tools anyway,
+as if you were writing an article on GitHub Gist likely.
+
+If you already have .NET 6.0 installation, you can install it simply:
+
 ```bash
-$ dotnet tool install -g MarkTheRipper
-You can invoke the tool using the following command: mtr
-Tool 'marktheripper' (version '0.0.1') was successfully installed.
+dotnet tool install -g MarkTheRipper
+```
 
-$ mtr --help
-MarkTheRipper [0.0.2, net6.0]
-  Fantastic faster generates static site comes from simply Markdowns.
-  Copyright (c) Kouji Matsui.
-usage: mtr.exe [options] [<rendered dir path> [<contents dir path> ...]]
-      --template=VALUE       Template html path
-  -h, --help                 Print this help
+Then at first time, you will need to run:
 
+```bash
+$ mtr new mininum
+```
+
+Will generate a template under your current directory as follows
+(Don't be afraid! It's only TWO FILES with a few lines of content
+and almost no extra definitions!)
+
+* `contents` directory: `index.md`,
+  It is a content (post) file written by markdown.
+* `templates` directory: `page-template.html`,
+  When the site is generated, the markdown is converted to HTML and inserted into this file.
+
+That's it! Just to be sure, let's show you what's inside:
+
+### index.md
+
+```markdown
+---
+title: Hello MarkTheRipper!
+author: Kouji Matsui
+tags: [foo,bar]
+---
+
+# Hello MarkTheRipper!
+
+This is sample post.
+
+## H2
+
+H2 body.
+
+### H3
+
+H3 body.
+```
+
+### page-template.html
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="author" content="{author}" />
+    <meta name="generator" content="https://github.com/kekyo/MarkTheRipper" />
+    <meta name="keywords" content="{tags}" />
+    <meta name="referrer" content="same-origin" />
+    <meta name="robots" content="index, follow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+</head>
+<body>
+    {contentBody}
+</body>
+</html>
+```
+
+If you look at the content, you can probably guess what happens:
+MarkTheRipper simply converts the keywords and body into HTML
+and inserts it into the template.
+So, when customizing it for your site,
+you can apply the various techniques used in common site implementations as is,
+with few restrictions.
+
+Let's generate the site as is. Generating a site is very easy:
+
+```bash
 $ mtr
-MarkTheRipper [0.0.2, net6.0]
-  Fantastic faster generates static site comes from simply Markdowns.
-  Copyright (c) Kouji Matsui.
+````
 
-Contents base path: contents
-Store to base path: docs
+If your directory structure is the same as the sample,
+just run ``mtr`` to generate the site.
+Site generation is multi-threaded and multi-asynchronous I/O driven,
+so it is fast even with a large amount of content.
+By default, the output is under the `docs` directory.
 
+You will then immediately see a preview in your default browser:
 
-Finished: Contents=0
+! [minimum image](Images/minimum.png)
+
+Site generation will delete all files in the `docs` directory
+and generate them again each time.
+If you manage the entire directory with Git,
+you can commit the site including the `docs` directory.
+Then you can check the differences of the actual generated files.
+You can also push it straight to `github.io` and easily publish your site!
+
+----
+
+## A more practical sample
+
+The samples generated by `mtr new minimum` are too simple (minimum is not a bad thing!),
+but in case you want to see some more customized examples,
+we have included two more samples as standard.
+Two more examples are built in:
+
+```bash
+$ mtr new standard
+$ mtr new rich
+````
+
+You can specify the sample `standard` or `rich`.
+The following features are available:
+
+* Add a navigation menu ([bootstrap.js 5.0](https://getbootstrap.jp/)).
+* `rich`: Additional Japanese fonts (Noto sans JP) available.
+* Fancy code blocks:
+  * `standard`: Looks like GitHub's code block design (but does not have syntax highlighting).
+  * `rich`: Syntax highlighting by [prism.js](https://prismjs.com/).
+
+![standard image](Images/standard.png)
+
+![rich image](Images/rich.png)
+
+In most cases, there is no problem starting with these samples.
+
+## Install develop branch package
+
+```
+$ dotnet tool install -g MarkTheRipper --nuget-source http://nuget.kekyo.online:59103/repository/nuget/index.json
 ```
 
 ----
