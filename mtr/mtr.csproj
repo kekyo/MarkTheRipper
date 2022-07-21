@@ -9,11 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="template.html" />
-    <EmbeddedResource Include="template.html" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="All" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
@@ -22,6 +17,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MarkTheRipper.Core\MarkTheRipper.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="contents\test.md" Pack="false" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -57,7 +57,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -81,7 +81,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -134,7 +134,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -152,7 +152,7 @@ public sealed class Ripper
         while (true)
         {
             var line = await tr.ReadLineAsync().
-                WaitAsync(ct).
+                WithCancellation(ct).
                 ConfigureAwait(false);
 
             // EOF
@@ -292,7 +292,8 @@ public sealed class Ripper
     /// Rip off and generate from Markdown contents.
     /// </summary>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
-    public ValueTask<int> RipOffAsync(
+    /// <remarks>Coverage</remarks>
+    public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, (_, _) => default, default);
 
@@ -301,7 +302,8 @@ public sealed class Ripper
     /// </summary>
     /// <param name="generated">Generated callback</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
-    public ValueTask<int> RipOffAsync(
+    /// <remarks>Coverage</remarks>
+    public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         Func<string, string, ValueTask> generated,
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, default);
@@ -312,7 +314,8 @@ public sealed class Ripper
     /// <param name="generated">Generated callback</param>
     /// <param name="ct">CancellationToken</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
-    public ValueTask<int> RipOffAsync(
+    /// <remarks>Coverage</remarks>
+    public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         Func<string, string, ValueTask> generated,
         CancellationToken ct, params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, ct);
@@ -323,7 +326,8 @@ public sealed class Ripper
     /// <param name="contentsBasePathList">Markdown content placed directory path iterator</param>
     /// <param name="generated">Generated callback</param>
     /// <param name="ct">CancellationToken</param>
-    public async ValueTask<int> RipOffAsync(
+    /// <remarks>Coverage</remarks>
+    public async ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         IEnumerable<string> contentsBasePathList,
         Func<string, string, ValueTask> generated,
         CancellationToken ct)
@@ -331,15 +335,17 @@ public sealed class Ripper
         var dc = new DirectoryCreator();
 
         var candidates = contentsBasePathList.
+            Select(contentsBasePath => Path.GetFullPath(contentsBasePath)).
             Where(contentsBasePath => Directory.Exists(contentsBasePath)).
             SelectMany(contentsBasePath => Directory.EnumerateFiles(
                 contentsBasePath, "*.*", SearchOption.AllDirectories).
                 Select(path => (contentsBasePath, path)));
 
-        async Task RunOnceAsync(string contentsBasePath, string contentsPath)
+        async ValueTask RunOnceAsync(string contentsBasePath, string contentsPath)
         {
-            var relativeContentPath =
-                contentsPath.Substring(0, contentsBasePath.Length + 1);
+            var relativeContentPath = contentsPath.Substring(
+                contentsBasePath.Length +
+                (contentsBasePath.EndsWith(Path.DirectorySeparatorChar.ToString()) ? 0 : 1));
 
             var storeToPath = Path.Combine(this.storeToBasePath, relativeContentPath);
             var storeToDirPath = Path.GetDirectoryName(storeToPath)!;
@@ -365,18 +371,40 @@ public sealed class Ripper
         }
 
         var count = 0;
-#if DEBUG
-        foreach (var candidate in candidates)
+        var concurrentProcessing = 0;
+        var maxConcurrentProcessing = 0;
+        async Task RunOnceWithCoverAsync(string contentsBasePath, string contentsPath)
         {
             count++;
-            await RunOnceAsync(candidate.contentsBasePath, candidate.path).
+            var cp = Interlocked.Increment(ref concurrentProcessing);
+            maxConcurrentProcessing = Math.Max(maxConcurrentProcessing, cp);
+
+            try
+            {
+                await RunOnceAsync(contentsBasePath, contentsPath).
+                    ConfigureAwait(false);
+            }
+            catch
+            {
+                Interlocked.Decrement(ref concurrentProcessing);
+                throw;
+            }
+
+            Interlocked.Decrement(ref concurrentProcessing);
+        }
+
+#if !DEBUG
+        foreach (var candidate in candidates)
+        {
+            await RunOnceWithCoverAsync(candidate.contentsBasePath, candidate.path).
                 ConfigureAwait(false);
         }
 #else
         await Task.WhenAll(candidates.
-            Select(candidate => { count++; return RunOnceAsync(candidate.contentsBasePath, candidate.path); })).
+            Select(candidate => RunOnceWithCoverAsync(candidate.contentsBasePath, candidate.path))).
             ConfigureAwait(false);
 #endif
-        return count;
+
+        return (count, maxConcurrentProcessing);
     }
 }

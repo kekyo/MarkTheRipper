@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net461;netstandard2.0;netstandard2.1;netcoreapp2.2;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net452;net48;netstandard2.0;netstandard2.1;netcoreapp2.2;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
@@ -11,12 +11,17 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+  <ItemGroup Condition="('$(TargetFramework)' == 'net452') OR ('$(TargetFramework)' == 'net48')">
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="('$(TargetFramework)' == 'net461') OR ('$(TargetFramework)' == 'netstandard2.0')">
+  <ItemGroup Condition="('$(TargetFramework)' == 'net452') OR ('$(TargetFramework)' == 'net48') OR ('$(TargetFramework)' == 'netstandard2.0')">
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="template.html" />
+    <EmbeddedResource Include="template.html" />
   </ItemGroup>
 
 </Project>
