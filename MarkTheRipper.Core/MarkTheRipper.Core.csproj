@@ -20,8 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="page-template.html" />
-    <EmbeddedResource Include="page-template.html" />
     <None Include="..\Images\MarkTheRipper.100.png" Pack="true" PackagePath="" />
   </ItemGroup>
 

@@ -10,6 +10,7 @@
 using Mono.Options;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -72,11 +73,13 @@ public static class Program
             var help = false;
             var templateBasePath = "templates";
             var requiredBeforeCleanup = true;
+            var requiredShowBrowser = true;
 
             var options = new OptionSet()
             {
                 { "templates=", "Template base path", v => templateBasePath = v },
                 { "no-cleanup", "Do not cleanup before processing if exists", _ => requiredBeforeCleanup = false },
+                { "n|no-show-browser", "Do not show browser automatically", _ => requiredShowBrowser = true },
                 { "h|help", "Print this help", _ => help = true },
             };
 
@@ -88,6 +91,7 @@ public static class Program
             {
                 Console.Out.WriteLine("  Fantastic faster generates static site comes from simply Markdowns.");
                 Console.Out.WriteLine("  Copyright (c) Kouji Matsui.");
+                Console.Out.WriteLine("  https://github.com/kekyo/MarkTheRipper");
                 Console.Out.WriteLine();
 
                 Console.Out.WriteLine("usage: mtr.exe [options] new [<sample name>]");
@@ -130,6 +134,12 @@ public static class Program
                         contentsBasePathList,
                         requiredBeforeCleanup,
                         default);
+
+                    if (requiredShowBrowser)
+                    {
+                        var indexPath = Path.Combine(storeToBasePath, "index.html");
+                        Process.Start(indexPath);
+                    }
                 }
             }
         }
