@@ -118,6 +118,10 @@ Site generation is multi-threaded and multi-asynchronous I/O driven,
 so it is fast even with a large amount of content.
 By default, the output is under the `docs` directory.
 
+You will then immediately see a preview in your default browser:
+
+! [minimum image](Images/minimum.png)
+
 Site generation will delete all files in the `docs` directory
 and generate them again each time.
 If you manage the entire directory with Git,
@@ -147,6 +151,10 @@ The following features are available:
 * Fancy code blocks:
   * `standard`: Looks like GitHub's code block design (but does not have syntax highlighting).
   * `rich`: Syntax highlighting by [prism.js](https://prismjs.com/).
+
+![standard image](Images/standard.png)
+
+![rich image](Images/rich.png)
 
 In most cases, there is no problem starting with these samples.
 
