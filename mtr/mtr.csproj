@@ -20,9 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="contents\test.md" Pack="false" >
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Remove="embeds\**\*" />
+    <EmbeddedResource Include="embeds\**\*" />
   </ItemGroup>
 
 </Project>

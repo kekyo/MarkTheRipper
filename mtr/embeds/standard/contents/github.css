@@ -1,0 +1,83 @@
+﻿/* github.css: Github Markdown CSS - for Markdown Editor Preview
+   https://gist.github.com/andyferra/2554919 */
+
+body {
+    font-family: "メイリオ", "Meiryo", "游ゴシック", "Yu Gothic", "YuGothic", "Hiragino Sans", "Noto Sans Japanese", Helvetica, arial, sans-serif;
+}
+
+a {
+    color: #4183C4;
+}
+
+a.absent {
+    color: #cc0000;
+}
+
+h1 {
+    page-break-after: avoid;
+    counter-increment: level1;
+    counter-reset: level2 0;
+    color: black;
+}
+
+h2:before {
+    content: counter(level2)". ";
+}
+
+h2 {
+    counter-increment: level2;
+    counter-reset: level3 0;
+    border-bottom: 1px solid #cccccc;
+    color: black;
+}
+
+h3:before {
+    content: counter(level2)"."counter(level3)". ";
+}
+
+h3 {
+    counter-increment: level3;
+}
+
+img {
+    max-width: 90%;
+}
+
+code, tt {
+    white-space: pre-line;
+    border: 0.1rem solid #eaeaea;
+    border-radius: 0.2rem !important;
+    padding: 0.13rem 0.35rem;
+    background-color: #f8f8f8;
+    font-family: "Consolas", "Courier New", "メイリオ", "Meiryo", "游ゴシック", "Yu Gothic", "YuGothic", "Hiragino Sans", "Noto Sans Japanese";
+}
+
+pre code, pre tt {
+    white-space: pre;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+}
+
+pre {
+    overflow: auto;
+    margin-left: 1rem !important;
+    margin-right: 1rem !important;
+    border: 0.1rem solid #cccccc;
+    border-radius: 0.3rem !important;
+    padding: 0.8rem;
+    background-color: #f8f8f8;
+}
+
+hr {
+    page-break-after: always;
+    border: 0 none;
+    height: 0;
+    padding: 0;
+}
+
+/* For prism "Copy" */
+.copy-to-clipboard-button {
+    margin-right: 1.3rem !important;
+}

@@ -19,8 +19,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\mtr\Program.cs" Link="Program.cs" />
+    <None Remove="..\mtr\embeds\**\*" LinkBase="embeds" />
+    <EmbeddedResource Include="..\mtr\embeds\**\*" LinkBase="embeds" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\mtr\*.cs" />
     <None Include="..\Images\MarkTheRipper.100.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="..\mtr\contents\**\*" Pack="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="..\mtr\templates\**\*" Pack="false">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

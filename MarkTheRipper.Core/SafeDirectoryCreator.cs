@@ -14,7 +14,10 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper;
 
-internal sealed class DirectoryCreator
+/// <summary>
+/// Asynchronous safe and fast directory creator.
+/// </summary>
+public sealed class SafeDirectoryCreator
 {
     private sealed class Waiter
     {
@@ -91,6 +94,11 @@ internal sealed class DirectoryCreator
         return (false, waiter);
     }
 
+    /// <summary>
+    /// Create specified directory.
+    /// </summary>
+    /// <param name="dirPath">Directory path</param>
+    /// <param name="ct">CancellationToken</param>
     public ValueTask CreateIfNotExistAsync(
         string dirPath, CancellationToken ct)
     {

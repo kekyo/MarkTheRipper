@@ -36,7 +36,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{body}</body>
+{contentBody}</body>
 </html>
 ",
             new Dictionary<string, string>(),

@@ -1,14 +1,17 @@
 ﻿---
 title: Hello MarkTheRipper!
-date: 2022/7/20 21:30:00
 author: Kouji Matsui
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 # Hello MarkTheRipper!
 
-Foo bar
+This is sample post.
 
-## Baz
+## H2
 
-Hoge
+H2 body.
+
+### H3
+
+H3 body.
