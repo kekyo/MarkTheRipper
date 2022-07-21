@@ -120,7 +120,7 @@ By default, the output is under the `docs` directory.
 
 You will then immediately see a preview in your default browser:
 
-! [minimum image](Images/minimum.png)
+![minimum image](Images/minimum.png)
 
 Site generation will delete all files in the `docs` directory
 and generate them again each time.
