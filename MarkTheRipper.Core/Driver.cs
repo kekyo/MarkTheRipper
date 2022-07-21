@@ -113,14 +113,25 @@ public static class Driver
             ConfigureAwait(false);
 
         sw.Stop();
-        var perContent = TimeSpan.FromTicks(sw.ElapsedTicks / count);
 
         await output.WriteLineAsync().
             WithCancellation(ct).
             ConfigureAwait(false);
-        await output.WriteLineAsync(
-            $"Finished: Contents={count}, Elapsed={sw.Elapsed}, PerContent={perContent}, Concurrent={maxConcurrentProcessing}").
-            WithCancellation(ct).
-            ConfigureAwait(false);
+
+        if (count >= 1)
+        {
+            var perContent = TimeSpan.FromTicks(sw.ElapsedTicks / count);
+            await output.WriteLineAsync(
+                $"Finished: Contents={count}, Elapsed={sw.Elapsed}, PerContent={perContent}, Concurrent={maxConcurrentProcessing}").
+                WithCancellation(ct).
+                ConfigureAwait(false);
+        }
+        else
+        {
+            await output.WriteLineAsync(
+                $"Finished: Contents=0, Elapsed={sw.Elapsed}").
+                WithCancellation(ct).
+                ConfigureAwait(false);
+        }
     }
 }
