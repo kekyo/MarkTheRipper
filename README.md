@@ -39,6 +39,12 @@ Store to base path: docs
 Finished: Contents=0
 ```
 
+## Install develop branch package
+
+```
+$ dotnet tool install -g MarkTheRipper --nuget-source http://nuget.kekyo.online:59103/repository/nuget/index.json
+```
+
 ----
 
 ## License
