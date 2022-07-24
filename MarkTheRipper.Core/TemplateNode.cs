@@ -119,19 +119,19 @@ internal sealed class ForEachNode : TemplateNode
         $"ForEach: {{{this.keyName}}}";
 }
 
-public readonly struct Template
+public sealed class RootTemplateNode : TemplateNode
 {
     public readonly string OriginalText;
 
     private readonly TemplateNode[] nodes;
 
-    public Template(string originalText, TemplateNode[] nodes)
+    public RootTemplateNode(string originalText, TemplateNode[] nodes)
     {
         this.OriginalText = originalText;
         this.nodes = nodes;
     }
 
-    public async ValueTask RenderAsync(
+    public override async ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
         Func<string, string?, string?> getMetadata,
         CancellationToken ct)

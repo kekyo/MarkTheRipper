@@ -12,6 +12,7 @@ using Markdig.Renderers;
 using MarkTheRipper.Internal;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,68 +27,51 @@ namespace MarkTheRipper;
 public sealed class Ripper
 {
     private readonly string storeToBasePath;
-    private readonly Template template;
+    private readonly IReadOnlyDictionary<string, RootTemplateNode> templates;
     private readonly IReadOnlyDictionary<string, object?> baseMetadata;
 
-    public Ripper(string storeToBasePath, Template template,
+    public Ripper(
+        string storeToBasePath,
+        IReadOnlyDictionary<string, RootTemplateNode> templates,
         IReadOnlyDictionary<string, object?> baseMetadata)
     {
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
-        this.template = template;
+        this.templates = templates;
         this.baseMetadata = baseMetadata;
     }
 
-    public static ValueTask<Template> ParseTemplateAsync(
-        string templateName, TextReader template, CancellationToken ct) =>
-        Parser.ParseTemplateAsync(templateName, template, ct);
+    public static ValueTask<RootTemplateNode> ParseTemplateAsync(
+        string templatePath, TextReader template, CancellationToken ct) =>
+        Parser.ParseTemplateAsync(templatePath, template, ct);
 
-    public static ValueTask<Template> ParseTemplateAsync(
-        string templateName, string templateText, CancellationToken ct) =>
-        Parser.ParseTemplateAsync(templateName, new StringReader(templateText), ct);
+    public static ValueTask<RootTemplateNode> ParseTemplateAsync(
+        string templatePath, string templateText, CancellationToken ct) =>
+        Parser.ParseTemplateAsync(templatePath, new StringReader(templateText), ct);
+
+    private static string? FormatValue(
+        object? value, object? parameter, IFormatProvider fp) =>
+        (value, parameter) switch
+        {
+            (null, _) => null,
+            (_, null) => value.ToString(),
+            (IFormattable formattable, string format) => formattable.ToString(format, fp),
+            _ => value.ToString(),
+        };
 
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
     /// <param name="markdownReader">Markdown content</param>
-    /// <param name="template">Parsed template</param>
+    /// <param name="templates">Parsed template</param>
+    /// <param name="baseMetadata">Base metadata dictionary</param>
     /// <param name="htmlWriter">Generated html content</param>
-    /// <param name="baseMetadata">Base metadata dictionary</param>
     /// <param name="ct">CancellationToken</param>
-    public static async ValueTask RipOffContentAsync(
-        TextReader markdownReader, Template template,
-        TextWriter htmlWriter,
-        IReadOnlyDictionary<string, object?> baseMetadata,
-        CancellationToken ct)
-    {
-        var markdownContent = await Parser.LoadMarkdownContentAsync(
-            markdownReader, ct).
-            ConfigureAwait(false);
-
-        var markdownDocument = MarkdownParser.Parse(markdownContent.Body);
-
-        var contentBody = new StringBuilder();
-        var renderer = new HtmlRenderer(new StringWriter(contentBody));
-        renderer.Render(markdownDocument);
-
-        await Parser.RenderAsync(
-            template, baseMetadata, markdownContent.Metadata,
-            contentBody.ToString(),
-            (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
-            ct).
-            ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Rip off and generate from Markdown content.
-    /// </summary>
-    /// <param name="markdownReader">Markdown content</param>
-    /// <param name="template">Parsed template</param>
-    /// <param name="baseMetadata">Base metadata dictionary</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <returns>Generated HTML content</returns>
+    /// <returns>Applied template name</returns>
     public static async ValueTask<string> RipOffContentAsync(
-        TextReader markdownReader, Template template,
+        TextReader markdownReader,
+        IReadOnlyDictionary<string, RootTemplateNode> templates,
         IReadOnlyDictionary<string, object?> baseMetadata,
+        TextWriter htmlWriter,
         CancellationToken ct)
     {
         var markdownContent = await Parser.LoadMarkdownContentAsync(
@@ -100,56 +84,56 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var capacityHint =
-            template.OriginalText.Length +
-            contentBody.Length +
-            baseMetadata.Concat(markdownContent.Metadata).
-                Sum(kv => (kv.Value?.ToString()?.Length ?? 0) - kv.Key.Length) +
-            100;
-        var html = new StringBuilder(capacityHint);
+        object? RawGetMetadata(string keyName) =>
+            StringComparer.OrdinalIgnoreCase.Equals("contentBody", keyName) ?
+                contentBody :
+                markdownContent.Metadata.TryGetValue(keyName, out var value) ?
+                    value :
+                    baseMetadata.TryGetValue(keyName, out var baseValue) ?
+                        baseValue :
+                        null;
 
-        await Parser.RenderAsync(
-            template, baseMetadata, markdownContent.Metadata,
-            contentBody.ToString(),
-            (text, ct) =>
-            {
-                ct.ThrowIfCancellationRequested();
-                html.Append(text);
-                return default;
-            },
+        var fp = RawGetMetadata("lang")?.ToString() switch
+        {
+            string lang => new CultureInfo(lang),
+            _ => CultureInfo.CurrentCulture,
+        };
+
+        string? GetMetadata(string keyName, string? parameter) =>
+            RawGetMetadata(keyName) is { } value ?
+                FormatValue(value, parameter, fp) : null;
+
+        var templateName = GetMetadata("template", null) ?? "page";
+
+        if (!templates.TryGetValue(templateName, out var template))
+        {
+            throw new FormatException(
+                $"Could not find template. Name={templateName}");
+        }
+
+        await template.RenderAsync(
+            (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
+            GetMetadata,
             ct).
             ConfigureAwait(false);
 
-        return html.ToString();
+        return templateName;
     }
-
-    /// <summary>
-    /// Rip off and generate from Markdown content.
-    /// </summary>
-    /// <param name="markdownText">Markdown content</param>
-    /// <param name="template">Parsed template</param>
-    /// <param name="baseMetadata">Base metadata dictionary</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <returns>Generated HTML content</returns>
-    public static ValueTask<string> RipOffContentAsync(
-        string markdownText, Template template,
-        IReadOnlyDictionary<string, object?> baseMetadata,
-        CancellationToken ct) =>
-        RipOffContentAsync(
-            new StringReader(markdownText), template, baseMetadata, ct);
 
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
     /// <param name="markdownPath">Markdown content path</param>
-    /// <param name="template">Parsed template</param>
-    /// <param name="outputHtmlPath">Generated html content path</param>
+    /// <param name="templates">Parsed template</param>
     /// <param name="baseMetadata">Base metadata dictionary</param>
+    /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="ct">CancellationToken</param>
-    public static async ValueTask RipOffContentAsync(
-        string markdownPath, Template template,
-        string outputHtmlPath,
+    /// <returns>Applied template name.</returns>
+    public static async ValueTask<string> RipOffContentAsync(
+        string markdownPath,
+        IReadOnlyDictionary<string, RootTemplateNode> templates,
         IReadOnlyDictionary<string, object?> baseMetadata,
+        string outputHtmlPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
@@ -166,16 +150,19 @@ public sealed class Ripper
         using var htmlWriter = new StreamWriter(
             htmlStream, Encoding.UTF8);
 
-        await RipOffContentAsync(
-            markdownReader, template, htmlWriter, baseMetadata, ct).
+        var templateName = await RipOffContentAsync(
+            markdownReader, templates, baseMetadata, htmlWriter, ct).
             ConfigureAwait(false);
 
         await htmlWriter.FlushAsync().
             ConfigureAwait(false);
+
+        return templateName;
     }
 
-    private async ValueTask<string> RipOffRelativeContentAsync(
-        string relativeContentPath, string contentsBasePath,
+    private async ValueTask<(string storeToRelativePath, string templateName)> RipOffRelativeContentAsync(
+        string relativeContentPath,
+        string contentsBasePath,
         CancellationToken ct)
     {
         var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
@@ -185,11 +172,11 @@ public sealed class Ripper
         var storeToPath = Path.Combine(storeToBasePath, storeToFileName + ".html");
         var storeToRelativePath = storeToPath.Substring(this.storeToBasePath.Length + 1);
 
-        await RipOffContentAsync(
-            contentPath, this.template, storeToPath, this.baseMetadata, ct).
+        var templateName = await RipOffContentAsync(
+            contentPath, this.templates, this.baseMetadata, storeToPath, ct).
             ConfigureAwait(false);
 
-        return storeToRelativePath;
+        return (storeToRelativePath, templateName);
     }
 
     /// <summary>
@@ -199,7 +186,9 @@ public sealed class Ripper
     /// <param name="storeToPath">Store to path</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask CopyContentToAsync(
-        Stream contentStream, string storeToPath, CancellationToken ct)
+        Stream contentStream,
+        string storeToPath,
+        CancellationToken ct)
     {
         using var storeToStream = new FileStream(
             storeToPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, true);
@@ -230,7 +219,9 @@ public sealed class Ripper
     /// <param name="storeToBasePath">Store to path</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask CopyRelativeContentAsync(
-        string relativeContentPath, string contentsBasePath, string storeToBasePath,
+        string relativeContentPath,
+        string contentsBasePath,
+        string storeToBasePath,
         CancellationToken ct)
     {
         var contentPath = Path.Combine(
@@ -246,7 +237,9 @@ public sealed class Ripper
     }
 
     private ValueTask CopyRelativeContentAsync(
-        string relativeContentPath, string contentsBasePath, CancellationToken ct) =>
+        string relativeContentPath,
+        string contentsBasePath,
+        CancellationToken ct) =>
         CopyRelativeContentAsync(
             relativeContentPath, contentsBasePath, this.storeToBasePath, ct);
 
@@ -257,7 +250,7 @@ public sealed class Ripper
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         params string[] contentsBasePathList) =>
-        this.RipOffAsync(contentsBasePathList, (_, _, _) => default, default);
+        this.RipOffAsync(contentsBasePathList, (_, _, _, _) => default, default);
 
     /// <summary>
     /// Rip off and generate from Markdown contents.
@@ -266,7 +259,7 @@ public sealed class Ripper
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
-        Func<string, string, string, ValueTask> generated,
+        Func<string, string, string, string, ValueTask> generated,
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, default);
 
@@ -278,7 +271,7 @@ public sealed class Ripper
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
-        Func<string, string, string, ValueTask> generated,
+        Func<string, string, string, string, ValueTask> generated,
         CancellationToken ct, params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, ct);
 
@@ -291,7 +284,7 @@ public sealed class Ripper
     /// <remarks>Coverage</remarks>
     public async ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         IEnumerable<string> contentsBasePathList,
-        Func<string, string, string, ValueTask> generated,
+        Func<string, string, string, string, ValueTask> generated,
         CancellationToken ct)
     {
         var utcNow = DateTimeOffset.UtcNow;
@@ -318,11 +311,18 @@ public sealed class Ripper
 
             if (Path.GetExtension(relativeContentPath) == ".md")
             {
-                var relativeGeneratedPath = await this.RipOffRelativeContentAsync(
-                    relativeContentPath, contentsBasePath, ct).
-                    ConfigureAwait(false);
+                var (relativeGeneratedPath, templateName) =
+                    await this.RipOffRelativeContentAsync(
+                        relativeContentPath,
+                        contentsBasePath,
+                        ct).
+                        ConfigureAwait(false);
 
-                await generated(relativeContentPath, relativeGeneratedPath, contentsBasePath).
+                await generated(
+                    relativeContentPath,
+                    relativeGeneratedPath,
+                    contentsBasePath,
+                    templateName).
                     ConfigureAwait(false);
             }
             else

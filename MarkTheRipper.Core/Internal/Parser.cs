@@ -10,7 +10,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,28 +32,28 @@ internal static class Parser
 {
     private sealed class TemplateParseContext
     {
-        public readonly string TemplateName;
+        public readonly string TemplatePath;
         public readonly TextReader Reader;
         public readonly CancellationToken Token;
         public readonly StringBuilder OriginalText;
 
         public TemplateParseContext(
-            string templateName,
+            string templatePath,
             TextReader reader,
             CancellationToken token)
         {
-            TemplateName = templateName;
-            Reader = reader;
-            Token = token;
-            OriginalText = new();
+            this.TemplatePath = templatePath;
+            this.Reader = reader;
+            this.Token = token;
+            this.OriginalText = new();
         }
 
         public TemplateParseContext(TemplateParseContext context)
         {
-            TemplateName = context.TemplateName;
-            Reader = context.Reader;
-            Token = context.Token;
-            OriginalText = context.OriginalText;
+            this.TemplatePath = context.TemplatePath;
+            this.Reader = context.Reader;
+            this.Token = context.Token;
+            this.OriginalText = context.OriginalText;
         }
     }
 
@@ -98,7 +97,7 @@ internal static class Parser
                     if (closeIndex == -1)
                     {
                         throw new FormatException(
-                            $"Could not find close bracket. Template={context.TemplateName}");
+                            $"Could not find close bracket. Template={context.TemplatePath}");
                     }
                     else
                     {
@@ -119,7 +118,7 @@ internal static class Parser
                             if (string.IsNullOrWhiteSpace(parameter))
                             {
                                 throw new FormatException(
-                                    $"`foreach` parameter required. Template={context.TemplateName}");
+                                    $"`foreach` parameter required. Template={context.TemplatePath}");
                             }
                             else
                             {
@@ -148,16 +147,16 @@ internal static class Parser
         return nodes.ToArray();
     }
 
-    public static async ValueTask<Template> ParseTemplateAsync(
-        string templateName, TextReader templateReader, CancellationToken ct)
+    public static async ValueTask<RootTemplateNode> ParseTemplateAsync(
+        string templatePath, TextReader templateReader, CancellationToken ct)
     {
         var context = new TemplateParseContext(
-            templateName, templateReader, ct);
+            templatePath, templateReader, ct);
 
         var nodes = await ParseTemplateAsync(context).
             ConfigureAwait(false);
 
-        return new Template(
+        return new RootTemplateNode(
             context.OriginalText.ToString(), nodes);
     }
 
@@ -276,27 +275,5 @@ internal static class Parser
         }
 
         return new(metadata, sb.ToString());
-    }
-
-    public static ValueTask RenderAsync(
-        Template template,
-        IReadOnlyDictionary<string, object?> baseMetadata,
-        IReadOnlyDictionary<string, object?> metadata,
-        string contentBody,
-        Func<string, CancellationToken, ValueTask> writer,
-        CancellationToken ct)
-    {
-        string? GetMetadata(string keyName, string? parameter) =>
-            keyName.ToLowerInvariant() switch
-            {
-                "contentbody" => contentBody,
-                _ => metadata.TryGetValue(keyName, out var value) ?
-                    value?.ToString() :
-                    baseMetadata.TryGetValue(keyName, out var baseValue) ?
-                        baseValue?.ToString() :
-                        null,
-            };
-
-        return template.RenderAsync(writer, GetMetadata, ct);
     }
 }
