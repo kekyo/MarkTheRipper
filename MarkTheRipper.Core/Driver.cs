@@ -7,10 +7,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,19 +24,29 @@ namespace MarkTheRipper;
 /// </summary>
 public static class Driver
 {
+    private static async ValueTask<RootTemplateNode> ReadTemplateAsync(
+        string path, CancellationToken ct)
+    {
+        using var rs = new FileStream(
+            path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+        using var tr = new StreamReader(
+            rs, Encoding.UTF8, true);
+
+        return await Ripper.ParseTemplateAsync(path, tr, ct).
+            ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Run Ripper.
     /// </summary>
     /// <param name="output">Log output target</param>
     /// <param name="storeToBasePath">Store to base path</param>
-    /// <param name="templateBasePath">Template base path</param>
-    /// <param name="baseMetadata">Base metadata</param>
+    /// <param name="resourceBasePath">Resource base path</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path iterator</param>
     /// <param name="requiredBeforeCleanup">Before cleanup</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask RunAsync(
-        TextWriter output, string storeToBasePath, string templateBasePath,
-        IReadOnlyDictionary<string, string> baseMetadata,
+        TextWriter output, string storeToBasePath, string resourceBasePath,
         IEnumerable<string> contentsBasePathList,
         bool requiredBeforeCleanup,
         CancellationToken ct)
@@ -44,7 +56,7 @@ public static class Driver
             WithCancellation(ct).
             ConfigureAwait(false);
         await output.WriteLineAsync(
-            $"Template base path: {templateBasePath}").
+            $"Resource base path: {resourceBasePath}").
             WithCancellation(ct).
             ConfigureAwait(false);
         await output.WriteLineAsync(
@@ -58,19 +70,37 @@ public static class Driver
         var sw = new Stopwatch();
         sw.Start();
 
-        static async ValueTask<string> ReadTemplateAsync(string path, CancellationToken ct)
-        {
-            using var rs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
-            using var tr = new StreamReader(rs, Encoding.UTF8, true);
+        var utcnow = DateTimeOffset.UtcNow;
+        var baseMetadata = new Dictionary<string, object?>(
+            StringComparer.OrdinalIgnoreCase)
+            {
+                { "utcnow", utcnow },
+            };
 
-            return await tr.ReadToEndAsync().
+        var templates = (await Task.WhenAll(
+            Directory.EnumerateFiles(
+                resourceBasePath, "template-*.html", SearchOption.AllDirectories).
+            Select(async templatePath =>
+            {
+                var templateName =
+                    Path.GetFileNameWithoutExtension(templatePath).
+                    Substring("template-".Length);
+                var template = await ReadTemplateAsync(templatePath, ct).
+                    ConfigureAwait(false);
+                return (templateName, template);
+            })).
+            ConfigureAwait(false)).
+            ToDictionary(entry => entry.templateName, entry => entry.template);
+        if (templates.Count >= 1)
+        {
+            await output.WriteLineAsync(
+                $"Read templates: {string.Join(", ", templates.Keys)}").
+                WithCancellation(ct).
+                ConfigureAwait(false);
+            await output.WriteLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
         }
-
-        var templatePath = Path.Combine(templateBasePath, "page-template.html");
-        var template = await ReadTemplateAsync(templatePath, ct).
-            ConfigureAwait(false);
 
         if (requiredBeforeCleanup && Directory.Exists(storeToBasePath))
         {
@@ -96,11 +126,14 @@ public static class Driver
         }
 
         var generator = new Ripper(
-            storeToBasePath, template, baseMetadata);
+            storeToBasePath,
+            templates,
+            baseMetadata);
+
         var (count, maxConcurrentProcessing) = await generator.RipOffAsync(
             contentsBasePathList,
-            (relativeContentsPath, relativeGeneratedPath, _) =>
-                output.WriteLineAsync($"Generated: {relativeContentsPath} ==> {relativeGeneratedPath}").
+            (relativeContentsPath, relativeGeneratedPath, contentsBasePath, templateName) =>
+                output.WriteLineAsync($"Generated: {templateName}: {relativeContentsPath} ==> {relativeGeneratedPath}").
                 WithCancellation(ct),
             ct).
             ConfigureAwait(false);

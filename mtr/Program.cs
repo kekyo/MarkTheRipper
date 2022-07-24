@@ -71,13 +71,13 @@ public static class Program
         try
         {
             var help = false;
-            var templateBasePath = "templates";
+            var resourceBasePath = "resources";
             var requiredBeforeCleanup = true;
             var requiredShowBrowser = true;
 
             var options = new OptionSet()
             {
-                { "templates=", "Template base path", v => templateBasePath = v },
+                { "resources=", "Resource base path", v => resourceBasePath = v },
                 { "no-cleanup", "Do not cleanup before processing if exists", _ => requiredBeforeCleanup = false },
                 { "n|no-show-browser", "Do not show browser automatically", _ => requiredShowBrowser = true },
                 { "h|help", "Print this help", _ => help = true },
@@ -124,13 +124,11 @@ public static class Program
                         DefaultIfEmpty("contents").
                         Distinct().
                         ToArray();
-                    var baseMetadata = new Dictionary<string, string>();
 
                     await Driver.RunAsync(
                         Console.Out,
                         storeToBasePath,
-                        templateBasePath,
-                        baseMetadata,
+                        resourceBasePath,
                         contentsBasePathList,
                         requiredBeforeCleanup,
                         default);

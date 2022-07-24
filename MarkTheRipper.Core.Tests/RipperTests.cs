@@ -8,20 +8,51 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using VerifyNUnit;
+
+using static NUnit.Framework.Assert;
 
 namespace MarkTheRipper;
 
 [TestFixture]
 public sealed class RipperTests
 {
+    private static async ValueTask<string> RipOffContentAsync(
+        string markdownText, string templateName, string templateText,
+        params (string keyName, object? value)[] baseMetadata)
+    {
+        var template = await Ripper.ParseTemplateAsync(
+            "test.html", templateText, default);
+        var templates = new Dictionary<string, RootTemplateNode>(StringComparer.OrdinalIgnoreCase)
+        {
+            { templateName, template },
+        };
+
+        var markdownReader = new StringReader(markdownText);
+        var htmlWriter = new StringWriter();
+
+        var appliedName = await Ripper.RipOffContentAsync(
+            markdownReader,
+            templates,
+            baseMetadata.ToDictionary(entry => entry.keyName, entry => entry.value),
+            htmlWriter,
+            default);
+
+        AreEqual(templateName, appliedName);
+
+        return htmlWriter.ToString();
+    }
+
     [Test]
     public async Task RipOff()
     {
-        var actual = await Ripper.RipOffContentAsync(
-            @"
+        var actual = await RipOffContentAsync(
+@"
 ---
 title: hoehoe
 tags: foo,bar
@@ -29,7 +60,9 @@ tags: foo,bar
 
 Hello MarkTheRipper!
 This is test contents.
-", @"<!DOCTYPE html>
+",
+"page",
+@"<!DOCTYPE html>
 <html>
   <head>
     <title>{title}</title>
@@ -38,9 +71,35 @@ This is test contents.
   <body>
 {contentBody}</body>
 </html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffWithExplicitTemplate()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+template: baz
+---
+
+Hello MarkTheRipper!
+This is test contents.
 ",
-            new Dictionary<string, string>(),
-            default);
+"baz",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+{contentBody}</body>
+</html>
+");
         await Verifier.Verify(actual);
     }
 }

@@ -1,6 +1,5 @@
 ﻿---
 title: Hello MarkTheRipper!
-author: Kouji Matsui
 tags: [foo,bar]
 ---
 

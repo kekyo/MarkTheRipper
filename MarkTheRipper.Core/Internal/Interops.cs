@@ -10,7 +10,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper;
+namespace MarkTheRipper.Internal;
 
 internal static class Interops
 {
@@ -59,7 +59,7 @@ internal static class Interops
         {
             return new ValueTask<T>(task.Result);
         }
-        
+
         var tcs = new TaskCompletionSource<T>();
         CancellationTokenRegistration? cr =
             ct.Register(() => tcs.TrySetCanceled());
