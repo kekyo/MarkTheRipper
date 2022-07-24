@@ -24,165 +24,73 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    private readonly struct MarkdownContent
-    {
-        public readonly string Body;
-        public readonly IReadOnlyDictionary<string, string> Metadata;
-
-        public MarkdownContent(IReadOnlyDictionary<string, string> metadata, string body)
-        {
-            this.Metadata = metadata;
-            this.Body = body;
-        }
-    }
-
     private readonly string storeToBasePath;
-    private readonly string template;
-    private readonly IReadOnlyDictionary<string, string> baseMetadata;
+    private readonly Template template;
+    private readonly IReadOnlyDictionary<string, object?> baseMetadata;
 
-    public Ripper(string storeToBasePath, string template,
-        IReadOnlyDictionary<string, string> baseMetadata)
+    public Ripper(string storeToBasePath, Template template,
+        IReadOnlyDictionary<string, object?> baseMetadata)
     {
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
         this.template = template;
         this.baseMetadata = baseMetadata;
     }
 
-    private static async ValueTask<MarkdownContent> LoadMarkdownContentAsync(
-        TextReader tr,
-        IReadOnlyDictionary<string, string> baseMetadata,
+    public static ValueTask<Template> ParseTemplateAsync(
+        string templateName, TextReader template, CancellationToken ct) =>
+        Parser.ParseTemplateAsync(templateName, template, ct);
+
+    public static ValueTask<Template> ParseTemplateAsync(
+        string templateName, string templateText, CancellationToken ct) =>
+        Parser.ParseTemplateAsync(templateName, new StringReader(templateText), ct);
+
+    /// <summary>
+    /// Rip off and generate from Markdown content.
+    /// </summary>
+    /// <param name="markdownReader">Markdown content</param>
+    /// <param name="template">Parsed template</param>
+    /// <param name="htmlWriter">Generated html content</param>
+    /// <param name="baseMetadata">Base metadata dictionary</param>
+    /// <param name="ct">CancellationToken</param>
+    public static async ValueTask RipOffContentAsync(
+        TextReader markdownReader, Template template,
+        TextWriter htmlWriter,
+        IReadOnlyDictionary<string, object?> baseMetadata,
         CancellationToken ct)
     {
-        // `---`
-        while (true)
-        {
-            var line = await tr.ReadLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
-            if (line == null)
-            {
-                throw new FormatException();
-            }
+        var markdownContent = await Parser.LoadMarkdownContentAsync(
+            markdownReader, ct).
+            ConfigureAwait(false);
 
-            if (!string.IsNullOrWhiteSpace(line))
-            {
-                if (line.Trim().StartsWith("---"))
-                {
-                    break;
-                }
-            }
-        }
+        var markdownDocument = MarkdownParser.Parse(markdownContent.Body);
 
-        var metadata = baseMetadata.ToDictionary(
-            kv => kv.Key, kv => kv.Value,
-            StringComparer.OrdinalIgnoreCase);
+        var contentBody = new StringBuilder();
+        var renderer = new HtmlRenderer(new StringWriter(contentBody));
+        renderer.Render(markdownDocument);
 
-        // `title: Hello world`
-        while (true)
-        {
-            var line = await tr.ReadLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
-            if (line == null)
-            {
-                throw new FormatException();
-            }
-
-            if (!string.IsNullOrWhiteSpace(line))
-            {
-                var keyIndex = line.IndexOf(':');
-                if (keyIndex >= 1)
-                {
-                    var key = line.Substring(0, keyIndex).Trim();
-                    var value = line.Substring(keyIndex + 1).Trim();
-
-                    // `title: "Hello world"`
-                    if (value.StartsWith("\""))
-                    {
-                        value = value.Trim('"');
-                    }
-                    // `title: 'Hello world'`
-                    else if (value.StartsWith("'"))
-                    {
-                        value = value.Trim('\'');
-                    }
-                    // `title: [Hello world]`
-                    // * Assume JavaScript array-like: `tags: [aaa, bbb]` --> `tags: aaa, bbb`
-                    else if (value.StartsWith("["))
-                    {
-                        value = value.TrimStart('[').TrimEnd(']');
-                    }
-
-                    metadata[key] = value;
-                }
-                else
-                {
-                    // `---`
-                    if (line.Trim().StartsWith("---"))
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        throw new FormatException();
-                    }
-                }
-            }
-        }
-
-        var sb = new StringBuilder();
-        while (true)
-        {
-            var line = await tr.ReadLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
-            if (line == null)
-            {
-                break;
-            }
-
-            // Skip empty lines, will detect start of body
-            if (!string.IsNullOrWhiteSpace(line))
-            {
-                sb.AppendLine(line);
-                break;
-            }
-        }
-
-        while (true)
-        {
-            var line = await tr.ReadLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
-
-            // EOF
-            if (line == null)
-            {
-                break;
-            }
-
-            // (Sanitizing EOL)
-            sb.AppendLine(line);
-        }
-
-        return new(metadata, sb.ToString());
+        await Parser.RenderAsync(
+            template, baseMetadata, markdownContent.Metadata,
+            contentBody.ToString(),
+            (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
+            ct).
+            ConfigureAwait(false);
     }
 
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
-    /// <param name="markdown">Markdown content</param>
-    /// <param name="template">Template content</param>
+    /// <param name="markdownReader">Markdown content</param>
+    /// <param name="template">Parsed template</param>
     /// <param name="baseMetadata">Base metadata dictionary</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Generated HTML content</returns>
     public static async ValueTask<string> RipOffContentAsync(
-        TextReader markdown, string template,
-        IReadOnlyDictionary<string, string> baseMetadata,
+        TextReader markdownReader, Template template,
+        IReadOnlyDictionary<string, object?> baseMetadata,
         CancellationToken ct)
     {
-        var markdownContent = await LoadMarkdownContentAsync(
-            markdown, baseMetadata, ct).
+        var markdownContent = await Parser.LoadMarkdownContentAsync(
+            markdownReader, ct).
             ConfigureAwait(false);
 
         var markdownDocument = MarkdownParser.Parse(markdownContent.Body);
@@ -192,16 +100,24 @@ public sealed class Ripper
         renderer.Render(markdownDocument);
 
         var capacityHint =
-            template.Length +
+            template.OriginalText.Length +
             contentBody.Length +
-            markdownContent.Metadata.Sum(kv => kv.Value.Length - kv.Key.Length) +
+            baseMetadata.Concat(markdownContent.Metadata).
+                Sum(kv => (kv.Value?.ToString()?.Length ?? 0) - kv.Key.Length) +
             100;
-        var html = new StringBuilder(template, capacityHint);
-        foreach (var kv in markdownContent.Metadata)
-        {
-            html.Replace($"{{{kv.Key}}}", kv.Value);
-        }
-        html.Replace("{contentBody}", contentBody.ToString());
+        var html = new StringBuilder(capacityHint);
+
+        await Parser.RenderAsync(
+            template, baseMetadata, markdownContent.Metadata,
+            contentBody.ToString(),
+            (text, ct) =>
+            {
+                ct.ThrowIfCancellationRequested();
+                html.Append(text);
+                return default;
+            },
+            ct).
+            ConfigureAwait(false);
 
         return html.ToString();
     }
@@ -209,79 +125,57 @@ public sealed class Ripper
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
-    /// <param name="markdown">Markdown content</param>
-    /// <param name="template">Template content</param>
+    /// <param name="markdownText">Markdown content</param>
+    /// <param name="template">Parsed template</param>
     /// <param name="baseMetadata">Base metadata dictionary</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Generated HTML content</returns>
     public static ValueTask<string> RipOffContentAsync(
-        string markdown, string template,
-        IReadOnlyDictionary<string, string> baseMetadata,
+        string markdownText, Template template,
+        IReadOnlyDictionary<string, object?> baseMetadata,
         CancellationToken ct) =>
         RipOffContentAsync(
-            new StringReader(markdown), template, baseMetadata, ct);
-
-    /// <summary>
-    /// Rip off and generate from Markdown content.
-    /// </summary>
-    /// <param name="markdown">Markdown content</param>
-    /// <param name="template">Template content</param>
-    /// <param name="outputHtml">Generated html content</param>
-    /// <param name="baseMetadata">Base metadata dictionary</param>
-    /// <param name="ct">CancellationToken</param>
-    public static async ValueTask RipOffContentAsync(
-        TextReader markdown, string template,
-        TextWriter outputHtml,
-        IReadOnlyDictionary<string, string> baseMetadata,
-        CancellationToken ct)
-    {
-        using var hw = new StringWriter();
-
-        var htmlContent = await RipOffContentAsync(
-            markdown, template, baseMetadata, ct).
-            ConfigureAwait(false);
-
-        await outputHtml.WriteAsync(htmlContent).
-            ConfigureAwait(false);
-    }
+            new StringReader(markdownText), template, baseMetadata, ct);
 
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
     /// <param name="markdownPath">Markdown content path</param>
-    /// <param name="template">Template content</param>
+    /// <param name="template">Parsed template</param>
     /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="baseMetadata">Base metadata dictionary</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask RipOffContentAsync(
-        string markdownPath, string template,
+        string markdownPath, Template template,
         string outputHtmlPath,
-        IReadOnlyDictionary<string, string> baseMetadata,
+        IReadOnlyDictionary<string, object?> baseMetadata,
         CancellationToken ct)
     {
-        using var ms = new FileStream(
+        using var markdownStream = new FileStream(
             markdownPath,
             FileMode.Open, FileAccess.Read, FileShare.Read,
             65536, true);
-        using var tr = new StreamReader(
-            ms, Encoding.UTF8, true);
+        using var markdownReader = new StreamReader(
+            markdownStream, Encoding.UTF8, true);
 
-        using var hs = new FileStream(
+        using var htmlStream = new FileStream(
             outputHtmlPath,
             FileMode.Create, FileAccess.ReadWrite, FileShare.None,
             65536, true);
-        using var tw = new StreamWriter(
-            hs, Encoding.UTF8);
+        using var htmlWriter = new StreamWriter(
+            htmlStream, Encoding.UTF8);
 
-        await RipOffContentAsync(tr, template, tw, baseMetadata, ct).
+        await RipOffContentAsync(
+            markdownReader, template, htmlWriter, baseMetadata, ct).
             ConfigureAwait(false);
 
-        await tw.FlushAsync().
+        await htmlWriter.FlushAsync().
             ConfigureAwait(false);
     }
 
     private async ValueTask<string> RipOffRelativeContentAsync(
-        string relativeContentPath, string contentsBasePath, CancellationToken ct)
+        string relativeContentPath, string contentsBasePath,
+        CancellationToken ct)
     {
         var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
         var storeToBasePath = Path.GetDirectoryName(
@@ -300,30 +194,30 @@ public sealed class Ripper
     /// <summary>
     /// Copy content into target path.
     /// </summary>
-    /// <param name="cs">Content stream</param>
+    /// <param name="contentStream">Content stream</param>
     /// <param name="storeToPath">Store to path</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask CopyContentToAsync(
-        Stream cs, string storeToPath, CancellationToken ct)
+        Stream contentStream, string storeToPath, CancellationToken ct)
     {
-        using var ss = new FileStream(
+        using var storeToStream = new FileStream(
             storeToPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, true);
 
         var buffer = new byte[65536];
         while (true)
         {
-            var read = await cs.ReadAsync(buffer, 0, buffer.Length, ct).
+            var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, ct).
                 ConfigureAwait(false);
             if (read <= 0)
             {
                 break;
             }
 
-            await ss.WriteAsync(buffer, 0, read, ct).
+            await storeToStream.WriteAsync(buffer, 0, read, ct).
                 ConfigureAwait(false);
         }
 
-        await ss.FlushAsync(ct).
+        await storeToStream.FlushAsync(ct).
             ConfigureAwait(false);
     }
 
@@ -338,10 +232,13 @@ public sealed class Ripper
         string relativeContentPath, string contentsBasePath, string storeToBasePath,
         CancellationToken ct)
     {
-        var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
-        var storeToPath = Path.Combine(storeToBasePath, relativeContentPath);
+        var contentPath = Path.Combine(
+            contentsBasePath, relativeContentPath);
+        var storeToPath = Path.Combine(
+            storeToBasePath, relativeContentPath);
 
-        using var cs = new FileStream(contentPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+        using var cs = new FileStream(
+            contentPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
 
         await CopyContentToAsync(cs, storeToPath, ct).
             ConfigureAwait(false);
@@ -396,6 +293,7 @@ public sealed class Ripper
         Func<string, string, string, ValueTask> generated,
         CancellationToken ct)
     {
+        var utcNow = DateTimeOffset.UtcNow;
         var dc = new SafeDirectoryCreator();
 
         var candidates = contentsBasePathList.
@@ -437,7 +335,7 @@ public sealed class Ripper
         var count = 0;
         var concurrentProcessing = 0;
         var maxConcurrentProcessing = 0;
-        async Task RunOnceWithCoverAsync(string contentsBasePath, string contentsPath)
+        async Task RunOnceWithMeasurementAsync(string contentsBasePath, string contentsPath)
         {
             count++;
             var cp = Interlocked.Increment(ref concurrentProcessing);
@@ -457,15 +355,15 @@ public sealed class Ripper
             Interlocked.Decrement(ref concurrentProcessing);
         }
 
-#if !DEBUG
+#if DEBUG
         foreach (var candidate in candidates)
         {
-            await RunOnceWithCoverAsync(candidate.contentsBasePath, candidate.path).
+            await RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.path).
                 ConfigureAwait(false);
         }
 #else
         await Task.WhenAll(candidates.
-            Select(candidate => RunOnceWithCoverAsync(candidate.contentsBasePath, candidate.path))).
+            Select(candidate => RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.path))).
             ConfigureAwait(false);
 #endif
 

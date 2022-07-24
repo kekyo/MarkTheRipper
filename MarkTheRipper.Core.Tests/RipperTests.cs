@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using NUnit.Framework;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using VerifyNUnit;
 
@@ -17,10 +17,19 @@ namespace MarkTheRipper;
 [TestFixture]
 public sealed class RipperTests
 {
+    private static async ValueTask<string> RipOffContentAsync(
+        string markdownContent, string template,
+        params (string keyName, object? value)[] baseMetadata) =>
+        await Ripper.RipOffContentAsync(
+            markdownContent,
+            await Ripper.ParseTemplateAsync("test.html", template, default),
+            baseMetadata.ToDictionary(entry => entry.keyName, entry => entry.value),
+            default);
+
     [Test]
     public async Task RipOff()
     {
-        var actual = await Ripper.RipOffContentAsync(
+        var actual = await RipOffContentAsync(
             @"
 ---
 title: hoehoe
@@ -38,9 +47,7 @@ This is test contents.
   <body>
 {contentBody}</body>
 </html>
-",
-            new Dictionary<string, string>(),
-            default);
+");
         await Verifier.Verify(actual);
     }
 }

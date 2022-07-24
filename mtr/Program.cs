@@ -124,7 +124,13 @@ public static class Program
                         DefaultIfEmpty("contents").
                         Distinct().
                         ToArray();
-                    var baseMetadata = new Dictionary<string, string>();
+                    var utcnow = DateTimeOffset.UtcNow;
+                    var baseMetadata = new Dictionary<string, object?>(
+                        StringComparer.OrdinalIgnoreCase)
+                    {
+                        { "template", "page" },
+                        { "utcnow", utcnow },
+                    };
 
                     await Driver.RunAsync(
                         Console.Out,

@@ -34,7 +34,7 @@ public static class Driver
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask RunAsync(
         TextWriter output, string storeToBasePath, string templateBasePath,
-        IReadOnlyDictionary<string, string> baseMetadata,
+        IReadOnlyDictionary<string, object?> baseMetadata,
         IEnumerable<string> contentsBasePathList,
         bool requiredBeforeCleanup,
         CancellationToken ct)
@@ -58,13 +58,15 @@ public static class Driver
         var sw = new Stopwatch();
         sw.Start();
 
-        static async ValueTask<string> ReadTemplateAsync(string path, CancellationToken ct)
+        static async ValueTask<Template> ReadTemplateAsync(
+            string path, CancellationToken ct)
         {
-            using var rs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
-            using var tr = new StreamReader(rs, Encoding.UTF8, true);
+            using var rs = new FileStream(
+                path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+            using var tr = new StreamReader(
+                rs, Encoding.UTF8, true);
 
-            return await tr.ReadToEndAsync().
-                WithCancellation(ct).
+            return await Ripper.ParseTemplateAsync(path, tr, ct).
                 ConfigureAwait(false);
         }
 
