@@ -9,6 +9,7 @@
 
 using Markdig.Parsers;
 using Markdig.Renderers;
+using MarkTheRipper.Internal;
 using System;
 using System.Collections.Generic;
 using System.IO;

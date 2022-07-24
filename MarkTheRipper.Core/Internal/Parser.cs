@@ -15,7 +15,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper;
+namespace MarkTheRipper.Internal;
 
 internal readonly struct MarkdownContent
 {
@@ -24,8 +24,8 @@ internal readonly struct MarkdownContent
 
     public MarkdownContent(IReadOnlyDictionary<string, object?> metadata, string body)
     {
-        this.Metadata = metadata;
-        this.Body = body;
+        Metadata = metadata;
+        Body = body;
     }
 }
 
@@ -43,18 +43,18 @@ internal static class Parser
             TextReader reader,
             CancellationToken token)
         {
-            this.TemplateName = templateName;
-            this.Reader = reader;
-            this.Token = token;
-            this.OriginalText = new();
+            TemplateName = templateName;
+            Reader = reader;
+            Token = token;
+            OriginalText = new();
         }
 
         public TemplateParseContext(TemplateParseContext context)
         {
-            this.TemplateName = context.TemplateName;
-            this.Reader = context.Reader;
-            this.Token = context.Token;
-            this.OriginalText = context.OriginalText;
+            TemplateName = context.TemplateName;
+            Reader = context.Reader;
+            Token = context.Token;
+            OriginalText = context.OriginalText;
         }
     }
 
@@ -108,9 +108,9 @@ internal static class Parser
                             openIndex + 1, closeIndex - openIndex - 1);
                         var metadataWordSplitterIndex = metadataWords.IndexOf(':');
 
-                        var keyName = (metadataWordSplitterIndex >= 0) ?
+                        var keyName = metadataWordSplitterIndex >= 0 ?
                             metadataWords.Substring(0, metadataWordSplitterIndex) : metadataWords;
-                        var parameter = (metadataWordSplitterIndex >= 0) ?
+                        var parameter = metadataWordSplitterIndex >= 0 ?
                             metadataWords.Substring(metadataWordSplitterIndex + 1) : null;
 
                         // Special case: foreach
