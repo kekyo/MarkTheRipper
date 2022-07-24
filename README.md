@@ -231,8 +231,9 @@ These keywords can be overridden by writing them in the markdown header.
 It may not make sense to override `now`, but just know that MarkTheRipper does not treat metadata dictionary definitions specially.
 
 You may be wondering what the default values of `lang` and `template` are.
-Metadata dictionaries can be placed in `resources/base-metadata.json`,
+Metadata dictionaries can be placed in `resources/metadata.json`,
 which is the base definition for site generation.
+(It does not have to be there. In fact, it is not present in the minimum sample.)
 For example, the following definition:
 
 ```json
@@ -287,6 +288,10 @@ You may feel that `lang` is simply one of the ordinary keywords.
 This is explained in the next section.
 
 ### Format parameters
+
+TODO:
+
+### Recursive keyword search
 
 TODO:
 

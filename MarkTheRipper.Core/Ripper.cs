@@ -93,8 +93,9 @@ public sealed class Ripper
                         baseValue :
                         null;
 
-        var fp = RawGetMetadata("lang")?.ToString() switch
+        var fp = RawGetMetadata("lang") switch
         {
+            IFormatProvider v => v,
             string lang => new CultureInfo(lang),
             _ => CultureInfo.CurrentCulture,
         };

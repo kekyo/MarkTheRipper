@@ -11,6 +11,7 @@ using MarkTheRipper.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -75,6 +76,8 @@ public static class Driver
             StringComparer.OrdinalIgnoreCase)
             {
                 { "utcnow", utcnow },
+                { "now", utcnow.ToLocalTime() },
+                { "lang", CultureInfo.CurrentCulture }
             };
 
         var templates = (await Task.WhenAll(
