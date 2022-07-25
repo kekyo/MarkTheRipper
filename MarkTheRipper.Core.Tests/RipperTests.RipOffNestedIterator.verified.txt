@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <h3>hoge</h3>
+    <ul>
+        <li>hoge: foo [0-0]</li>
+        <li>hoge: bar [0-1]</li>
+    </ul>
+    <h3>hoe</h3>
+    <ul>
+        <li>hoe: foo [1-0]</li>
+        <li>hoe: bar [1-1]</li>
+    </ul>
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>

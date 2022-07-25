@@ -7,13 +7,65 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
-internal static class Interops
+internal static class Utilities
 {
+    public static JsonSerializer GetDefaultJsonSerializer()
+    {
+        var defaultNamingStrategy = new CamelCaseNamingStrategy();
+        var serializer = new JsonSerializer
+        {
+            DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            DateParseHandling = DateParseHandling.DateTimeOffset,
+            DateTimeZoneHandling = DateTimeZoneHandling.Local,
+            NullValueHandling = NullValueHandling.Include,
+            ObjectCreationHandling = ObjectCreationHandling.Replace,
+            ContractResolver = new DefaultContractResolver { NamingStrategy = defaultNamingStrategy, },
+        };
+        serializer.Converters.Add(new StringEnumConverter(defaultNamingStrategy));
+        return serializer;
+    }
+    
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static string? FormatValue(
+        object? value, object? parameter, IFormatProvider fp) =>
+        (value, parameter) switch
+        {
+            (null, _) => null,
+            (_, null) => value.ToString(),
+            (IFormattable formattable, string format) => formattable.ToString(format, fp),
+            _ => value.ToString(),
+        };
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+#if !NET6_0_OR_GREATER
+    public static IEnumerable<T> DistinctBy<T, TKey>(
+        this IEnumerable<T> enumerable, Func<T, TKey> selector)
+    {
+        var keys = new HashSet<TKey>();
+        foreach (var entry in enumerable)
+        {
+            if (keys.Add(selector(entry)))
+            {
+                yield return entry;
+            }
+        }
+    }
+#endif
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static ValueTask WithCancellation(
         this Task task, CancellationToken ct)
     {

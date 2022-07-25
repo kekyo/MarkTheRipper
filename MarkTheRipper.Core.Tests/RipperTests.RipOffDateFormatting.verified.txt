@@ -1,0 +1,12 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <p>Date: 2022/01/02 12:34:56.789 +09:00</p>
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>
