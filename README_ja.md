@@ -2,7 +2,7 @@
 
 ![MarkTheRipper](Images/MarkTheRipper.100.png)
 
-MarkTheRipper - Fantastic faster generates static site comes from simply Markdowns.
+MarkTheRipper - マークダウンで書く事が出来る、静的サイトの高速生成ツール。
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
@@ -24,6 +24,8 @@ MarkTheRipper - Fantastic faster generates static site comes from simply Markdow
 [English is here](https://github.com/kekyo/MarkTheRipper)
 
 ## これは何？
+
+TODO: 最終的にこのドキュメントは、MarkTheRipper自身で変換する予定です。
 
 MarkTheRipperは、非常にシンプルかつ高速なスタティックサイトジェネレータで、コンテンツをマークダウンで書くことができます。
 主に想定される用途はブログサイトですが、まるでGitHub Gistで記事を書いているかのように、とにかく複雑な構造やツールの要求、というものを排除しました。
@@ -101,6 +103,7 @@ $ mtr
 ディレクトリ構成がサンプルと同じであれば、`mtr`を実行するだけでサイトを生成します。
 サイト生成はマルチスレッド・マルチ非同期I/Oで行うので、大量のコンテンツがあっても高速です。
 デフォルトでは、`docs`ディレクトリ配下に出力されます。
+この例では、`contents/index.md`ファイルが、`docs/index.html`ファイルに変換されて配置されます。
 
 その後、すぐにデフォルトのブラウザでプレビューが表示されます:
 
@@ -110,6 +113,13 @@ $ mtr
 ディレクトリ全体をGitで管理している場合は、`docs`ディレクトを含めてコミットしてOKです。
 そうすれば、実際に生成されたファイルの差分を確認することが出来ます。
 また、`github.io`にそのままpushして、簡単にあなたのサイトを公開出来ます！
+
+マークダウンファイルのファイル名や、配置するサブディレクトリにも制約はありません。
+`contents`ディレクトリ配下で拡張子が`.md`のファイルがあれば、どのようなサブディレクトリにどのようなファイル名で配置されていても、また、多数存在していても構いません。
+サブディレクトリの構造を保ったまま、全ての`.md`ファイルが`.html`ファイルに変換されます。
+
+`.md`ではない拡張子のファイルは、単純に同じ場所にコピーされます。
+例えば、写真などの追加ファイルは、あなたが管理したいように配置して、そこを指すように相対パスでマークダウンを書けば良いのです。
 
 ----
 
@@ -205,8 +215,7 @@ stylesheet: darcula
 
 |キーワード|内容|
 |:----|:----|
-|`now`|MarkTheRipperでサイトを生成した、ローカル日時|
-|`utcnow`|MarkTheRipperでサイトを生成した、UTC日時|
+|`now`|MarkTheRipperでサイトを生成した日時|
 |`template`|適用するテンプレート名|
 |`lang`|ロケール(`en-us`や`ja-jp`など)|
 |`date`|記事の日時|
@@ -243,13 +252,13 @@ MarkTheRipperがメタデータ辞書の定義を特別扱いしない、と言�
 しかし、タイトルはもちろん、その投稿毎に異なるはずです。
 そのような場合分けに、この、メタデータ辞書の「フォールバック」機能を使うことが出来ます。
 
-そして、`lang`と`template`のフォールバックですが:
+そして、`template`と`lang`のフォールバックですが:
 
-* `template`がフォールバックにも見つからない場合に限り、`page`という値が使われます。
+* `template`がフォールバックにも見つからない場合に限り、`page`というテンプレート名が使われます。
 * `lang`がフォールバックにも見つからない場合に限り、システムのデフォルト言語が適用されます。
 
-テンプレート名には、少し補足が必要でしょう。
-例えば、テンプレート名が`page`の場合は、`resources/template-page.html`ファイルが適用されます。もし:
+テンプレート名には、少し補足が必要でしょう。テンプレート名は、変換元のテンプレートファイルの特定に使用されます。
+例えば、テンプレート名が`page`の場合は、`resources/template-page.html`ファイルが使用されます。もし:
 
 ```markdown
 ---

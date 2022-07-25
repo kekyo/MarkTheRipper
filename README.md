@@ -25,7 +25,7 @@ MarkTheRipper - Fantastic faster generates static site comes from simply Markdow
 
 ## What is this?
 
-TODO:
+TODO: Eventually this document will be converted by MarkTheRipper itself.
 
 MarkTheRipper is a very simple and fast static site generator
 that allows you to write content in markdown.
@@ -108,6 +108,7 @@ If your directory structure is the same as the sample, just run ``mtr`` to gener
 Site generation is multi-threaded and multi-asynchronous I/O driven,
 so it is fast even with a large amount of content.
 By default, the output is under the `docs` directory.
+In this example, the `contents/index.md` file is converted and placed in the `docs/index.html` file.
 
 You will then immediately see a preview in your default browser:
 
@@ -118,6 +119,17 @@ If you manage the entire directory with Git,
 you can commit the site including the `docs` directory.
 Then you can check the differences of the actual generated files.
 You can also push it straight to `github.io` and easily publish your site!
+
+There are no restrictions on the file names of markdown files or the subdirectories in which they are placed.
+If there are files with the extension `.md` under the `contents` directory,
+it does not matter what kind of subdirectories they are placed in,
+under what kind of file names, or even if there are many of them.
+All `.md` files will be converted to `.html` files, keeping the structure of the subdirectories.
+
+Files with non `.md` extensions will simply be copied to the same location.
+Additional files, such as pictures for example,
+can be placed as you wish to manage them,
+and you can write markdowns with relative paths to point to them.
 
 ----
 
@@ -221,8 +233,7 @@ They are listed below:
 
 |keywords|content|
 |:----|:----|
-|`now`|Local date and time when the site was generated.|
-|`utcnow`|UTC date and time when the site was generated.|
+|`now`|Date and time when the site was generated.|
 |`template`|The name of the template to apply.|
 |`lang`|Locale (`en-us`, `ja-jp`, etc.)|
 |`date`|Date of the post|
@@ -265,10 +276,11 @@ In such cases, you can use the "fallback" feature of the metadata dictionary.
 
 And as for the `lang` and `template` fallback:
 
-* Only if `template` is not found in the fallback, the value `page` is used.
+* Only if `template` is not found in the fallback, the template name `page` is used.
 * Only if `lang` is not found in the fallback, the system default language is applied.
 
 The template name may need some supplementation.
+The template name is used to identify the template file from which the conversion is being made.
 For example, if the template name is `page`, the file `resources/template-page.html` will be applied. If:
 
 ```markdown
