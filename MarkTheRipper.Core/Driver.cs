@@ -71,12 +71,11 @@ public static class Driver
         var sw = new Stopwatch();
         sw.Start();
 
-        var utcnow = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.Now;
         var baseMetadata = new Dictionary<string, object?>(
             StringComparer.OrdinalIgnoreCase)
             {
-                { "utcnow", utcnow },
-                { "now", utcnow.ToLocalTime() },
+                { "now", now },
                 { "lang", CultureInfo.CurrentCulture }
             };
 
