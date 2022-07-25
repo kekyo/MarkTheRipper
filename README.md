@@ -361,7 +361,57 @@ In other words, it is not possible to keep searching repeatedly using the obtain
 
 ### Iterators and nesting
 
-TODO:
+For classifications such as TAG and SLUG,
+you would want to have the user select them from a menu and be taken to that page.
+For example, suppose there are 5 tags on the entire site.
+You would automatically add these to the page's menu.
+To allow the user to navigate to a page classified under a tag from the menu, we can use the iterator function.
+As usual, let's start with a small example.
+This is the template included in minimum:
+
+```html
+<p>Tags:{foreach:tags} '{tags-item}'{/}</p>
+```
+
+This means that documents between `{foreach:tags}` and `{/}` will be repeated as many times as the number of `tags`.
+"Documents between" are, in this case: ` '{tags-item}'`. Note the inclusion of spaces.
+Likewise, it can contain line breaks, HTML tags, or anything else in between.
+
+Now suppose we convert the following markdown:
+
+```markdown
+---
+title: Hello MarkTheRipper
+tags: foo,bar
+
+(... Body ...)
+---
+````
+
+Then the output will be `<p>Tags: 'foo' 'bar'</p>`.
+The `foo,bar` in `tags` have been expanded and quoted in the output, each separated by a comma.
+By cleverly inserting spaces, they are separated in an easy-to-read manner.
+
+Again, documents between `{foreach:tags}` and `{/}` are output repeatedly, so you can use the following:
+
+```html
+<ul>
+  {foreach:tags}
+  <li>{tags-item}</li>
+  {/}
+</ul>
+```
+
+The `{tags-item}` inserted between the tags is a keyword that can refer to each repeated value.
+It is specified in the form `{<keyword>-item}`. `-item` is fixed.
+Similarly, `{<keyword>-index}` gives you a number that starts at 0 and counts from 1,2,3...
+
+In addition, you can nest different keywords.
+For example, for each slug, and you can enumerate multiple tags.
+
+Although we have shown examples using slugs and tags,
+it is of course possible to apply the recursive keyword search described in the previous section.
+The output to HTML can be whatever name you want to show to people.
 
 ----
 
