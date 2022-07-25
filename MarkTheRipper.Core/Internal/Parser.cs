@@ -60,6 +60,8 @@ internal static class Parser
     private static async ValueTask<TemplateNode[]> ParseTemplateAsync(
         TemplateParseContext context)
     {
+        var nestedIterations = new Stack<(string iteratorKeyName, List<TemplateNode> nodes)>();
+
         var nodes = new List<TemplateNode>();
         var buffer = new StringBuilder();
 
@@ -86,7 +88,7 @@ internal static class Parser
                 }
                 else
                 {
-                    buffer.Append(line.Substring(0, openIndex));
+                    buffer.Append(line.Substring(startIndex, openIndex - startIndex));
                     if (buffer.Length >= 1)
                     {
                         nodes.Add(new TextNode(buffer.ToString()));
@@ -112,7 +114,7 @@ internal static class Parser
                         var parameter = metadataWordSplitterIndex >= 0 ?
                             metadataWords.Substring(metadataWordSplitterIndex + 1) : null;
 
-                        // Special case: foreach
+                        // Special case: iterator begin
                         if (StringComparer.OrdinalIgnoreCase.Equals("foreach", keyName))
                         {
                             if (string.IsNullOrWhiteSpace(parameter))
@@ -122,12 +124,30 @@ internal static class Parser
                             }
                             else
                             {
-                                var childContext = new TemplateParseContext(context);
+                                nestedIterations.Push((parameter!, nodes));
+                                nodes = new();
+                            }
+                        }
+                        // Special case: iterator end
+                        else if (keyName == "/")
+                        {
+                            if (!string.IsNullOrWhiteSpace(parameter))
+                            {
+                                throw new FormatException(
+                                    $"Invalid iterator-end parameter. Template={context.TemplatePath}");
+                            }
+                            else if (nestedIterations.Count <= 0)
+                            {
+                                throw new FormatException(
+                                    $"Could not find iterator-begin. Template={context.TemplatePath}");
+                            }
+                            else
+                            {
+                                var childNodes = nodes.ToArray();
+                                var (iteratorKeyName, lastNodes) = nestedIterations.Pop();
 
-                                var childNodes = await ParseTemplateAsync(childContext).
-                                    ConfigureAwait(false);
-
-                                nodes.Add(new ForEachNode(parameter!, childNodes));
+                                nodes = lastNodes;
+                                nodes.Add(new ForEachNode(iteratorKeyName, childNodes));
                             }
                         }
                         else
@@ -160,18 +180,21 @@ internal static class Parser
             context.OriginalText.ToString(), nodes);
     }
 
-    public static async ValueTask<MarkdownContent> LoadMarkdownContentAsync(
-        TextReader tr, CancellationToken ct)
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static async ValueTask<MarkdownContent> ParseEntireMarkdownAsync(
+        TextReader markdownReader, CancellationToken ct)
     {
         // `---`
         while (true)
         {
-            var line = await tr.ReadLineAsync().
+            var line = await markdownReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
-                throw new FormatException();
+                throw new FormatException(
+                    $"Could not find markdown header.");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -189,7 +212,7 @@ internal static class Parser
         // `title: Hello world`
         while (true)
         {
-            var line = await tr.ReadLineAsync().
+            var line = await markdownReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
@@ -242,7 +265,7 @@ internal static class Parser
         var sb = new StringBuilder();
         while (true)
         {
-            var line = await tr.ReadLineAsync().
+            var line = await markdownReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
@@ -260,7 +283,7 @@ internal static class Parser
 
         while (true)
         {
-            var line = await tr.ReadLineAsync().
+            var line = await markdownReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
 

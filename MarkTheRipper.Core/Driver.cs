@@ -37,6 +37,8 @@ public static class Driver
             ConfigureAwait(false);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////
+
     /// <summary>
     /// Run Ripper.
     /// </summary>

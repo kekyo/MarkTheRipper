@@ -77,6 +77,8 @@ public sealed class SafeDirectoryCreator
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////
+
     private readonly Dictionary<string, Waiter> dirs = new();
 
     private (bool required, Waiter waiter) GetWaiter(string dirPath)
@@ -93,6 +95,8 @@ public sealed class SafeDirectoryCreator
         }
         return (false, waiter);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
 
     /// <summary>
     /// Create specified directory.

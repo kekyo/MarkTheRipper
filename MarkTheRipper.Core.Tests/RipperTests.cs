@@ -48,6 +48,8 @@ public sealed class RipperTests
         return htmlWriter.ToString();
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////
+
     [Test]
     public async Task RipOff()
     {
@@ -74,6 +76,8 @@ This is test contents.
 ");
         await Verifier.Verify(actual);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
 
     [Test]
     public async Task RipOffWithExplicitTemplate()
@@ -103,6 +107,8 @@ This is test contents.
         await Verifier.Verify(actual);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////
+
     [Test]
     public async Task RipOffDateFormatting()
     {
@@ -131,6 +137,114 @@ This is test contents.
 ",
 ("date", date));
 
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffItemIterator()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <ul>
+{foreach:tags}
+        <li>{tags-item}</li>
+{/}
+    </ul>
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffIndexIterator()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <ul>
+{foreach:tags}
+        <li>{tags-index}</li>
+{/}
+    </ul>
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffNestedIterator()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+authors: hoge,hoe
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+{foreach:authors}
+    <h3>{authors-item}</h3>
+    <ul>
+{foreach:tags}
+        <li>{authors-item}: {tags-item} [{authors-index}-{tags-index}]</li>
+{/}
+    </ul>
+{/}
+
+{contentBody}</body>
+</html>
+");
         await Verifier.Verify(actual);
     }
 }

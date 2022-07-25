@@ -7,13 +7,26 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
-internal static class Interops
+internal static class Utilities
 {
+    public static string? FormatValue(
+        object? value, object? parameter, IFormatProvider fp) =>
+        (value, parameter) switch
+        {
+            (null, _) => null,
+            (_, null) => value.ToString(),
+            (IFormattable formattable, string format) => formattable.ToString(format, fp),
+            _ => value.ToString(),
+        };
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static ValueTask WithCancellation(
         this Task task, CancellationToken ct)
     {

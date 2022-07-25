@@ -1,4 +1,4 @@
-﻿/////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 //
 // MarkTheRipper - Fantastic faster generates static site comes from simply Markdowns.
 // Copyright (c) Kouji Matsui (@kozy_kekyo, @kekyo@mastodon.cloud)
@@ -48,16 +48,6 @@ public sealed class Ripper
         string templatePath, string templateText, CancellationToken ct) =>
         Parser.ParseTemplateAsync(templatePath, new StringReader(templateText), ct);
 
-    private static string? FormatValue(
-        object? value, object? parameter, IFormatProvider fp) =>
-        (value, parameter) switch
-        {
-            (null, _) => null,
-            (_, null) => value.ToString(),
-            (IFormattable formattable, string format) => formattable.ToString(format, fp),
-            _ => value.ToString(),
-        };
-
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
@@ -74,7 +64,7 @@ public sealed class Ripper
         TextWriter htmlWriter,
         CancellationToken ct)
     {
-        var markdownContent = await Parser.LoadMarkdownContentAsync(
+        var markdownContent = await Parser.ParseEntireMarkdownAsync(
             markdownReader, ct).
             ConfigureAwait(false);
 
@@ -100,11 +90,11 @@ public sealed class Ripper
             _ => CultureInfo.CurrentCulture,
         };
 
-        string? GetMetadata(string keyName, string? parameter) =>
+        string? GetMetadata(string keyName, string? parameter, IFormatProvider fp) =>
             RawGetMetadata(keyName) is { } value ?
-                FormatValue(value, parameter, fp) : null;
+                Utilities.FormatValue(value, parameter, fp) : null;
 
-        var templateName = GetMetadata("template", null) ?? "page";
+        var templateName = GetMetadata("template", null, fp) ?? "page";
 
         if (!templates.TryGetValue(templateName, out var template))
         {
@@ -114,8 +104,7 @@ public sealed class Ripper
 
         await template.RenderAsync(
             (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
-            GetMetadata,
-            ct).
+            GetMetadata, fp, ct).
             ConfigureAwait(false);
 
         return templateName;
