@@ -8,6 +8,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,6 +27,21 @@ namespace MarkTheRipper;
 /// </summary>
 public static class Driver
 {
+    private static async ValueTask<IReadOnlyDictionary<string, object?>> ReadMetadataAsync(
+        string path, CancellationToken ct)
+    {
+        using var rs = new FileStream(
+            path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+        using var tr = new StreamReader(
+            rs, Encoding.UTF8, true);
+        var jr = new JsonTextReader(tr);
+
+        var s = Utilities.GetDefaultJsonSerializer();
+
+        var jt = await JToken.LoadAsync(jr, ct);
+        return jt.ToObject<Dictionary<string, object?>>(s) ?? new();
+    }
+
     private static async ValueTask<RootTemplateNode> ReadTemplateAsync(
         string path, CancellationToken ct)
     {
@@ -75,14 +92,34 @@ public static class Driver
 
         var now = DateTimeOffset.Now;
         var baseMetadata = new Dictionary<string, object?>()
-            {
-                { "now", now },
-                { "lang", CultureInfo.CurrentCulture }
-            };
+        {
+            { "now", now },
+            { "lang", CultureInfo.CurrentCulture }
+        };
+
+        var metadataList = await Task.WhenAll(
+            Directory.EnumerateFiles(
+                resourceBasePath, "metadata*.json", SearchOption.TopDirectoryOnly).
+            Select(metadataPath => ReadMetadataAsync(metadataPath, ct).AsTask())).
+            ConfigureAwait(false);
+        baseMetadata = baseMetadata.Concat(
+            metadataList.SelectMany(entries => entries)).
+            DistinctBy(entry => entry.Key).
+            ToDictionary(entry => entry.Key, entry => entry.Value);
+        if (metadataList.Length >= 1)
+        {
+            await output.WriteLineAsync(
+                $"Read metadata: {baseMetadata.Count} / {metadataList.Length}").
+                WithCancellation(ct).
+                ConfigureAwait(false);
+            await output.WriteLineAsync().
+                WithCancellation(ct).
+                ConfigureAwait(false);
+        }
 
         var templates = (await Task.WhenAll(
             Directory.EnumerateFiles(
-                resourceBasePath, "template-*.html", SearchOption.AllDirectories).
+                resourceBasePath, "template-*.html", SearchOption.TopDirectoryOnly).
             Select(async templatePath =>
             {
                 var templateName =
