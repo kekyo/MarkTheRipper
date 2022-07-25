@@ -95,8 +95,11 @@ H3 body.
 
 If you look at the content, you can probably guess what happens:
 MarkTheRipper simply converts the keywords and body into HTML and inserts it into the template.
-So, when customizing it for your site,
-you can apply the various techniques used in common site implementations as is, with few restrictions.
+Therefore when customizing a template,
+common HTML/JavaScript techniques can be applied as is,
+and there are no restrictions.
+
+(MarkTheRipper is written in .NET, but the user does not need to know about .NET)
 
 Let's generate the site as is. Generating a site is very easy:
 
@@ -158,7 +161,10 @@ The following features are available:
 
 ![rich image](Images/rich.png)
 
-In most cases, there is no problem starting with these samples.
+No need to worry. These samples have also been implemented
+with the utmost care to keep the template code to a simplest.
+They are easy to understand and even HTML beginners
+can start customizing with these samples.
 
 ----
 
