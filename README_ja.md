@@ -86,6 +86,8 @@ H3 body.
 </head>
 <body>
     {contentBody}
+    <hr />
+    <p>Tags:{foreach:tags} `{tags-item}`{/}</p>
 </body>
 </html>
 ```
