@@ -75,7 +75,7 @@ public sealed class Ripper
         renderer.Render(markdownDocument);
 
         object? RawGetMetadata(string keyName) =>
-            StringComparer.OrdinalIgnoreCase.Equals("contentBody", keyName) ?
+            keyName == "contentBody" ?
                 contentBody :
                 markdownContent.Metadata.TryGetValue(keyName, out var value) ?
                     value :

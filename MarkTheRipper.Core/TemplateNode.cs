@@ -109,9 +109,9 @@ internal sealed class ForEachNode : TemplateNode
             foreach (var iterationValue in iterationValues)
             {
                 string? GetMetadata(string keyName, string? parameter, IFormatProvider fp) =>
-                    StringComparer.OrdinalIgnoreCase.Equals(keyName, this.keyName + "-item") ?
+                    keyName == (this.keyName + "-item") ?
                         Utilities.FormatValue(iterationValue, parameter, fp) :
-                        StringComparer.OrdinalIgnoreCase.Equals(keyName, this.keyName + "-index") ?
+                        keyName == (this.keyName + "-index") ?
                             index.ToString(parameter) :
                             getMetadata(keyName, parameter, fp);
 

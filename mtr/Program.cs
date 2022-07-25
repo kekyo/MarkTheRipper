@@ -108,14 +108,14 @@ public static class Program
 
                 var command = extras.
                     ElementAtOrDefault(0) ?? "build";
-                if (StringComparer.OrdinalIgnoreCase.Equals(command, "new"))
+                if (command == "new")
                 {
                     var sampleName = extras.
                         ElementAtOrDefault(1) ?? "minimum";
 
                     await ExtractSampleAsync(sampleName);
                 }
-                else if (StringComparer.OrdinalIgnoreCase.Equals(command, "build"))
+                else if (command == "build")
                 {
                     var storeToBasePath = extras.
                         ElementAtOrDefault(1) ?? "docs";

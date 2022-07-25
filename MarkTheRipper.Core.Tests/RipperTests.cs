@@ -28,7 +28,7 @@ public sealed class RipperTests
     {
         var template = await Ripper.ParseTemplateAsync(
             "test.html", templateText, default);
-        var templates = new Dictionary<string, RootTemplateNode>(StringComparer.OrdinalIgnoreCase)
+        var templates = new Dictionary<string, RootTemplateNode>()
         {
             { templateName, template },
         };

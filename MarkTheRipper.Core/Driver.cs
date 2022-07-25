@@ -74,8 +74,7 @@ public static class Driver
         sw.Start();
 
         var now = DateTimeOffset.Now;
-        var baseMetadata = new Dictionary<string, object?>(
-            StringComparer.OrdinalIgnoreCase)
+        var baseMetadata = new Dictionary<string, object?>()
             {
                 { "now", now },
                 { "lang", CultureInfo.CurrentCulture }

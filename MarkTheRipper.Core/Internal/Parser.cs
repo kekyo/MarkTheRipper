@@ -115,7 +115,7 @@ internal static class Parser
                             metadataWords.Substring(metadataWordSplitterIndex + 1) : null;
 
                         // Special case: iterator begin
-                        if (StringComparer.OrdinalIgnoreCase.Equals("foreach", keyName))
+                        if (keyName == "foreach")
                         {
                             if (string.IsNullOrWhiteSpace(parameter))
                             {
@@ -206,8 +206,7 @@ internal static class Parser
             }
         }
 
-        var metadata = new Dictionary<string, object?>(
-            StringComparer.OrdinalIgnoreCase);
+        var metadata = new Dictionary<string, object?>();
 
         // `title: Hello world`
         while (true)
