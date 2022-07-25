@@ -247,4 +247,39 @@ This is test contents.
 ");
         await Verifier.Verify(actual);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffNestedLookup()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+slug: main
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <h1>{*slug}</h1>
+
+{contentBody}</body>
+</html>
+",
+("main", "MAIN CATEGORY"),
+("sub", "SUB CATEGORY"));
+
+        await Verifier.Verify(actual);
+    }
 }

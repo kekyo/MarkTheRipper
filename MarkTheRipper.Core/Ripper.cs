@@ -92,7 +92,8 @@ public sealed class Ripper
 
         string? GetMetadata(string keyName, string? parameter, IFormatProvider fp) =>
             RawGetMetadata(keyName) is { } value ?
-                Utilities.FormatValue(value, parameter, fp) : null;
+                Utilities.FormatValue(value, parameter, fp) :
+                null;
 
         var templateName = GetMetadata("template", null, fp) ?? "page";
 

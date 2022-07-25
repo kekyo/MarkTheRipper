@@ -66,10 +66,43 @@ internal sealed class ReplacerNode : TemplateNode
         IFormatProvider fp,
         CancellationToken ct)
     {
-        if (getMetadata(keyName, this.parameter, fp) is { } value)
+        if (this.keyName[0] == '*')
         {
-            await writer(value, ct).
-                ConfigureAwait(false);
+            var keyName = this.keyName.Substring(1);
+            if (getMetadata(keyName, this.parameter, fp) is { } nestedKeyName)
+            {
+                if (getMetadata(nestedKeyName, this.parameter, fp) is { } value)
+                {
+                    await writer(value, ct).
+                        ConfigureAwait(false);
+                }
+                // Not found from all metadata.
+                else
+                {
+                    await writer($"<!-- Nested reference key: {nestedKeyName} -->", ct).
+                        ConfigureAwait(false);
+                }
+            }
+            // Not found from all metadata.
+            else
+            {
+                await writer($"<!-- Reference key: {keyName} -->", ct).
+                    ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            if (getMetadata(this.keyName, this.parameter, fp) is { } value)
+            {
+                await writer(value, ct).
+                    ConfigureAwait(false);
+            }
+            // Not found from all metadata.
+            else
+            {
+                await writer($"<!-- Key: {keyName} -->", ct).
+                    ConfigureAwait(false);
+            }
         }
     }
 

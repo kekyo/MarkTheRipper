@@ -296,6 +296,8 @@ For example, if the template name is `page`, the file `resources/template-page.h
 title: Hello MarkTheRipper!
 template: fancy
 ---
+
+(... Body ...)
 ```
 
 then `resources/template-fancy.html` will be used.
@@ -313,7 +315,49 @@ TODO:
 
 ### Recursive keyword search
 
-TODO:
+You may want to pull results from the metadata dictionary again,
+using the keywords as the result of the metadata dictionary pull.
+For example, you might want to look up:
+
+```markdown
+---
+title: Hello MarkTheRipper!
+slug: blog
+---
+
+(... Body ...)
+```
+
+A `slug` is like a category of articles.
+Here, it is named `blog`, but if you refer to it by keyword as follows:
+
+```html
+<p>Category: {slug}</p>
+```
+
+The HTML will look like `Category: blog`.
+This may work fine in some cases, but you may want to replace it with a more polite statement.
+So you can have the metadata dictionary search for the value again,
+using `blog` as the keyword.
+Add an asterisk `*` before the keyword:
+
+```html
+<p>Category: {*slug}</p>
+```
+
+If you do this and register the pair `blog` and `Private diary` in the metadata dictionary,
+the HTML will show `Category: Private diary`.
+
+Such keyword/value pairs can be referenced by writing them in `resources/metadata.json` as shown in the previous section.
+In addition, the metadata dictionary file is actually all JSON files matched by `resources/metadata*.json`.
+Even if the files are separated,
+they will all be read and their contents merged when MarkTheRipper starts.
+
+For example, it would be easier to manage only article categories as separate files,
+such as `resource/metadata-slug.json`.
+
+This recursive search can be performed only once (by design).
+In other words, it is not possible to keep searching repeatedly using the obtained values as keys.
 
 ### Iterators and nesting
 
