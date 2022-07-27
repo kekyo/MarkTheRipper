@@ -239,12 +239,13 @@ Perhaps this feature alone will solve most of the problems.
 There are several special but potentially important keywords in this metadata dictionary.
 They are listed below:
 
-|keywords|content|
+|Keyword|Content|
 |:----|:----|
 |`now`|Date and time when the site was generated.|
 |`template`|The name of the template to apply.|
 |`lang`|Locale (`en-us`, `ja-jp`, etc.)|
-|`date`|Date of the post|
+|`date`|Date of the post.|
+|`generator`|MarkTheRipper version information.|
 
 These keywords can be overridden by writing them in the markdown header.
 It may not make sense to override `now`, but just know that MarkTheRipper does not treat metadata dictionary definitions specially.

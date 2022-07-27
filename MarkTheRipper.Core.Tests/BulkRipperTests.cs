@@ -81,7 +81,7 @@ public sealed class BulkRipperTests
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
