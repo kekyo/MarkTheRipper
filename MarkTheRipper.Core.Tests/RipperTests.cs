@@ -257,7 +257,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-slug: main
+category: main
 tags: foo,bar
 ---
 
@@ -272,7 +272,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <h1>{*slug}</h1>
+    <h1>{*category}</h1>
 
 {contentBody}</body>
 </html>
