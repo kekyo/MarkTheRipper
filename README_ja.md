@@ -223,6 +223,7 @@ stylesheet: darcula
 |`template`|適用するテンプレート名|
 |`lang`|ロケール(`en-us`や`ja-jp`など)|
 |`date`|記事の日時|
+|`generator`|MarkTheRipperのバージョン情報|
 
 これらのキーワードは、マークダウンのヘッダに書いて、上書きする事が出来ます。
 `now`を上書きする事に、意味は無いかも知れませんが、

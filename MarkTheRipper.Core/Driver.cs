@@ -94,7 +94,8 @@ public static class Driver
         var baseMetadata = new Dictionary<string, object?>()
         {
             { "now", now },
-            { "lang", CultureInfo.CurrentCulture }
+            { "lang", CultureInfo.CurrentCulture },
+            { "generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}" },
         };
 
         var metadataList = await Task.WhenAll(
