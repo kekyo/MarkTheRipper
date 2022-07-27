@@ -103,8 +103,9 @@ public static class Driver
                 resourceBasePath, "metadata*.json", SearchOption.TopDirectoryOnly).
             Select(metadataPath => ReadMetadataAsync(metadataPath, ct).AsTask())).
             ConfigureAwait(false);
-        baseMetadata = baseMetadata.Concat(
-            metadataList.SelectMany(entries => entries)).
+        baseMetadata = metadataList.
+            SelectMany(entries => entries).
+            Concat(baseMetadata).
             DistinctBy(entry => entry.Key).
             ToDictionary(entry => entry.Key, entry => entry.Value);
         if (metadataList.Length >= 1)
