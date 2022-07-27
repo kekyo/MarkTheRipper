@@ -22,15 +22,17 @@ namespace MarkTheRipper;
 public sealed class BulkRipper
 {
     private readonly string storeToBasePath;
+    private readonly Func<string, object?> getMetadata;
     private readonly Ripper ripper;
 
     public BulkRipper(
         string storeToBasePath,
-        IReadOnlyDictionary<string, RootTemplateNode> templates,
-        IReadOnlyDictionary<string, object?> baseMetadata)
+        Func<string, RootTemplateNode?> getTemplate,
+        Func<string, object?> getMetadata)
     {
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
-        this.ripper = new Ripper(templates, baseMetadata);
+        this.getMetadata = getMetadata;
+        this.ripper = new Ripper(getTemplate);
     }
 
     private async ValueTask<(string storeToRelativePath, string templateName)> RipOffRelativeContentAsync(
@@ -45,8 +47,17 @@ public sealed class BulkRipper
         var storeToPath = Path.Combine(storeToBasePath, storeToFileName + ".html");
         var storeToRelativePath = storeToPath.Substring(this.storeToBasePath.Length + 1);
 
+        object? GetMetadata(string keyName) =>
+            keyName == "category" &&
+            relativeContentPath.Split(new[] {
+                Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar
+            }) is { } categories &&
+            categories.Length >= 2 ?
+                categories.Take(categories.Length - 1).ToArray() :
+                this.getMetadata(keyName);
+
         var templateName = await this.ripper.RipOffContentAsync(
-            contentPath, storeToPath, ct).
+            contentPath, GetMetadata, storeToPath, ct).
             ConfigureAwait(false);
 
         return (storeToRelativePath, templateName);
@@ -84,23 +95,15 @@ public sealed class BulkRipper
             ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Copy content into target path.
-    /// </summary>
-    /// <param name="relativeContentPath">Relative content path</param>
-    /// <param name="contentsBasePath">Content base path</param>
-    /// <param name="storeToBasePath">Store to path</param>
-    /// <param name="ct">CancellationToken</param>
-    public static async ValueTask CopyRelativeContentAsync(
+    private async ValueTask CopyRelativeContentAsync(
         string relativeContentPath,
         string contentsBasePath,
-        string storeToBasePath,
         CancellationToken ct)
     {
         var contentPath = Path.Combine(
             contentsBasePath, relativeContentPath);
         var storeToPath = Path.Combine(
-            storeToBasePath, relativeContentPath);
+            this.storeToBasePath, relativeContentPath);
 
         using var cs = new FileStream(
             contentPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
@@ -108,13 +111,6 @@ public sealed class BulkRipper
         await CopyContentToAsync(cs, storeToPath, ct).
             ConfigureAwait(false);
     }
-
-    private ValueTask CopyRelativeContentAsync(
-        string relativeContentPath,
-        string contentsBasePath,
-        CancellationToken ct) =>
-        CopyRelativeContentAsync(
-            relativeContentPath, contentsBasePath, this.storeToBasePath, ct);
 
     /// <summary>
     /// Rip off and generate from Markdown contents.

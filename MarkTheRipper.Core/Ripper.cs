@@ -11,7 +11,6 @@ using Markdig.Parsers;
 using Markdig.Renderers;
 using MarkTheRipper.Internal;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -26,16 +25,10 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    private readonly IReadOnlyDictionary<string, RootTemplateNode> templates;
-    private readonly IReadOnlyDictionary<string, object?> baseMetadata;
+    private readonly Func<string, RootTemplateNode?> getTemplate;
 
-    public Ripper(
-        IReadOnlyDictionary<string, RootTemplateNode> templates,
-        IReadOnlyDictionary<string, object?> baseMetadata)
-    {
-        this.templates = templates;
-        this.baseMetadata = baseMetadata;
-    }
+    public Ripper(Func<string, RootTemplateNode?> getTemplate) =>
+        this.getTemplate = getTemplate;
 
     public static ValueTask<RootTemplateNode> ParseTemplateAsync(
         string templatePath, TextReader template, CancellationToken ct) =>
@@ -49,11 +42,13 @@ public sealed class Ripper
     /// Rip off and generate from Markdown content.
     /// </summary>
     /// <param name="markdownReader">Markdown content</param>
+    /// <param name="getMetadata">Metadata getter</param>
     /// <param name="htmlWriter">Generated html content</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name</returns>
     public async ValueTask<string> RipOffContentAsync(
         TextReader markdownReader,
+        Func<string, object?> getMetadata,
         TextWriter htmlWriter,
         CancellationToken ct)
     {
@@ -67,16 +62,8 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        object? RawGetMetadata(string keyName) =>
-            keyName == "contentBody" ?
-                contentBody :
-                markdownContent.Metadata.TryGetValue(keyName, out var value) ?
-                    value :
-                    baseMetadata.TryGetValue(keyName, out var baseValue) ?
-                        baseValue :
-                        null;
-
-        var fp = RawGetMetadata("lang") switch
+        var fp = (markdownContent.Metadata.TryGetValue("lang", out var value) ?
+            value : getMetadata("lang")) switch
         {
             IFormatProvider v => v,
             string lang => new CultureInfo(lang),
@@ -84,35 +71,42 @@ public sealed class Ripper
         };
 
         string? GetMetadata(string keyName, string? parameter, IFormatProvider fp) =>
-            RawGetMetadata(keyName) is { } value ?
-                Utilities.FormatValue(value, parameter, fp) :
-                null;
+            keyName == "contentBody" ?
+                contentBody.ToString() :
+                markdownContent.Metadata.TryGetValue(keyName, out var value) ?
+                    Utilities.FormatValue(value, parameter, fp) :
+                    Utilities.FormatValue(getMetadata(keyName), parameter, fp);
 
-        var templateName = GetMetadata("template", null, fp) ?? "page";
+        var templateName =
+            GetMetadata("template", null, fp) ?? "page";
 
-        if (!templates.TryGetValue(templateName, out var template))
+        if (this.getTemplate(templateName) is { } template)
+        {
+            await template.RenderAsync(
+                (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
+                GetMetadata, fp, ct).
+                ConfigureAwait(false);
+
+            return templateName;
+        }
+        else
         {
             throw new FormatException(
                 $"Could not find template. Name={templateName}");
         }
-
-        await template.RenderAsync(
-            (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
-            GetMetadata, fp, ct).
-            ConfigureAwait(false);
-
-        return templateName;
     }
 
     /// <summary>
     /// Rip off and generate from Markdown content.
     /// </summary>
     /// <param name="markdownPath">Markdown content path</param>
+    /// <param name="getMetadata">Metadata getter</param>
     /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RipOffContentAsync(
         string markdownPath,
+        Func<string, object?> getMetadata,
         string outputHtmlPath,
         CancellationToken ct)
     {
@@ -131,7 +125,7 @@ public sealed class Ripper
             htmlStream, Encoding.UTF8);
 
         var templateName = await this.RipOffContentAsync(
-            markdownReader,htmlWriter, ct).
+            markdownReader, getMetadata, htmlWriter, ct).
             ConfigureAwait(false);
 
         await htmlWriter.FlushAsync().

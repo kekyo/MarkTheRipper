@@ -33,15 +33,18 @@ public sealed class RipperTests
             { templateName, template },
         };
 
+        var metadata = baseMetadata.ToDictionary(
+            entry => entry.keyName, entry => entry.value);
+
         var markdownReader = new StringReader(markdownText);
         var htmlWriter = new StringWriter();
 
         var ripper = new Ripper(
-            templates,
-            baseMetadata.ToDictionary(entry => entry.keyName, entry => entry.value));
+            templateName => templates.TryGetValue(templateName, out var template) ? template : null);
 
         var appliedName = await ripper.RipOffContentAsync(
             markdownReader,
+            keyName => metadata.TryGetValue(keyName, out var value) ? value : null,
             htmlWriter,
             default);
 
@@ -282,6 +285,39 @@ This is test contents.
 ("main", "MAIN CATEGORY"),
 ("sub", "SUB CATEGORY"));
 
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffCategoryLookup1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+category: hoge1,hoge2,hoge3
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach:category}
+      <h1>Category: {category-item}</h1>
+{contentBody}</body>
+    {/}
+</html>
+");
         await Verifier.Verify(actual);
     }
 }

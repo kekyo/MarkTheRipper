@@ -167,8 +167,8 @@ public static class Driver
 
         var generator = new BulkRipper(
             storeToBasePath,
-            templates,
-            baseMetadata);
+            templateName => templates.TryGetValue(templateName, out var template) ? template : null,
+            keyName => baseMetadata.TryGetValue(keyName, out var value) ? value : null);
 
         var (count, maxConcurrentProcessing) = await generator.RipOffAsync(
             contentsBasePathList,
