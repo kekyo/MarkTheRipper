@@ -70,15 +70,15 @@ public sealed class Ripper
             _ => CultureInfo.CurrentCulture,
         };
 
-        string? GetMetadata(string keyName, string? parameter, IFormatProvider fp) =>
+        object? GetMetadata(string keyName) =>
             keyName == "contentBody" ?
-                contentBody.ToString() :
+                contentBody :
                 markdownContent.Metadata.TryGetValue(keyName, out var value) ?
-                    Utilities.FormatValue(value, parameter, fp) :
-                    Utilities.FormatValue(getMetadata(keyName), parameter, fp);
+                    value :
+                    getMetadata(keyName);
 
         var templateName =
-            GetMetadata("template", null, fp) ?? "page";
+            GetMetadata("template")?.ToString() ?? "page";
 
         if (this.getTemplate(templateName) is { } template)
         {

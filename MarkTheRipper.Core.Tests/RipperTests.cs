@@ -62,7 +62,7 @@ public sealed class RipperTests
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -91,7 +91,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 template: baz
 ---
 
@@ -122,7 +122,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -154,7 +154,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -188,7 +188,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -223,8 +223,8 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
-authors: hoge,hoe
+tags: [foo,bar]
+authors: [hoge,hoe]
 ---
 
 Hello MarkTheRipper!
@@ -263,7 +263,7 @@ This is test contents.
 ---
 title: hoehoe
 category: main
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -297,8 +297,8 @@ This is test contents.
 @"
 ---
 title: hoehoe
-category: hoge1,hoge2,hoge3
-tags: foo,bar
+category: [hoge1,hoge2,hoge3]
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -314,8 +314,9 @@ This is test contents.
   <body>
     {foreach:category}
       <h1>Category: {category-item}</h1>
-{contentBody}</body>
     {/}
+    {contentBody}
+  </body>
 </html>
 ");
         await Verifier.Verify(actual);

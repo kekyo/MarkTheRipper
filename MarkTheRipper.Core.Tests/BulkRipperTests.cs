@@ -74,14 +74,13 @@ public sealed class BulkRipperTests
     [TestCase("")]
     [TestCase("aaa")]
     [TestCase("aaa/bbb")]
-    public async Task RipOffCategoryLookup2(string subNames)
+    public async Task RipOffCategoryLookup1(string subNames)
     {
         var actual = await RipOffContentAsync(
             subNames.Split('/'),
 @"
 ---
 title: hoehoe
-category: hoge1,hoge2,hoge3
 tags: foo,bar
 ---
 
@@ -98,8 +97,46 @@ This is test contents.
   <body>
     {foreach:category}
       <h1>Category: {category-item}</h1>
-{contentBody}</body>
     {/}
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [TestCase("")]
+    [TestCase("aaa")]
+    [TestCase("aaa/bbb")]
+    public async Task RipOffCategoryLookup2(string subNames)
+    {
+        var actual = await RipOffContentAsync(
+            subNames.Split('/'),
+@"
+---
+title: hoehoe
+category: [hoge1,hoge2,hoge3]
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach:category}
+      <h1>Category: {category-item}</h1>
+    {/}
+    {contentBody}
+  </body>
 </html>
 ");
         await Verifier.Verify(actual);

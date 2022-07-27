@@ -9,7 +9,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -182,6 +184,62 @@ internal static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
+    // TODO: rewrite with LL.
+    private static readonly char[] separators = new[] { ',' };
+    private static object? ParseYamlLikeString(string text)
+    {
+        // `title: "Hello world"`
+        if (text.StartsWith("\"") || text.EndsWith("\""))
+        {
+            // string
+            return text.Trim('"');
+        }
+        // `title: 'Hello world'`
+        else if (text.StartsWith("'") || text.EndsWith("'"))
+        {
+            // string
+            return text.Trim('\'');
+        }
+        // `title: [Hello world]`
+        // * Assume yaml array-like: `tags: [aaa, bbb]` --> `tags: aaa, bbb`
+        else if (text.StartsWith("[") && text.EndsWith("]"))
+        {
+            return text.TrimStart('[').TrimEnd(']').
+                Split(separators).
+                Select(value => ParseYamlLikeString(value.Trim())).
+                ToArray();
+        }
+        else if (long.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var lv))
+        {
+            // long
+            return lv;
+        }
+        else if (double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var dv))
+        {
+            // double
+            return dv;
+        }
+        else if (bool.TryParse(text, out var bv))
+        {
+            // bool
+            return bv;
+        }
+        else if (DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dtv))
+        {
+            // DateTimeOffset
+            return dtv;
+        }
+        else if (Uri.TryCreate(text, UriKind.RelativeOrAbsolute, out var uv))
+        {
+            // Uri
+            return uv;
+        }
+        else
+        {
+            return text;
+        }
+    }
+
     public static async ValueTask<MarkdownContent> ParseEntireMarkdownAsync(
         TextReader markdownReader, CancellationToken ct)
     {
@@ -225,24 +283,8 @@ internal static class Parser
                 if (keyIndex >= 1)
                 {
                     var key = line.Substring(0, keyIndex).Trim();
-                    var value = line.Substring(keyIndex + 1).Trim();
-
-                    // `title: "Hello world"`
-                    if (value.StartsWith("\""))
-                    {
-                        value = value.Trim('"');
-                    }
-                    // `title: 'Hello world'`
-                    else if (value.StartsWith("'"))
-                    {
-                        value = value.Trim('\'');
-                    }
-                    // `title: [Hello world]`
-                    // * Assume JavaScript array-like: `tags: [aaa, bbb]` --> `tags: aaa, bbb`
-                    else if (value.StartsWith("["))
-                    {
-                        value = value.TrimStart('[').TrimEnd(']');
-                    }
+                    var valueText = line.Substring(keyIndex + 1).Trim();
+                    var value = ParseYamlLikeString(valueText);
 
                     metadata[key] = value;
                 }
