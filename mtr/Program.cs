@@ -9,7 +9,6 @@
 
 using Mono.Options;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -45,7 +44,7 @@ public static class Program
             using var ms = typeof(Program).Assembly.
                 GetManifestResourceStream(resourceName);
 
-            await Ripper.CopyContentToAsync(ms!, path, default);
+            await BulkRipper.CopyContentToAsync(ms!, path, default);
         }
 
 #if DEBUG

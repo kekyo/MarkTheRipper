@@ -22,7 +22,7 @@ public abstract class TemplateNode
 
     public abstract ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
-        Func<string, string?, IFormatProvider, string?> getMetadata,
+        Func<string, object?> getMetadata,
         IFormatProvider fp,
         CancellationToken ct);
 }
@@ -38,7 +38,7 @@ internal sealed class TextNode : TemplateNode
 
     public override ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
-        Func<string, string?, IFormatProvider, string?> getMetadata,
+        Func<string, object?> getMetadata,
         IFormatProvider fp,
         CancellationToken ct) =>
         writer(this.text, ct);
@@ -62,16 +62,18 @@ internal sealed class ReplacerNode : TemplateNode
 
     public override async ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
-        Func<string, string?, IFormatProvider, string?> getMetadata,
+        Func<string, object?> getMetadata,
         IFormatProvider fp,
         CancellationToken ct)
     {
         if (this.keyName[0] == '*')
         {
             var keyName = this.keyName.Substring(1);
-            if (getMetadata(keyName, this.parameter, fp) is { } nestedKeyName)
+            if (getMetadata(keyName) is { } rawNestedKeyName &&
+                Utilities.FormatValue(rawNestedKeyName, null, fp) is { } nestedKeyName)
             {
-                if (getMetadata(nestedKeyName, this.parameter, fp) is { } value)
+                if (getMetadata(nestedKeyName) is { } rawValue &&
+                    Utilities.FormatValue(rawValue, this.parameter, fp) is { } value)
                 {
                     await writer(value, ct).
                         ConfigureAwait(false);
@@ -79,7 +81,7 @@ internal sealed class ReplacerNode : TemplateNode
                 // Not found from all metadata.
                 else
                 {
-                    await writer($"<!-- Nested reference key: {nestedKeyName} -->", ct).
+                    await writer(nestedKeyName, ct).
                         ConfigureAwait(false);
                 }
             }
@@ -92,7 +94,8 @@ internal sealed class ReplacerNode : TemplateNode
         }
         else
         {
-            if (getMetadata(this.keyName, this.parameter, fp) is { } value)
+            if (getMetadata(this.keyName) is { } rawValue &&
+                Utilities.FormatValue(rawValue, this.parameter, fp) is { } value)
             {
                 await writer(value, ct).
                     ConfigureAwait(false);
@@ -100,7 +103,7 @@ internal sealed class ReplacerNode : TemplateNode
             // Not found from all metadata.
             else
             {
-                await writer($"<!-- Key: {keyName} -->", ct).
+                await writer($"<!-- Key: {this.keyName} -->", ct).
                     ConfigureAwait(false);
             }
         }
@@ -108,16 +111,14 @@ internal sealed class ReplacerNode : TemplateNode
 
     public override string ToString() =>
         this.parameter is { } ?
-            $"Replacer: {{{keyName}:{this.parameter}}}" :
-            $"Replacer: {{{keyName}}}";
+            $"Replacer: {{{this.keyName}:{this.parameter}}}" :
+            $"Replacer: {{{this.keyName}}}";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
 
 internal sealed class ForEachNode : TemplateNode
 {
-    private static readonly char[] separators = new[] { ',', ';', ':' };
-
     private readonly string keyName;
     private readonly TemplateNode[] childNodes;
 
@@ -129,24 +130,22 @@ internal sealed class ForEachNode : TemplateNode
 
     public override async ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
-        Func<string, string?, IFormatProvider, string?> getMetadata,
+        Func<string, object?> getMetadata,
         IFormatProvider fp,
         CancellationToken ct)
     {
-        if (getMetadata(this.keyName, null, fp) is { } valueString)
+        if (getMetadata(this.keyName) is { } rawValue &&
+            Utilities.EnumerateValue(rawValue) is { } enumerable)
         {
-            var iterationValues = valueString.Split(
-                separators, StringSplitOptions.RemoveEmptyEntries);
-
             var index = 0;
-            foreach (var iterationValue in iterationValues)
+            foreach (var iterationValue in enumerable)
             {
-                string? GetMetadata(string keyName, string? parameter, IFormatProvider fp) =>
+                object? GetMetadata(string keyName) =>
                     keyName == (this.keyName + "-item") ?
-                        Utilities.FormatValue(iterationValue, parameter, fp) :
+                        iterationValue :
                         keyName == (this.keyName + "-index") ?
-                            index.ToString(parameter) :
-                            getMetadata(keyName, parameter, fp);
+                            index :
+                            getMetadata(keyName);
 
                 foreach (var childNode in this.childNodes)
                 {
@@ -179,7 +178,7 @@ public sealed class RootTemplateNode : TemplateNode
 
     public override async ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
-        Func<string, string?, IFormatProvider, string?> getMetadata,
+        Func<string, object?> getMetadata,
         IFormatProvider fp,
         CancellationToken ct)
     {

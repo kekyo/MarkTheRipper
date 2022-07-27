@@ -322,17 +322,17 @@ For example, you might want to look up:
 ```markdown
 ---
 title: Hello MarkTheRipper!
-slug: blog
+category: blog
 ---
 
 (... Body ...)
 ```
 
-A `slug` is like a category of articles.
+A `category` keyword is like a category of articles.
 Here, it is named `blog`, but if you refer to it by keyword as follows:
 
 ```html
-<p>Category: {slug}</p>
+<p>Category: {category}</p>
 ```
 
 The HTML will look like `Category: blog`.
@@ -342,7 +342,7 @@ using `blog` as the keyword.
 Add an asterisk `*` before the keyword:
 
 ```html
-<p>Category: {*slug}</p>
+<p>Category: {*category}</p>
 ```
 
 If you do this and register the pair `blog` and `Private diary` in the metadata dictionary,
@@ -354,14 +354,14 @@ Even if the files are separated,
 they will all be read and their contents merged when MarkTheRipper starts.
 
 For example, it would be easier to manage only article categories as separate files,
-such as `resource/metadata-slug.json`.
+such as `resource/metadata-category.json`.
 
 This recursive search can be performed only once (by design).
 In other words, it is not possible to keep searching repeatedly using the obtained values as keys.
 
 ### Iterators and nesting
 
-For classifications such as TAG and SLUG,
+For classifications such as "category" and "tag",
 you would want to have the user select them from a menu and be taken to that page.
 For example, suppose there are 5 tags on the entire site.
 You would automatically add these to the page's menu.
@@ -382,10 +382,10 @@ Now suppose we convert the following markdown:
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: foo,bar
+tags: [foo,bar]
+---
 
 (... Body ...)
----
 ````
 
 Then the output will be `<p>Tags: 'foo' 'bar'</p>`.
@@ -407,9 +407,9 @@ It is specified in the form `{<keyword>-item}`. `-item` is fixed.
 Similarly, `{<keyword>-index}` gives you a number that starts at 0 and counts from 1,2,3...
 
 In addition, you can nest different keywords.
-For example, for each slug, and you can enumerate multiple tags.
+For example, for each category and you can enumerate multiple tags.
 
-Although we have shown examples using slugs and tags,
+Although we have shown examples using categories and tags,
 it is of course possible to apply the recursive keyword search described in the previous section.
 The output to HTML can be whatever name you want to show to people.
 

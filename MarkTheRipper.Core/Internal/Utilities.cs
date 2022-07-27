@@ -11,7 +11,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,9 +44,23 @@ internal static class Utilities
         (value, parameter) switch
         {
             (null, _) => null,
-            (_, null) => value.ToString(),
-            (IFormattable formattable, string format) => formattable.ToString(format, fp),
+            (IFormattable formattable, string format) =>
+                formattable.ToString(format, fp),
+            (string str, _) => str,
+            (IEnumerable enumerable, _) =>
+                string.Join(",", enumerable.Cast<object?>().Select(v => FormatValue(v, parameter, fp))),
             _ => value.ToString(),
+        };
+
+    private static readonly object?[] empty = new object?[0];
+
+    public static IEnumerable EnumerateValue(object? value) =>
+        value switch
+        {
+            null => empty,
+            string str => new[] { str },
+            IEnumerable enumerable => enumerable,
+            _ => new[] { value },
         };
 
     ///////////////////////////////////////////////////////////////////////////////////

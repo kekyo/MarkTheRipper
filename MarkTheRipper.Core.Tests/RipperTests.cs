@@ -33,13 +33,18 @@ public sealed class RipperTests
             { templateName, template },
         };
 
+        var metadata = baseMetadata.ToDictionary(
+            entry => entry.keyName, entry => entry.value);
+
         var markdownReader = new StringReader(markdownText);
         var htmlWriter = new StringWriter();
 
-        var appliedName = await Ripper.RipOffContentAsync(
+        var ripper = new Ripper(
+            templateName => templates.TryGetValue(templateName, out var template) ? template : null);
+
+        var appliedName = await ripper.RipOffContentAsync(
             markdownReader,
-            templates,
-            baseMetadata.ToDictionary(entry => entry.keyName, entry => entry.value),
+            keyName => metadata.TryGetValue(keyName, out var value) ? value : null,
             htmlWriter,
             default);
 
@@ -57,7 +62,7 @@ public sealed class RipperTests
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -86,7 +91,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 template: baz
 ---
 
@@ -117,7 +122,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -149,7 +154,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -183,7 +188,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -218,8 +223,8 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: foo,bar
-authors: hoge,hoe
+tags: [foo,bar]
+authors: [hoge,hoe]
 ---
 
 Hello MarkTheRipper!
@@ -257,8 +262,8 @@ This is test contents.
 @"
 ---
 title: hoehoe
-slug: main
-tags: foo,bar
+category: main
+tags: [foo,bar]
 ---
 
 Hello MarkTheRipper!
@@ -272,7 +277,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <h1>{*slug}</h1>
+    <h1>{*category}</h1>
 
 {contentBody}</body>
 </html>
@@ -280,6 +285,40 @@ This is test contents.
 ("main", "MAIN CATEGORY"),
 ("sub", "SUB CATEGORY"));
 
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffCategoryLookup1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+category: [hoge1,hoge2,hoge3]
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach:category}
+      <h1>Category: {category-item}</h1>
+    {/}
+    {contentBody}
+  </body>
+</html>
+");
         await Verifier.Verify(actual);
     }
 }

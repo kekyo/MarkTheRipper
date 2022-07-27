@@ -16,4 +16,43 @@
     <ProjectReference Include="..\MarkTheRipper.Core\MarkTheRipper.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="BulkRipperTests.RipOff.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffCategoryLookup.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffDateFormatting.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffIndexIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffItemIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffNestedIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffNestedLookup.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTests.RipOffWithExplicitTemplate.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTests.cs</DependentUpon>
+    </None>
+  </ItemGroup>
+
 </Project>
