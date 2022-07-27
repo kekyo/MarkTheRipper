@@ -382,7 +382,7 @@ Now suppose we convert the following markdown:
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: foo,bar
+tags: [foo,bar]
 ---
 
 (... Body ...)
