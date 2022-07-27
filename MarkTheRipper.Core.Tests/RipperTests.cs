@@ -36,10 +36,12 @@ public sealed class RipperTests
         var markdownReader = new StringReader(markdownText);
         var htmlWriter = new StringWriter();
 
-        var appliedName = await Ripper.RipOffContentAsync(
-            markdownReader,
+        var ripper = new Ripper(
             templates,
-            baseMetadata.ToDictionary(entry => entry.keyName, entry => entry.value),
+            baseMetadata.ToDictionary(entry => entry.keyName, entry => entry.value));
+
+        var appliedName = await ripper.RipOffContentAsync(
+            markdownReader,
             htmlWriter,
             default);
 

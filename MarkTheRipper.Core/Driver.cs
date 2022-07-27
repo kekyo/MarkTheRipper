@@ -165,7 +165,7 @@ public static class Driver
                 ConfigureAwait(false);
         }
 
-        var generator = new Ripper(
+        var generator = new BulkRipper(
             storeToBasePath,
             templates,
             baseMetadata);
