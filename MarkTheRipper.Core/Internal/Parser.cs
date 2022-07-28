@@ -85,78 +85,93 @@ internal static class Parser
                 var openIndex = line.IndexOf('{', startIndex);
                 if (openIndex == -1)
                 {
-                    buffer.AppendLine(line.Substring(startIndex));
-                    break;
+                    var closeIndex2 = line.IndexOf('}', startIndex);
+                    if (closeIndex2 == -1)
+                    {
+                        buffer.AppendLine(line.Substring(startIndex));
+                        break;
+                    }
+
+                    if ((closeIndex2 + 1) < line.Length &&
+                        line[closeIndex2 + 1] == '}')
+                    {
+                        buffer.Append(line.Substring(startIndex, closeIndex2 - startIndex + 1));
+                        startIndex = closeIndex2 + 2;
+                        continue;
+                    }
+
+                    throw new FormatException(
+                        $"Could not find open bracket. Template={context.TemplatePath}");
+                }
+
+                if ((openIndex + 1) < line.Length &&
+                    line[openIndex + 1] == '{')
+                {
+                    buffer.Append(line.Substring(startIndex, openIndex - startIndex + 1));
+                    startIndex = openIndex + 2;
+                    continue;
+                }
+
+                buffer.Append(line.Substring(startIndex, openIndex - startIndex));
+                if (buffer.Length >= 1)
+                {
+                    nodes.Add(new TextNode(buffer.ToString()));
+                    buffer.Clear();
+                }
+
+                var closeIndex = line.IndexOf('}', openIndex + 1);
+                if (closeIndex == -1)
+                {
+                    throw new FormatException(
+                        $"Could not find close bracket. Template={context.TemplatePath}");
+                }
+
+                startIndex = closeIndex + 1;
+
+                var metadataWords = line.Substring(
+                    openIndex + 1, closeIndex - openIndex - 1);
+                var metadataWordSplitterIndex = metadataWords.IndexOf(':');
+
+                var keyName = metadataWordSplitterIndex >= 0 ?
+                    metadataWords.Substring(0, metadataWordSplitterIndex) : metadataWords;
+                var parameter = metadataWordSplitterIndex >= 0 ?
+                    metadataWords.Substring(metadataWordSplitterIndex + 1) : null;
+
+                // Special case: iterator begin
+                if (keyName == "foreach")
+                {
+                    if (string.IsNullOrWhiteSpace(parameter))
+                    {
+                        throw new FormatException(
+                            $"`foreach` parameter required. Template={context.TemplatePath}");
+                    }
+
+                    nestedIterations.Push((parameter!, nodes));
+                    nodes = new();
+                }
+                // Special case: iterator end
+                else if (keyName == "/")
+                {
+                    if (!string.IsNullOrWhiteSpace(parameter))
+                    {
+                        throw new FormatException(
+                            $"Invalid iterator-end parameter. Template={context.TemplatePath}");
+                    }
+                    else if (nestedIterations.Count <= 0)
+                    {
+                        throw new FormatException(
+                            $"Could not find iterator-begin. Template={context.TemplatePath}");
+                    }
+
+                    var childNodes = nodes.ToArray();
+                    var (iteratorKeyName, lastNodes) = nestedIterations.Pop();
+
+                    nodes = lastNodes;
+                    nodes.Add(new ForEachNode(iteratorKeyName, childNodes));
                 }
                 else
                 {
-                    buffer.Append(line.Substring(startIndex, openIndex - startIndex));
-                    if (buffer.Length >= 1)
-                    {
-                        nodes.Add(new TextNode(buffer.ToString()));
-                        buffer.Clear();
-                    }
-
-                    var closeIndex = line.IndexOf('}', openIndex + 1);
-                    if (closeIndex == -1)
-                    {
-                        throw new FormatException(
-                            $"Could not find close bracket. Template={context.TemplatePath}");
-                    }
-                    else
-                    {
-                        startIndex = closeIndex + 1;
-
-                        var metadataWords = line.Substring(
-                            openIndex + 1, closeIndex - openIndex - 1);
-                        var metadataWordSplitterIndex = metadataWords.IndexOf(':');
-
-                        var keyName = metadataWordSplitterIndex >= 0 ?
-                            metadataWords.Substring(0, metadataWordSplitterIndex) : metadataWords;
-                        var parameter = metadataWordSplitterIndex >= 0 ?
-                            metadataWords.Substring(metadataWordSplitterIndex + 1) : null;
-
-                        // Special case: iterator begin
-                        if (keyName == "foreach")
-                        {
-                            if (string.IsNullOrWhiteSpace(parameter))
-                            {
-                                throw new FormatException(
-                                    $"`foreach` parameter required. Template={context.TemplatePath}");
-                            }
-                            else
-                            {
-                                nestedIterations.Push((parameter!, nodes));
-                                nodes = new();
-                            }
-                        }
-                        // Special case: iterator end
-                        else if (keyName == "/")
-                        {
-                            if (!string.IsNullOrWhiteSpace(parameter))
-                            {
-                                throw new FormatException(
-                                    $"Invalid iterator-end parameter. Template={context.TemplatePath}");
-                            }
-                            else if (nestedIterations.Count <= 0)
-                            {
-                                throw new FormatException(
-                                    $"Could not find iterator-begin. Template={context.TemplatePath}");
-                            }
-                            else
-                            {
-                                var childNodes = nodes.ToArray();
-                                var (iteratorKeyName, lastNodes) = nestedIterations.Pop();
-
-                                nodes = lastNodes;
-                                nodes.Add(new ForEachNode(iteratorKeyName, childNodes));
-                            }
-                        }
-                        else
-                        {
-                            nodes.Add(new ReplacerNode(keyName, parameter));
-                        }
-                    }
+                    nodes.Add(new ReplacerNode(keyName, parameter));
                 }
             }
         }
