@@ -18,66 +18,28 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
-internal readonly struct MarkdownContent
-{
-    public readonly string Body;
-    public readonly IReadOnlyDictionary<string, object?> Metadata;
-
-    public MarkdownContent(IReadOnlyDictionary<string, object?> metadata, string body)
-    {
-        Metadata = metadata;
-        Body = body;
-    }
-}
-
 internal static class Parser
 {
-    private sealed class TemplateParseContext
-    {
-        public readonly string TemplatePath;
-        public readonly TextReader Reader;
-        public readonly CancellationToken Token;
-        public readonly StringBuilder OriginalText;
-
-        public TemplateParseContext(
-            string templatePath,
-            TextReader reader,
-            CancellationToken token)
-        {
-            this.TemplatePath = templatePath;
-            this.Reader = reader;
-            this.Token = token;
-            this.OriginalText = new();
-        }
-
-        public TemplateParseContext(TemplateParseContext context)
-        {
-            this.TemplatePath = context.TemplatePath;
-            this.Reader = context.Reader;
-            this.Token = context.Token;
-            this.OriginalText = context.OriginalText;
-        }
-    }
-
-    private static async ValueTask<TemplateNode[]> ParseTemplateAsync(
-        TemplateParseContext context)
+    public static async ValueTask<RootTemplateNode> ParseTemplateAsync(
+        string templatePath, TextReader templateReader, CancellationToken ct)
     {
         var nestedIterations = new Stack<(string iteratorKeyName, List<TemplateNode> nodes)>();
 
+        var originalText = new StringBuilder();
         var nodes = new List<TemplateNode>();
         var buffer = new StringBuilder();
 
         while (true)
         {
-            var line = await context.Reader.ReadLineAsync().
-                WithCancellation(context.Token).
+            var line = await templateReader.ReadLineAsync().
+                WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
                 break;
             }
 
-            context.OriginalText.AppendLine(line);
+            originalText.AppendLine(line);
 
             var startIndex = 0;
             while (startIndex < line.Length)
@@ -101,7 +63,7 @@ internal static class Parser
                     }
 
                     throw new FormatException(
-                        $"Could not find open bracket. Template={context.TemplatePath}");
+                        $"Could not find open bracket. Template={templatePath}");
                 }
 
                 if ((openIndex + 1) < line.Length &&
@@ -123,7 +85,7 @@ internal static class Parser
                 if (closeIndex == -1)
                 {
                     throw new FormatException(
-                        $"Could not find close bracket. Template={context.TemplatePath}");
+                        $"Could not find close bracket. Template={templatePath}");
                 }
 
                 startIndex = closeIndex + 1;
@@ -143,7 +105,7 @@ internal static class Parser
                     if (string.IsNullOrWhiteSpace(parameter))
                     {
                         throw new FormatException(
-                            $"`foreach` parameter required. Template={context.TemplatePath}");
+                            $"`foreach` parameter required. Template={templatePath}");
                     }
 
                     nestedIterations.Push((parameter!, nodes));
@@ -155,12 +117,12 @@ internal static class Parser
                     if (!string.IsNullOrWhiteSpace(parameter))
                     {
                         throw new FormatException(
-                            $"Invalid iterator-end parameter. Template={context.TemplatePath}");
+                            $"Invalid iterator-end parameter. Template={templatePath}");
                     }
                     else if (nestedIterations.Count <= 0)
                     {
                         throw new FormatException(
-                            $"Could not find iterator-begin. Template={context.TemplatePath}");
+                            $"Could not find iterator-begin. Template={templatePath}");
                     }
 
                     var childNodes = nodes.ToArray();
@@ -181,20 +143,8 @@ internal static class Parser
             nodes.Add(new TextNode(buffer.ToString()));
         }
 
-        return nodes.ToArray();
-    }
-
-    public static async ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templatePath, TextReader templateReader, CancellationToken ct)
-    {
-        var context = new TemplateParseContext(
-            templatePath, templateReader, ct);
-
-        var nodes = await ParseTemplateAsync(context).
-            ConfigureAwait(false);
-
         return new RootTemplateNode(
-            context.OriginalText.ToString(), nodes);
+           originalText.ToString(), nodes.ToArray());
     }
 
     ///////////////////////////////////////////////////////////////////////////////////
