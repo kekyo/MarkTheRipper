@@ -85,8 +85,23 @@ internal static class Parser
                 var openIndex = line.IndexOf('{', startIndex);
                 if (openIndex == -1)
                 {
-                    buffer.AppendLine(line.Substring(startIndex));
-                    break;
+                    var closeIndex2 = line.IndexOf('}', startIndex);
+                    if (closeIndex2 == -1)
+                    {
+                        buffer.AppendLine(line.Substring(startIndex));
+                        break;
+                    }
+
+                    if ((closeIndex2 + 1) < line.Length &&
+                        line[closeIndex2 + 1] == '}')
+                    {
+                        buffer.Append(line.Substring(startIndex, closeIndex2 - startIndex + 1));
+                        startIndex = closeIndex2 + 2;
+                        continue;
+                    }
+
+                    throw new FormatException(
+                        $"Could not find open bracket. Template={context.TemplatePath}");
                 }
 
                 if ((openIndex + 1) < line.Length &&

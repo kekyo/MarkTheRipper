@@ -345,7 +345,35 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <p>{{<==Bracket left - {title}</p>
+    <p>Bracket left ==> {{{title}</p>
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffThroughBracketRight()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <p>{title}}}<==Bracket right</p>
 {contentBody}</body>
 </html>
 ");

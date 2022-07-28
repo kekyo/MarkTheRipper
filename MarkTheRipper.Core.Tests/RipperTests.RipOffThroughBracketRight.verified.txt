@@ -5,7 +5,7 @@
     <meta name="keywords" content="foo,bar" />
   </head>
   <body>
-    <p>Bracket left ==> {hoehoe</p>
+    <p>hoehoe}<==Bracket right</p>
 <p>Hello MarkTheRipper!
 This is test contents.</p>
 </body>
