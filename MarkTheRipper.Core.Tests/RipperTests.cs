@@ -36,19 +36,20 @@ public sealed class RipperTests
         var metadata = baseMetadata.ToDictionary(
             entry => entry.keyName, entry => entry.value);
 
-        var markdownReader = new StringReader(markdownText);
-        var htmlWriter = new StringWriter();
-
         var ripper = new Ripper(
             templateName => templates.TryGetValue(templateName, out var template) ? template : null);
 
-        var appliedName = await ripper.RipOffContentAsync(
-            markdownReader,
+        var markdownHeader = await ripper.ParseMarkdownHeaderAsync(
+            "test.md", new StringReader(markdownText), default);
+
+        var htmlWriter = new StringWriter();
+        var appliedTemplateName = await ripper.RenderContentAsync(
+            markdownHeader, new StringReader(markdownText), 
             keyName => metadata.TryGetValue(keyName, out var value) ? value : null,
             htmlWriter,
             default);
 
-        AreEqual(templateName, appliedName);
+        AreEqual(templateName, appliedTemplateName);
 
         return htmlWriter.ToString();
     }

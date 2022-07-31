@@ -35,12 +35,11 @@ public sealed class BulkRipper
         this.ripper = new Ripper(getTemplate);
     }
 
-    private async ValueTask<(string storeToRelativePath, string templateName)> RipOffRelativeContentAsync(
+    private async ValueTask<(string storeToRelativePath, string appliedTemplateName)> RipOffRelativeContentAsync(
         string relativeContentPath,
         string contentsBasePath,
         CancellationToken ct)
     {
-        var contentPath = Path.Combine(contentsBasePath, relativeContentPath);
         var storeToBasePath = Path.GetDirectoryName(
             Path.Combine(this.storeToBasePath, relativeContentPath))!;
         var storeToFileName = Path.GetFileNameWithoutExtension(relativeContentPath);
@@ -56,11 +55,15 @@ public sealed class BulkRipper
                 categories.Take(categories.Length - 1).ToArray() :
                 this.getMetadata(keyName);
 
-        var templateName = await this.ripper.RipOffContentAsync(
-            contentPath, GetMetadata, storeToPath, ct).
+        var markdownHeader = await this.ripper.ParseMarkdownHeaderAsync(
+            contentsBasePath, relativeContentPath, ct).
             ConfigureAwait(false);
 
-        return (storeToRelativePath, templateName);
+        var appliedTemplateName = await this.ripper.RenderContentAsync(
+            contentsBasePath, markdownHeader, GetMetadata, storeToPath, ct).
+            ConfigureAwait(false);
+
+        return (storeToRelativePath, appliedTemplateName);
     }
 
     /// <summary>
@@ -180,7 +183,7 @@ public sealed class BulkRipper
 
             if (Path.GetExtension(relativeContentPath) == ".md")
             {
-                var (relativeGeneratedPath, templateName) =
+                var (relativeGeneratedPath, appliedTemplateName) =
                     await this.RipOffRelativeContentAsync(
                         relativeContentPath,
                         contentsBasePath,
@@ -191,7 +194,7 @@ public sealed class BulkRipper
                     relativeContentPath,
                     relativeGeneratedPath,
                     contentsBasePath,
-                    templateName).
+                    appliedTemplateName).
                     ConfigureAwait(false);
             }
             else

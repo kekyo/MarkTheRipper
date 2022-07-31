@@ -11,16 +11,16 @@ using System.Collections.Generic;
 
 namespace MarkTheRipper;
 
-public readonly struct MarkdownContent
+public readonly struct MarkdownHeader
 {
+    public readonly string RelativeContentPath;
     public readonly IReadOnlyDictionary<string, object?> Metadata;
-    public readonly string Body;
 
-    public MarkdownContent(
-        IReadOnlyDictionary<string, object?> metadata,
-        string body)
+    public MarkdownHeader(
+        string relativeContentPath,
+        IReadOnlyDictionary<string, object?> metadata)
     {
+        this.RelativeContentPath = relativeContentPath;
         this.Metadata = metadata;
-        this.Body = body;
     }
 }

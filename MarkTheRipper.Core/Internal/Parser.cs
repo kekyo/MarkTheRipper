@@ -205,8 +205,10 @@ internal static class Parser
         }
     }
 
-    public static async ValueTask<MarkdownContent> ParseEntireMarkdownAsync(
-        TextReader markdownReader, CancellationToken ct)
+    public static async ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+        string relativeContentPath,
+        TextReader markdownReader,
+        CancellationToken ct)
     {
         // `---`
         while (true)
@@ -217,7 +219,7 @@ internal static class Parser
             if (line == null)
             {
                 throw new FormatException(
-                    $"Could not find markdown header.");
+                    $"Could not find any markdown header: Path={relativeContentPath}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -239,7 +241,8 @@ internal static class Parser
                 ConfigureAwait(false);
             if (line == null)
             {
-                throw new FormatException();
+                throw new FormatException(
+                    $"Could not find any markdown header: Path={relativeContentPath}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -262,13 +265,62 @@ internal static class Parser
                     }
                     else
                     {
-                        throw new FormatException();
+                        throw new FormatException(
+                            $"Could not find any markdown header: Path={relativeContentPath}");
                     }
                 }
             }
         }
 
-        var sb = new StringBuilder();
+        return new(relativeContentPath, metadata);
+    }
+
+    public static async ValueTask<string> ParseMarkdownBodyAsync(
+        TextReader markdownReader,
+        CancellationToken ct)
+    {
+        // `---`
+        while (true)
+        {
+            var line = await markdownReader.ReadLineAsync().
+                WithCancellation(ct).
+                ConfigureAwait(false);
+            if (line == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                if (line.Trim().StartsWith("---"))
+                {
+                    break;
+                }
+            }
+        }
+
+        // `title: Hello world`
+        while (true)
+        {
+            var line = await markdownReader.ReadLineAsync().
+                WithCancellation(ct).
+                ConfigureAwait(false);
+            if (line == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                // `---`
+                if (line.Trim().StartsWith("---"))
+                {
+                    break;
+                }
+            }
+        }
+
+        var body = new StringBuilder();
         while (true)
         {
             var line = await markdownReader.ReadLineAsync().
@@ -282,7 +334,7 @@ internal static class Parser
             // Skip empty lines, will detect start of body
             if (!string.IsNullOrWhiteSpace(line))
             {
-                sb.AppendLine(line);
+                body.AppendLine(line);
                 break;
             }
         }
@@ -300,9 +352,9 @@ internal static class Parser
             }
 
             // (Sanitizing EOL)
-            sb.AppendLine(line);
+            body.AppendLine(line);
         }
 
-        return new(metadata, sb.ToString());
+        return body.ToString();
     }
 }

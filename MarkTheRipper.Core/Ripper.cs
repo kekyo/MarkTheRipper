@@ -39,30 +39,70 @@ public sealed class Ripper
         Parser.ParseTemplateAsync(templatePath, new StringReader(templateText), ct);
 
     /// <summary>
-    /// Rip off and generate from Markdown content.
+    /// Parse markdown header.
     /// </summary>
-    /// <param name="markdownReader">Markdown content</param>
-    /// <param name="getMetadata">Metadata getter</param>
-    /// <param name="htmlWriter">Generated html content</param>
+    /// <param name="relativeContentPath">Markdown content path</param>
+    /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied template name</returns>
-    public async ValueTask<string> RipOffContentAsync(
+    /// <returns>Applied template name.</returns>
+    public ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+        string relativeContentPath,
         TextReader markdownReader,
-        Func<string, object?> getMetadata,
-        TextWriter htmlWriter,
+        CancellationToken ct) =>
+        Parser.ParseMarkdownHeaderAsync(
+            relativeContentPath, markdownReader, ct);
+
+    /// <summary>
+    /// Parse markdown header.
+    /// </summary>
+    /// <param name="contentsBasePath">Markdown content path</param>
+    /// <param name="relativeContentPath">Markdown content path</param>
+    /// <param name="ct">CancellationToken</param>
+    /// <returns>Applied template name.</returns>
+    public async ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+        string contentsBasePath,
+        string relativeContentPath,
         CancellationToken ct)
     {
-        var markdownContent = await Parser.ParseEntireMarkdownAsync(
+        using var markdownStream = new FileStream(
+            Path.Combine(contentsBasePath, relativeContentPath),
+            FileMode.Open, FileAccess.Read, FileShare.Read,
+            65536, true);
+        using var markdownReader = new StreamReader(
+            markdownStream, Encoding.UTF8, true);
+
+        return await Parser.ParseMarkdownHeaderAsync(
+            relativeContentPath, markdownReader, ct).
+            ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Render markdown content.
+    /// </summary>
+    /// <param name="markdownHeader">Parsed markdown header</param>
+    /// <param name="markdownReader">Markdown content path</param>
+    /// <param name="getMetadata">Metadata getter</param>
+    /// <param name="outputHtmlWriter">Generated html content writer</param>
+    /// <param name="ct">CancellationToken</param>
+    /// <returns>Applied template name.</returns>
+    public async ValueTask<string> RenderContentAsync(
+        MarkdownHeader markdownHeader,
+        TextReader markdownReader,
+        Func<string, object?> getMetadata,
+        TextWriter outputHtmlWriter,
+        CancellationToken ct)
+    {
+        var body = await Parser.ParseMarkdownBodyAsync(
             markdownReader, ct).
             ConfigureAwait(false);
 
-        var markdownDocument = MarkdownParser.Parse(markdownContent.Body);
+        var markdownDocument = MarkdownParser.Parse(body);
 
         var contentBody = new StringBuilder();
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var fp = (markdownContent.Metadata.TryGetValue("lang", out var value) ?
+        var fp = (markdownHeader.Metadata.TryGetValue("lang", out var value) ?
             value : getMetadata("lang")) switch
         {
             IFormatProvider v => v,
@@ -73,7 +113,7 @@ public sealed class Ripper
         object? GetMetadata(string keyName) =>
             keyName == "contentBody" ?
                 contentBody :
-                markdownContent.Metadata.TryGetValue(keyName, out var value) ?
+                markdownHeader.Metadata.TryGetValue(keyName, out var value) ?
                     value :
                     getMetadata(keyName);
 
@@ -83,7 +123,7 @@ public sealed class Ripper
         if (this.getTemplate(templateName) is { } template)
         {
             await template.RenderAsync(
-                (text, ct) => htmlWriter.WriteAsync(text).WithCancellation(ct),
+                (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
                 GetMetadata, fp, ct).
                 ConfigureAwait(false);
 
@@ -96,41 +136,45 @@ public sealed class Ripper
         }
     }
 
+
     /// <summary>
-    /// Rip off and generate from Markdown content.
+    /// Render markdown content.
     /// </summary>
-    /// <param name="markdownPath">Markdown content path</param>
+    /// <param name="contentsBasePath">Markdown content path</param>
+    /// <param name="markdownHeader">Parsed markdown header</param>
     /// <param name="getMetadata">Metadata getter</param>
     /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
-    public async ValueTask<string> RipOffContentAsync(
-        string markdownPath,
+    public async ValueTask<string> RenderContentAsync(
+        string contentsBasePath,
+        MarkdownHeader markdownHeader,
         Func<string, object?> getMetadata,
         string outputHtmlPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
-            markdownPath,
+            Path.Combine(contentsBasePath, markdownHeader.RelativeContentPath),
             FileMode.Open, FileAccess.Read, FileShare.Read,
             65536, true);
         using var markdownReader = new StreamReader(
             markdownStream, Encoding.UTF8, true);
 
-        using var htmlStream = new FileStream(
+        using var outputHtmlStream = new FileStream(
             outputHtmlPath,
             FileMode.Create, FileAccess.ReadWrite, FileShare.None,
             65536, true);
-        using var htmlWriter = new StreamWriter(
-            htmlStream, Encoding.UTF8);
+        using var outputHtmlWriter = new StreamWriter(
+            outputHtmlStream, Encoding.UTF8);
 
-        var templateName = await this.RipOffContentAsync(
-            markdownReader, getMetadata, htmlWriter, ct).
+        var appliedTemplateName = await this.RenderContentAsync(
+            markdownHeader, markdownReader, getMetadata,
+            outputHtmlWriter, ct).
             ConfigureAwait(false);
 
-        await htmlWriter.FlushAsync().
+        await outputHtmlWriter.FlushAsync().
             ConfigureAwait(false);
 
-        return templateName;
+        return appliedTemplateName;
     }
 }
