@@ -17,6 +17,66 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="BulkRipperTagsTests.RipOff.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup1_subNames=.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup1_subNames=aaa-bbb.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup1_subNames=aaa.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup2_subNames=.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup2_subNames=aaa-bbb.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffCategoryLookup2_subNames=aaa.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffDateFormatting.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffIndexIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffItemIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffNestedIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffNestedLookup.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
+    <None Update="BulkRipperTagsTests.RipOffWithExplicitTemplate.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>BulkRipperTagsTests.cs</DependentUpon>
+    </None>
     <None Update="BulkRipperTests.RipOff.verified.txt">
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>BulkRipperTests.cs</DependentUpon>

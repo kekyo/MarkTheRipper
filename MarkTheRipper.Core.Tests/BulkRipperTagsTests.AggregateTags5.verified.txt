@@ -1,0 +1,42 @@
+﻿{
+  tag1: [
+    {
+      RelativeContentPath: content1,
+      Metadata: {
+        tags: [
+          tag1
+        ]
+      }
+    },
+    {
+      RelativeContentPath: content2,
+      Metadata: {
+        tags: [
+          tag1,
+          tag2
+        ]
+      }
+    }
+  ],
+  tag2: [
+    {
+      RelativeContentPath: content2,
+      Metadata: {
+        tags: [
+          tag1,
+          tag2
+        ]
+      }
+    }
+  ],
+  tag3: [
+    {
+      RelativeContentPath: content3,
+      Metadata: {
+        tags: [
+          tag3
+        ]
+      }
+    }
+  ]
+}

@@ -36,7 +36,17 @@ internal static class Utilities
         serializer.Converters.Add(new StringEnumConverter(defaultNamingStrategy));
         return serializer;
     }
-    
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    private static class EmtyArray<T>
+    {
+        public static readonly T[] Empty = new T[0];
+    }
+
+    public static T[] Empty<T>() =>
+        EmtyArray<T>.Empty;
+
     ///////////////////////////////////////////////////////////////////////////////////
 
     public static string? FormatValue(
@@ -54,12 +64,12 @@ internal static class Utilities
 
     private static readonly object?[] empty = new object?[0];
 
-    public static IEnumerable EnumerateValue(object? value) =>
+    public static IEnumerable<object?> EnumerateValue(object? value) =>
         value switch
         {
             null => empty,
             string str => new[] { str },
-            IEnumerable enumerable => enumerable,
+            IEnumerable enumerable => enumerable.Cast<object?>(),
             _ => new[] { value },
         };
 

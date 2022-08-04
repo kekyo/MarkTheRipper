@@ -1,0 +1,12 @@
+﻿{
+  tag1: [
+    {
+      RelativeContentPath: content1,
+      Metadata: {
+        tags: [
+          tag1
+        ]
+      }
+    }
+  ]
+}
