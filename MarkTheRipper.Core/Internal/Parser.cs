@@ -206,6 +206,7 @@ internal static class Parser
     }
 
     public static async ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+        string contentsBasePath,
         string relativeContentPath,
         TextReader markdownReader,
         CancellationToken ct)
@@ -272,7 +273,7 @@ internal static class Parser
             }
         }
 
-        return new(relativeContentPath, metadata);
+        return new(relativeContentPath, metadata, contentsBasePath);
     }
 
     public static async ValueTask<string> ParseMarkdownBodyAsync(

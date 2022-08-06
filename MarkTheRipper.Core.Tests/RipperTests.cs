@@ -40,7 +40,7 @@ public sealed class RipperTests
             templateName => templates.TryGetValue(templateName, out var template) ? template : null);
 
         var markdownHeader = await ripper.ParseMarkdownHeaderAsync(
-            "test.md", new StringReader(markdownText), default);
+            "", "test.md", new StringReader(markdownText), default);
 
         var htmlWriter = new StringWriter();
         var appliedTemplateName = await ripper.RenderContentAsync(

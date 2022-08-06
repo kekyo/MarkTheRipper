@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ using static NUnit.Framework.Assert;
 namespace MarkTheRipper;
 
 [TestFixture]
-public sealed class BulkRipperTagsTests
+public sealed class TagsTests
 {
     [Test]
     public Task AggregateTags1()
@@ -27,11 +28,12 @@ public sealed class BulkRipperTagsTests
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
-            });
+            },
+            null!);
 
-        var actual = BulkRipper.AggregateTags(new[]
+        var actual = EntryAggregator.AggregateTags(new[]
         {
-            ("base", mh1),
+            mh1,
         });
 
         return Verifier.Verify(actual);
@@ -45,11 +47,12 @@ public sealed class BulkRipperTagsTests
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", "tag2", } },
-            });
+            },
+            null!);
 
-        var actual = BulkRipper.AggregateTags(new[]
+        var actual = EntryAggregator.AggregateTags(new[]
         {
-            ("base", mh1),
+            mh1,
         });
 
         return Verifier.Verify(actual);
@@ -63,18 +66,19 @@ public sealed class BulkRipperTagsTests
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
-            });
+            },
+            null!);
         var mh2 = new MarkdownHeader(
             "content2",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
-            });
+            },
+            null!);
 
-        var actual = BulkRipper.AggregateTags(new[]
+        var actual = EntryAggregator.AggregateTags(new[]
         {
-            ("base", mh1),
-            ("base", mh2),
+            mh1, mh2,
         });
 
         return Verifier.Verify(actual);
@@ -88,18 +92,19 @@ public sealed class BulkRipperTagsTests
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
-            });
+            },
+            null!);
         var mh2 = new MarkdownHeader(
             "content2",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", "tag2", } },
-            });
+            },
+            null!);
 
-        var actual = BulkRipper.AggregateTags(new[]
+        var actual = EntryAggregator.AggregateTags(new[]
         {
-            ("base", mh1),
-            ("base", mh2),
+            mh1, mh2,
         });
 
         return Verifier.Verify(actual);
@@ -113,25 +118,26 @@ public sealed class BulkRipperTagsTests
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
-            });
+            },
+            null!);
         var mh2 = new MarkdownHeader(
             "content2",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", "tag2", } },
-            });
+            },
+            null!);
         var mh3 = new MarkdownHeader(
             "content3",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag3", } },
-            });
+            },
+            null!);
 
-        var actual = BulkRipper.AggregateTags(new[]
+        var actual = EntryAggregator.AggregateTags(new[]
         {
-            ("base", mh1),
-            ("base", mh2),
-            ("base", mh3),
+            mh1, mh2, mh3,
         });
 
         return Verifier.Verify(actual);
@@ -144,14 +150,14 @@ public sealed class BulkRipperTagsTests
             "content1",
             new Dictionary<string, object?>()
             {
-            });
+            },
+            null!);
 
-        var actual = BulkRipper.AggregateTags(new[]
+        var actual = EntryAggregator.AggregateTags(new[]
         {
-            ("base", mh1),
+            mh1,
         });
 
         return Verifier.Verify(actual);
     }
-
 }

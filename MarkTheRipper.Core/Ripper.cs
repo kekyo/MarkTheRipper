@@ -41,16 +41,18 @@ public sealed class Ripper
     /// <summary>
     /// Parse markdown header.
     /// </summary>
+    /// <param name="contentBasePathHint">Markdown content base path (Hint)</param>
     /// <param name="relativeContentPath">Markdown content path</param>
     /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+        string contentBasePathHint,
         string relativeContentPath,
         TextReader markdownReader,
         CancellationToken ct) =>
         Parser.ParseMarkdownHeaderAsync(
-            relativeContentPath, markdownReader, ct);
+            contentBasePathHint, relativeContentPath, markdownReader, ct);
 
     /// <summary>
     /// Parse markdown header.
@@ -72,7 +74,7 @@ public sealed class Ripper
             markdownStream, Encoding.UTF8, true);
 
         return await Parser.ParseMarkdownHeaderAsync(
-            relativeContentPath, markdownReader, ct).
+            contentsBasePath, relativeContentPath, markdownReader, ct).
             ConfigureAwait(false);
     }
 
@@ -102,8 +104,8 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var fp = (markdownHeader.Metadata.TryGetValue("lang", out var value) ?
-            value : getMetadata("lang")) switch
+        var fp = (markdownHeader.GetMetadata("lang") is { } langValue ?
+            langValue : getMetadata("lang")) switch
         {
             IFormatProvider v => v,
             string lang => new CultureInfo(lang),
@@ -113,7 +115,7 @@ public sealed class Ripper
         object? GetMetadata(string keyName) =>
             keyName == "contentBody" ?
                 contentBody :
-                markdownHeader.Metadata.TryGetValue(keyName, out var value) ?
+                markdownHeader.GetMetadata(keyName) is { } value ?
                     value :
                     getMetadata(keyName);
 

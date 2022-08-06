@@ -1,0 +1,24 @@
+﻿{
+  CategoryName: ,
+  Children: {
+    cat1: {
+      CategoryName: cat1,
+      Children: {
+        cat2: {
+          CategoryName: cat2,
+          Headers: [
+            {
+              RelativeContentPath: content1,
+              Metadata: {
+                category: [
+                  cat1,
+                  cat2
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

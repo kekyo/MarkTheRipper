@@ -18,13 +18,21 @@ public sealed class MarkdownHeader : IEquatable<MarkdownHeader>
     public readonly string RelativeContentPath;
     public readonly IReadOnlyDictionary<string, object?> Metadata;
 
+    internal readonly string ContentBasePath;
+
     public MarkdownHeader(
         string relativeContentPath,
-        IReadOnlyDictionary<string, object?> metadata)
+        IReadOnlyDictionary<string, object?> metadata,
+        string contentBasePath)
     {
         this.RelativeContentPath = relativeContentPath;
         this.Metadata = metadata;
+        this.ContentBasePath = contentBasePath;
     }
+
+    public object? GetMetadata(string keyName) =>
+        this.Metadata.TryGetValue(keyName, out var value) ?
+            value : null;
 
     public bool Equals(MarkdownHeader? other) =>
         other is { } rhs &&

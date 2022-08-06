@@ -9,9 +9,7 @@
 
 using MarkTheRipper.Internal;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -150,53 +148,6 @@ public sealed class BulkRipper
         CancellationToken ct, params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, ct);
 
-    public sealed class TagEntry :
-        IEnumerable<MarkdownHeader>
-    {
-        public readonly string TagName;
-        public readonly (string contentBasePath, MarkdownHeader markdownHeader)[] Headers;
-
-        public TagEntry(
-            string tagName,
-            (string contentBasePath, MarkdownHeader markdownHeader)[] headers)
-        {
-            this.TagName = tagName;
-            this.Headers = headers;
-        }
-
-        public IEnumerator<MarkdownHeader> GetEnumerator() =>
-            this.Headers.Select(entry => entry.markdownHeader).GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() =>
-            this.GetEnumerator();
-    }
-
-    private sealed class MarkdownHeaderDateComparer :
-        IComparer<MarkdownHeader>
-    {
-        public static readonly MarkdownHeaderDateComparer Instance =
-            new MarkdownHeaderDateComparer();
-
-        private MarkdownHeaderDateComparer()
-        {
-        }
-
-        public int Compare(MarkdownHeader? x, MarkdownHeader? y)
-        {
-            var xd = (DateTimeOffset)x!.Metadata["date"]!;
-            var yd = (DateTimeOffset)y!.Metadata["date"]!;
-            return xd.CompareTo(yd);
-        }
-    }
-
-    public sealed class CategoryEntry
-    {
-        public readonly Dictionary<string, List<CategoryEntry>> Entries =
-            new();
-        public readonly SortedSet<MarkdownHeader> Headers =
-            new(MarkdownHeaderDateComparer.Instance);
-    }
-
     /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
@@ -221,16 +172,15 @@ public sealed class BulkRipper
                 Select(path => (contentsBasePath, path))).
             ToArray();
 
-        var parsedEntries = await Task.WhenAll(
-            candidates.Select(async candidate =>
-                (candidate.contentsBasePath,
-                 markdownHeader: await ripper.ParseMarkdownHeaderAsync(
+        var headers = await Task.WhenAll(
+            candidates.Select(candidate =>
+                ripper.ParseMarkdownHeaderAsync(
                     candidate.contentsBasePath, candidate.path, ct).
-                    ConfigureAwait(false)))).
+                AsTask())).
             ConfigureAwait(false);
 
-        var tags = AggregateTags(parsedEntries);
-        var categories = AggregateCategories(parsedEntries);
+        var tags = EntryAggregator.AggregateTags(headers);
+        var categories = EntryAggregator.AggregateCategories(headers);
 
         //object? GetMetadata(string keyName) =>
         //    tags!.TryGetValue(keyName, out var headers) ?
@@ -333,74 +283,5 @@ public sealed class BulkRipper
 #endif
 
         return (count, maxConcurrentProcessing);
-    }
-
-    internal static Dictionary<string, TagEntry> AggregateTags(
-        IEnumerable<(string contentsBasePath, MarkdownHeader markdownHeader)> parsedEntries) =>
-        parsedEntries.SelectMany(entry =>
-             entry.markdownHeader.Metadata.TryGetValue("tags", out var tags) ?
-                Utilities.EnumerateValue(tags).
-                Select(tagName =>
-                    (tagName: Utilities.FormatValue(tagName, null, CultureInfo.InvariantCulture)!,
-                        contentBasePath: entry.contentsBasePath,
-                        markdownHeader: entry.markdownHeader)).
-                Where(entry => !string.IsNullOrWhiteSpace(entry.tagName)) :
-                Utilities.Empty<(string, string, MarkdownHeader)>()).
-            GroupBy(entry => entry.tagName).
-            ToDictionary(
-                g => g.Key,
-                g => new TagEntry(
-                    g.Key,
-                    g.Select(entry => (entry.contentBasePath, entry.markdownHeader)).
-                    ToArray()));
-
-    internal static CategoryEntry AggregateCategories(
-        IEnumerable<(string contentsBasePath, MarkdownHeader markdownHeader)> parsedEntries)
-    {
-        var categoryNameLists = parsedEntries.Select(entry =>
-            (entry.contentsBasePath,
-             entry.markdownHeader,
-             categoryNames: entry.markdownHeader.Metadata.TryGetValue("category", out var categoryNameList) ?
-                Utilities.EnumerateValue(categoryNameList).
-                Select(categoryName => Utilities.FormatValue(categoryName, null, CultureInfo.InvariantCulture)!).
-                Where(categoryName => !string.IsNullOrWhiteSpace(categoryName)).
-                ToArray() :
-                (Path.GetDirectoryName(entry.markdownHeader.RelativeContentPath) ?? Path.DirectorySeparatorChar.ToString()).
-                Split(new[] {
-                    Path.DirectorySeparatorChar,
-                    Path.AltDirectorySeparatorChar },
-                    StringSplitOptions.RemoveEmptyEntries))).
-            ToArray();
-
-        void AggregateCategory(CategoryEntry categoryEntry, int levelIndex)
-        {
-            foreach (var categoryNameList in categoryNameLists)
-            {
-                var categoryName = categoryNameList.categoryNames[levelIndex];
-
-                if (!categoryEntry.Entries.TryGetValue(categoryName, out var entries))
-                {
-                    entries = new();
-                    categoryEntry.Entries.Add(categoryName, entries);
-                }
-
-                var nextEntry = new CategoryEntry();
-                entries.Add(nextEntry);
-
-                if (levelIndex >= (categoryNameList.categoryNames.Length - 1))
-                {
-                    categoryEntry.Headers.Add(categoryNameList.markdownHeader);
-                }
-                else
-                {
-                    AggregateCategory(nextEntry, levelIndex + 1);
-                }
-            }
-        }
-
-        var categoryEntry0 = new CategoryEntry();
-        AggregateCategory(categoryEntry0, 0);
-
-        return categoryEntry0;
     }
 }
