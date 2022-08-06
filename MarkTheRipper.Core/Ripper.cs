@@ -25,6 +25,12 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
+    private static readonly char[] pathSeparators = new[]
+    {
+        Path.DirectorySeparatorChar,
+        Path.AltDirectorySeparatorChar,
+    };
+
     private readonly Func<string, RootTemplateNode?> getTemplate;
 
     public Ripper(Func<string, RootTemplateNode?> getTemplate) =>
@@ -46,13 +52,30 @@ public sealed class Ripper
     /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
-    public ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+    public async ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
         string contentBasePathHint,
         string relativeContentPath,
         TextReader markdownReader,
-        CancellationToken ct) =>
-        Parser.ParseMarkdownHeaderAsync(
-            contentBasePathHint, relativeContentPath, markdownReader, ct);
+        CancellationToken ct)
+    {
+        var metadata = await Parser.ParseMarkdownHeaderAsync(
+            relativeContentPath, markdownReader, ct).
+            ConfigureAwait(false);
+
+        // Special: category
+        if (!metadata.ContainsKey("category"))
+        {
+            var relativeDirectoryPath =
+                Path.GetDirectoryName(relativeContentPath) ??
+                Path.DirectorySeparatorChar.ToString();
+            var pathElements = relativeDirectoryPath.
+                Split(pathSeparators, StringSplitOptions.RemoveEmptyEntries);
+
+            metadata.Add("category", pathElements);
+        }
+
+        return new(relativeContentPath, metadata, contentBasePathHint);
+    }
 
     /// <summary>
     /// Parse markdown header.
@@ -73,7 +96,7 @@ public sealed class Ripper
         using var markdownReader = new StreamReader(
             markdownStream, Encoding.UTF8, true);
 
-        return await Parser.ParseMarkdownHeaderAsync(
+        return await this.ParseMarkdownHeaderAsync(
             contentsBasePath, relativeContentPath, markdownReader, ct).
             ConfigureAwait(false);
     }
