@@ -25,12 +25,6 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    private static readonly char[] pathSeparators = new[]
-    {
-        Path.DirectorySeparatorChar,
-        Path.AltDirectorySeparatorChar,
-    };
-
     private readonly Func<string, RootTemplateNode?> getTemplate;
 
     public Ripper(Func<string, RootTemplateNode?> getTemplate) =>
@@ -69,7 +63,7 @@ public sealed class Ripper
                 Path.GetDirectoryName(relativeContentPath) ??
                 Path.DirectorySeparatorChar.ToString();
             var pathElements = relativeDirectoryPath.
-                Split(pathSeparators, StringSplitOptions.RemoveEmptyEntries);
+                Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
 
             metadata.Add("category", pathElements);
         }
@@ -161,25 +155,22 @@ public sealed class Ripper
         }
     }
 
-
     /// <summary>
     /// Render markdown content.
     /// </summary>
-    /// <param name="contentsBasePath">Markdown content path</param>
     /// <param name="markdownHeader">Parsed markdown header</param>
     /// <param name="getMetadata">Metadata getter</param>
     /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
-        string contentsBasePath,
         MarkdownHeader markdownHeader,
         Func<string, object?> getMetadata,
         string outputHtmlPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
-            Path.Combine(contentsBasePath, markdownHeader.RelativeContentPath),
+            Path.Combine(markdownHeader.ContentBasePath, markdownHeader.RelativeContentPath),
             FileMode.Open, FileAccess.Read, FileShare.Read,
             65536, true);
         using var markdownReader = new StreamReader(

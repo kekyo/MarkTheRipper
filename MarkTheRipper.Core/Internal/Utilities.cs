@@ -13,6 +13,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,14 @@ namespace MarkTheRipper.Internal;
 
 internal static class Utilities
 {
+    public static readonly char[] PathSeparators = new[]
+    {
+        Path.DirectorySeparatorChar,
+        Path.AltDirectorySeparatorChar,
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static JsonSerializer GetDefaultJsonSerializer()
     {
         var defaultNamingStrategy = new CamelCaseNamingStrategy();

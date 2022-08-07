@@ -22,6 +22,24 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class BulkRipper
 {
+    private sealed class StoreToPathElements
+    {
+        public readonly string BasePath;
+        public readonly string FileName;
+        public readonly string RelativePath;
+        public readonly string ExplicitPath;
+
+        public StoreToPathElements(
+            string basePath, string fileName,
+            string relativePath, string explicitPath)
+        {
+            this.BasePath = basePath;
+            this.FileName = fileName;
+            this.RelativePath = relativePath;
+            this.ExplicitPath = explicitPath;
+        }
+    }
+
     private readonly string storeToBasePath;
     private readonly Func<string, object?> getMetadata;
     private readonly Ripper ripper;
@@ -36,35 +54,32 @@ public sealed class BulkRipper
         this.ripper = new Ripper(getTemplate);
     }
 
+    private StoreToPathElements GetStoreToPathElements(string relativeContentPath)
+    {
+        var basePath = Path.GetDirectoryName(
+            Path.Combine(this.storeToBasePath, relativeContentPath))!;
+        var fileName = Path.GetFileNameWithoutExtension(relativeContentPath);
+        var explicitPath = Path.Combine(basePath, fileName + ".html");
+        var relativePath = explicitPath.Substring(this.storeToBasePath.Length + 1);
+
+        return new(basePath, fileName, relativePath, explicitPath);
+    }
+
     private async ValueTask<(string storeToRelativePath, string appliedTemplateName)> RipOffRelativeContentAsync(
-        string relativeContentPath,
-        string contentsBasePath,
+        StoreToPathElements storeToPathElements,
+        MarkdownHeader header,
         CancellationToken ct)
     {
-        var storeToBasePath = Path.GetDirectoryName(
-            Path.Combine(this.storeToBasePath, relativeContentPath))!;
-        var storeToFileName = Path.GetFileNameWithoutExtension(relativeContentPath);
-        var storeToPath = Path.Combine(storeToBasePath, storeToFileName + ".html");
-        var storeToRelativePath = storeToPath.Substring(this.storeToBasePath.Length + 1);
-
         object? GetMetadata(string keyName) =>
-            keyName == "category" &&
-            relativeContentPath.Split(new[] {
-                Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar
-            }) is { } categories &&
-            categories.Length >= 2 ?
-                categories.Take(categories.Length - 1).ToArray() :
+            header.GetMetadata(keyName) is { } value ?
+                value :
                 this.getMetadata(keyName);
 
-        var markdownHeader = await this.ripper.ParseMarkdownHeaderAsync(
-            contentsBasePath, relativeContentPath, ct).
-            ConfigureAwait(false);
-
         var appliedTemplateName = await this.ripper.RenderContentAsync(
-            contentsBasePath, markdownHeader, GetMetadata, storeToPath, ct).
+            header, GetMetadata, storeToPathElements.ExplicitPath, ct).
             ConfigureAwait(false);
 
-        return (storeToRelativePath, appliedTemplateName);
+        return (storeToPathElements.RelativePath, appliedTemplateName);
     }
 
     /// <summary>
@@ -163,86 +178,70 @@ public sealed class BulkRipper
         var utcNow = DateTimeOffset.UtcNow;
         var dc = new SafeDirectoryCreator();
 
-#if DEBUG
         var candidates = contentsBasePathList.
             Select(contentsBasePath => Path.GetFullPath(contentsBasePath)).
             Where(contentsBasePath => Directory.Exists(contentsBasePath)).
             SelectMany(contentsBasePath => Directory.EnumerateFiles(
                 contentsBasePath, "*.*", SearchOption.AllDirectories).
-                Select(path => (contentsBasePath, path))).
+                Select(path =>
+                    (contentsBasePath,
+                     relativeContentPath: path.Substring(contentsBasePath.Length + 1)))).
             ToArray();
 
+#if DEBUG
+        var headers = new List<MarkdownHeader>();
+        foreach (var candidate in candidates.
+            Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md"))
+        {
+            var header = await ripper.ParseMarkdownHeaderAsync(
+                candidate.contentsBasePath, candidate.relativeContentPath, ct).
+                ConfigureAwait(false);
+            headers.Add(header);
+        }
+#else
         var headers = await Task.WhenAll(
-            candidates.Select(candidate =>
+            candidates.
+            Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md").
+            Select(candidate =>
                 ripper.ParseMarkdownHeaderAsync(
-                    candidate.contentsBasePath, candidate.path, ct).
+                    candidate.contentsBasePath, candidate.relativeContentPath, ct).
                 AsTask())).
             ConfigureAwait(false);
+#endif
+
+        var headerByCandidate = headers.ToDictionary(
+            header => (header.ContentBasePath, header.RelativeContentPath));
 
         var tags = EntryAggregator.AggregateTags(headers);
         var categories = EntryAggregator.AggregateCategories(headers);
 
-        //object? GetMetadata(string keyName) =>
-        //    tags!.TryGetValue(keyName, out var headers) ?
-        //        headers :
-        //        this.getMetadata(keyName);
-
-        //await Task.WhenAll(
-        //    parsedEntries.Select(markdownHeader =>
-        //    {
-        //        this.ripper.RenderContentAsync(contentBasePath, markdownHeader,)
-        //    }));
-        //        this.ripper.ParseMarkdownHeaderAsync(
-        //            candidate.contentsBasePath, candidate.path, ct).
-        //            AsTask())).
-        //    ConfigureAwait(false);
-
-        //{
-        //    var markdownHeader = await this.ripper.ParseMarkdownHeaderAsync(
-        //        candidate.contentsBasePath, candidate.path, ct).
-        //        ConfigureAwait(false);
-
-        //    await RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.path).
-        //        ConfigureAwait(false);
-        //}
-#else
-        await Task.WhenAll(candidates.
-            Select(candidate => RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.path))).
-            ConfigureAwait(false);
-#endif
-
-        async ValueTask RunOnceAsync(string contentsBasePath, string contentsPath)
+        async ValueTask RunOnceAsync(string contentBasePath, string relativeContentPath)
         {
-            var relativeContentPath = contentsPath.Substring(
-                contentsBasePath.Length +
-                (contentsBasePath.EndsWith(Path.DirectorySeparatorChar.ToString()) ? 0 : 1));
+            var storeToPathElements = this.GetStoreToPathElements(
+                relativeContentPath);
 
-            var storeToPath = Path.Combine(this.storeToBasePath, relativeContentPath);
-            var storeToDirPath = Path.GetDirectoryName(storeToPath)!;
-
-            await dc!.CreateIfNotExistAsync(storeToDirPath, ct).
+            await dc!.CreateIfNotExistAsync(storeToPathElements.BasePath, ct).
                 ConfigureAwait(false);
 
-            if (Path.GetExtension(relativeContentPath) == ".md")
+            if (headerByCandidate.TryGetValue(
+                (contentBasePath, relativeContentPath), out var header))
             {
                 var (relativeGeneratedPath, appliedTemplateName) =
                     await this.RipOffRelativeContentAsync(
-                        relativeContentPath,
-                        contentsBasePath,
-                        ct).
+                        storeToPathElements, header, ct).
                         ConfigureAwait(false);
 
                 await generated(
                     relativeContentPath,
                     relativeGeneratedPath,
-                    contentsBasePath,
+                    contentBasePath,
                     appliedTemplateName).
                     ConfigureAwait(false);
             }
             else
             {
                 await this.CopyRelativeContentAsync(
-                    relativeContentPath, contentsBasePath, ct).
+                    relativeContentPath, contentBasePath, ct).
                     ConfigureAwait(false);
             }
         }
@@ -250,7 +249,7 @@ public sealed class BulkRipper
         var count = 0;
         var concurrentProcessing = 0;
         var maxConcurrentProcessing = 0;
-        async Task RunOnceWithMeasurementAsync(string contentsBasePath, string contentsPath)
+        async Task RunOnceWithMeasurementAsync(string contentBasePath, string relativeContentPath)
         {
             count++;
             var cp = Interlocked.Increment(ref concurrentProcessing);
@@ -258,7 +257,7 @@ public sealed class BulkRipper
 
             try
             {
-                await RunOnceAsync(contentsBasePath, contentsPath).
+                await RunOnceAsync(contentBasePath, relativeContentPath).
                     ConfigureAwait(false);
             }
             catch
@@ -273,7 +272,7 @@ public sealed class BulkRipper
 #if DEBUG
         foreach (var candidate in candidates)
         {
-            await RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.path).
+            await RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.relativeContentPath).
                 ConfigureAwait(false);
         }
 #else
