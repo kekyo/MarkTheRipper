@@ -96,7 +96,7 @@ This is test contents.
   </head>
   <body>
     {foreach:category}
-      <h1>Category: {category-item}</h1>
+      <h1>Category: {category.item}</h1>
     {/}
     {contentBody}
   </body>
@@ -133,7 +133,7 @@ This is test contents.
   </head>
   <body>
     {foreach:category}
-      <h1>Category: {category-item}</h1>
+      <h1>Category: {category.item}</h1>
     {/}
     {contentBody}
   </body>

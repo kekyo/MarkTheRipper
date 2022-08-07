@@ -90,7 +90,7 @@ H3 body.
 <body>
     {contentBody}
     <hr />
-    <p>Tags:{foreach:tags} `{tags-item}`{/}</p>
+    <p>Tags:{foreach:tags} `{tags.item}`{/}</p>
 </body>
 </html>
 ```
@@ -371,11 +371,11 @@ As usual, let's start with a small example.
 This is the template included in minimum:
 
 ```html
-<p>Tags:{foreach:tags} '{tags-item}'{/}</p>
+<p>Tags:{foreach:tags} '{tags.item}'{/}</p>
 ```
 
 This means that documents between `{foreach:tags}` and `{/}` will be repeated as many times as the number of `tags`.
-"Documents between" are, in this case: ` '{tags-item}'`. Note the inclusion of spaces.
+"Documents between" are, in this case: ` '{tags.item}'`. Note the inclusion of spaces.
 Likewise, it can contain line breaks, HTML tags, or anything else in between.
 
 Now suppose we convert the following markdown:
@@ -398,14 +398,14 @@ Again, documents between `{foreach:tags}` and `{/}` are output repeatedly, so yo
 ```html
 <ul>
   {foreach:tags}
-  <li>{tags-item}</li>
+  <li>{tags.item}</li>
   {/}
 </ul>
 ```
 
-The `{tags-item}` inserted between the tags is a keyword that can refer to each repeated value.
-It is specified in the form `{<keyword>-item}`. `-item` is fixed.
-Similarly, `{<keyword>-index}` gives you a number that starts at 0 and counts from 1,2,3...
+The `{tags.item}` inserted between the tags is a keyword that can refer to each repeated value.
+It is specified in the form `{<keyword>.item}`. `.item` is fixed.
+Similarly, `{<keyword>.index}` gives you a number that starts at 0 and counts from 1,2,3...
 
 In addition, you can nest different keywords.
 For example, for each category and you can enumerate multiple tags.

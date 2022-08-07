@@ -63,9 +63,12 @@ internal static class Utilities
         (value, parameter) switch
         {
             (null, _) => null,
+            (IEntry entry, _) => FormatValue(entry.ImplicitValue, parameter, fp),
             (IFormattable formattable, string format) =>
                 formattable.ToString(format, fp),
             (string str, _) => str,
+            (IEnumerableEntry enumerable, _) =>
+                string.Join(",", enumerable.GetEntries().Select(v => FormatValue(v, parameter, fp))),
             (IEnumerable enumerable, _) =>
                 string.Join(",", enumerable.Cast<object?>().Select(v => FormatValue(v, parameter, fp))),
             _ => value.ToString(),
@@ -78,6 +81,7 @@ internal static class Utilities
         {
             null => empty,
             string str => new[] { str },
+            IEnumerableEntry enumerable => enumerable.GetEntries(),
             IEnumerable enumerable => enumerable.Cast<object?>(),
             _ => new[] { value },
         };

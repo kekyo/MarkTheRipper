@@ -15,16 +15,18 @@ namespace MarkTheRipper;
 
 public interface IEntry
 {
+    object? ImplicitValue { get; }
+
     object? GetProperty(string keyName);
 }
 
-public interface IEnumerableEntry<T>
+public interface IEnumerableEntry
 {
-    IEnumerable<T> GetEntries();
+    IEnumerable<object> GetEntries();
 }
 
 public sealed class TagEntry :
-    IEntry, IEnumerableEntry<MarkdownEntry>
+    IEntry, IEnumerableEntry
 {
     public readonly string Name;
     public readonly MarkdownEntry[] Entries;
@@ -36,6 +38,9 @@ public sealed class TagEntry :
         this.Entries = markdownEntries;
     }
 
+    object? IEntry.ImplicitValue =>
+        this.Name;
+
     public object? GetProperty(string keyName) =>
         keyName switch
         {
@@ -43,12 +48,12 @@ public sealed class TagEntry :
             _ => null,
         };
 
-    public IEnumerable<MarkdownEntry> GetEntries() =>
+    public IEnumerable<object> GetEntries() =>
         this.Entries;
 }
 
 public sealed class CategoryEntry :
-    IEntry, IEnumerableEntry<MarkdownEntry>
+    IEntry, IEnumerableEntry
 {
     public readonly string Name;
     public readonly IReadOnlyDictionary<string, CategoryEntry> Children;
@@ -64,6 +69,9 @@ public sealed class CategoryEntry :
         this.Entries = markdownEntries;
     }
 
+    object? IEntry.ImplicitValue =>
+        this.Name;
+
     public object? GetProperty(string keyName) =>
         keyName switch
         {
@@ -72,7 +80,7 @@ public sealed class CategoryEntry :
             _ => null,
         };
 
-    public IEnumerable<MarkdownEntry> GetEntries() =>
+    public IEnumerable<object> GetEntries() =>
         this.Entries;
 }
 
@@ -93,6 +101,10 @@ public sealed class MarkdownEntry :
         this.Metadata = metadata;
         this.ContentBasePath = contentBasePath;
     }
+
+    object? IEntry.ImplicitValue =>
+        this.Metadata.TryGetValue("title", out var value) ?
+            value : null;
 
     public object? GetProperty(string keyName) =>
         keyName switch

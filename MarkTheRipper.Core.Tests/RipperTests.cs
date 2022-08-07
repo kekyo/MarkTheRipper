@@ -171,7 +171,7 @@ This is test contents.
   <body>
     <ul>
 {foreach:tags}
-        <li>{tags-item}</li>
+        <li>{tags.item}</li>
 {/}
     </ul>
 {contentBody}</body>
@@ -205,7 +205,7 @@ This is test contents.
   <body>
     <ul>
 {foreach:tags}
-        <li>{tags-index}</li>
+        <li>{tags.index}</li>
 {/}
     </ul>
 {contentBody}</body>
@@ -240,10 +240,10 @@ This is test contents.
   </head>
   <body>
 {foreach:authors}
-    <h3>{authors-item}</h3>
+    <h3>{authors.item}</h3>
     <ul>
 {foreach:tags}
-        <li>{authors-item}: {tags-item} [{authors-index}-{tags-index}]</li>
+        <li>{authors.item}: {tags.item} [{authors.index}-{tags.index}]</li>
 {/}
     </ul>
 {/}
@@ -314,7 +314,7 @@ This is test contents.
   </head>
   <body>
     {foreach:category}
-      <h1>Category: {category-item}</h1>
+      <h1>Category: {category.item}</h1>
     {/}
     {contentBody}
   </body>

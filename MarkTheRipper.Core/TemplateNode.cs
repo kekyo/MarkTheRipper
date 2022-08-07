@@ -141,9 +141,9 @@ internal sealed class ForEachNode : TemplateNode
             foreach (var iterationValue in enumerable)
             {
                 object? GetMetadata(string keyName) =>
-                    keyName == (this.keyName + "-item") ?
+                    keyName == (this.keyName + ".item") ?
                         iterationValue :
-                        keyName == (this.keyName + "-index") ?
+                        keyName == (this.keyName + ".index") ?
                             index :
                             getMetadata(keyName);
 
