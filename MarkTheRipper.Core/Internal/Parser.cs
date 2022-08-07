@@ -219,7 +219,7 @@ internal static class Parser
             if (line == null)
             {
                 throw new FormatException(
-                    $"Could not find any markdown header: Path={relativeContentPath}");
+                    $"Could not find any markdown markdownEntry: Path={relativeContentPath}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -242,7 +242,7 @@ internal static class Parser
             if (line == null)
             {
                 throw new FormatException(
-                    $"Could not find any markdown header: Path={relativeContentPath}");
+                    $"Could not find any markdown markdownEntry: Path={relativeContentPath}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -266,7 +266,7 @@ internal static class Parser
                     else
                     {
                         throw new FormatException(
-                            $"Could not find any markdown header: Path={relativeContentPath}");
+                            $"Could not find any markdown markdownEntry: Path={relativeContentPath}");
                     }
                 }
             }

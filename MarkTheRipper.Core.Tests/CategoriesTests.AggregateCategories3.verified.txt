@@ -1,11 +1,11 @@
 ﻿{
-  CategoryName: ,
+  Name: ,
   Children: {
     cat1: {
-      CategoryName: cat1,
-      Headers: [
+      Name: cat1,
+      Entries: [
         {
-          RelativeContentPath: content1,
+          RelativePath: content1,
           Metadata: {
             category: [
               cat1
@@ -13,7 +13,7 @@
           }
         },
         {
-          RelativeContentPath: content2,
+          RelativePath: content2,
           Metadata: {
             category: [
               cat1

@@ -67,16 +67,16 @@ public sealed class BulkRipper
 
     private async ValueTask<(string storeToRelativePath, string appliedTemplateName)> RipOffRelativeContentAsync(
         StoreToPathElements storeToPathElements,
-        MarkdownHeader header,
+        MarkdownEntry markdownEntry,
         CancellationToken ct)
     {
         object? GetMetadata(string keyName) =>
-            header.GetMetadata(keyName) is { } value ?
+            markdownEntry.GetProperty(keyName) is { } value ?
                 value :
                 this.getMetadata(keyName);
 
         var appliedTemplateName = await this.ripper.RenderContentAsync(
-            header, GetMetadata, storeToPathElements.ExplicitPath, ct).
+            markdownEntry, GetMetadata, storeToPathElements.ExplicitPath, ct).
             ConfigureAwait(false);
 
         return (storeToPathElements.RelativePath, appliedTemplateName);
@@ -189,17 +189,17 @@ public sealed class BulkRipper
             ToArray();
 
 #if DEBUG
-        var headers = new List<MarkdownHeader>();
+        var markdownEntries = new List<MarkdownEntry>();
         foreach (var candidate in candidates.
             Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md"))
         {
-            var header = await ripper.ParseMarkdownHeaderAsync(
+            var markdownEntry = await ripper.ParseMarkdownHeaderAsync(
                 candidate.contentsBasePath, candidate.relativeContentPath, ct).
                 ConfigureAwait(false);
-            headers.Add(header);
+            markdownEntries.Add(markdownEntry);
         }
 #else
-        var headers = await Task.WhenAll(
+        var markdownEntries = await Task.WhenAll(
             candidates.
             Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md").
             Select(candidate =>
@@ -209,11 +209,11 @@ public sealed class BulkRipper
             ConfigureAwait(false);
 #endif
 
-        var headerByCandidate = headers.ToDictionary(
-            header => (header.ContentBasePath, header.RelativeContentPath));
+        var headerByCandidate = markdownEntries.ToDictionary(
+            markdownEntry => (markdownEntry.ContentBasePath, markdownEntry.RelativePath));
 
-        var tags = EntryAggregator.AggregateTags(headers);
-        var categories = EntryAggregator.AggregateCategories(headers);
+        var tags = EntryAggregator.AggregateTags(markdownEntries);
+        var categories = EntryAggregator.AggregateCategories(markdownEntries);
 
         async ValueTask RunOnceAsync(string contentBasePath, string relativeContentPath)
         {
@@ -224,11 +224,11 @@ public sealed class BulkRipper
                 ConfigureAwait(false);
 
             if (headerByCandidate.TryGetValue(
-                (contentBasePath, relativeContentPath), out var header))
+                (contentBasePath, relativeContentPath), out var markdownEntry))
             {
                 var (relativeGeneratedPath, appliedTemplateName) =
                     await this.RipOffRelativeContentAsync(
-                        storeToPathElements, header, ct).
+                        storeToPathElements, markdownEntry, ct).
                         ConfigureAwait(false);
 
                 await generated(

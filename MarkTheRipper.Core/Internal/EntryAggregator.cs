@@ -16,54 +16,56 @@ namespace MarkTheRipper.Internal;
 internal static class EntryAggregator
 {
     public static Dictionary<string, TagEntry> AggregateTags(
-        IEnumerable<MarkdownHeader> parsedHeaders) =>
-        parsedHeaders.SelectMany(header =>
-             header.GetMetadata("tags") is { } tagsValue ?
+        IEnumerable<MarkdownEntry> markdownEntries) =>
+        markdownEntries.SelectMany(markdownEntry =>
+             markdownEntry.GetProperty("tags") is { } tagsValue ?
                 Utilities.EnumerateValue(tagsValue).
                 Select(tagName =>
                     (tagName: Utilities.FormatValue(tagName, null, CultureInfo.InvariantCulture)!,
-                     header)).
+                     markdownEntry)).
                 Where(entry => !string.IsNullOrWhiteSpace(entry.tagName)) :
-                Utilities.Empty<(string, MarkdownHeader)>()).
+                Utilities.Empty<(string, MarkdownEntry)>()).
             GroupBy(entry => entry.tagName).
             ToDictionary(
                 g => g.Key,
                 g => new TagEntry(
                     g.Key,
-                    g.Select(entry => entry.header).
-                    OrderBy(header => header, MarkdownHeaderDateComparer.Instance).
+                    g.Select(entry => entry.markdownEntry).
+                    OrderBy(markdownEntry => markdownEntry, MarkdownHeaderDateComparer.Instance).
                     ToArray()));
 
     private static CategoryEntry AggregateCategory(
-        string categoryName, IEnumerable<MarkdownHeader> headers, int levelIndex)
+        string categoryName,
+        IEnumerable<MarkdownEntry> markdownEntries,
+        int levelIndex)
     {
-        var categoryLists = headers.
-            Select(header =>
-                (header,
-                 categoryList: Utilities.EnumerateValue(header.GetMetadata("category")).
+        var categoryLists = markdownEntries.
+            Select(markdownEntry =>
+                (markdownEntry,
+                 categoryList: Utilities.EnumerateValue(markdownEntry.GetProperty("category")).
                     Select(categoryName => Utilities.FormatValue(categoryName, null, CultureInfo.InvariantCulture)!).
                     ToArray())).
             ToArray();
 
-        var childEntries = categoryLists.
+        var childCategoryEntries = categoryLists.
             Where(entry => entry.categoryList.Length > levelIndex).
             GroupBy(entry => entry.categoryList[levelIndex]).
             ToDictionary(
                 g => g.Key!,
                 g => AggregateCategory(
                     g.Key!,
-                    g.Select(entry => entry.header),
+                    g.Select(entry => entry.markdownEntry),
                     levelIndex + 1));
 
-        var childHeaders = categoryLists.
+        var childEntries = categoryLists.
             Where(entry => entry.categoryList.Length <= levelIndex).
-            Select(entry => entry.header).
+            Select(entry => entry.markdownEntry).
             ToArray();
 
-        return new(categoryName, childEntries, childHeaders);
+        return new(categoryName, childCategoryEntries, childEntries);
     }
 
     public static CategoryEntry AggregateCategories(
-        IEnumerable<MarkdownHeader> headers) =>
-        AggregateCategory("", headers, 0);
+        IEnumerable<MarkdownEntry> markdownEntries) =>
+        AggregateCategory("", markdownEntries, 0);
 }

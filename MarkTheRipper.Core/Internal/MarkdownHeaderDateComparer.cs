@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace MarkTheRipper.Internal;
 
 internal sealed class MarkdownHeaderDateComparer :
-    IComparer<MarkdownHeader>
+    IComparer<MarkdownEntry>
 {
     public static readonly MarkdownHeaderDateComparer Instance =
         new MarkdownHeaderDateComparer();
@@ -22,13 +22,13 @@ internal sealed class MarkdownHeaderDateComparer :
     {
     }
 
-    private static DateTimeOffset GetValue(MarkdownHeader? header) =>
-        header is { } &&
-        header.GetMetadata("date") is DateTimeOffset dto ?
+    private static DateTimeOffset GetValue(MarkdownEntry? markdownEntry) =>
+        markdownEntry is { } &&
+        markdownEntry.GetProperty("date") is DateTimeOffset dto ?
             dto :
             DateTimeOffset.MaxValue;
 
-    public int Compare(MarkdownHeader? x, MarkdownHeader? y)
+    public int Compare(MarkdownEntry? x, MarkdownEntry? y)
     {
         var xd = GetValue(x);
         var yd = GetValue(y);

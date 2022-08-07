@@ -23,7 +23,7 @@ public sealed class TagsTests
     [Test]
     public Task AggregateTags1()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
@@ -42,7 +42,7 @@ public sealed class TagsTests
     [Test]
     public Task AggregateTags2()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
@@ -61,14 +61,14 @@ public sealed class TagsTests
     [Test]
     public Task AggregateTags3()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
@@ -87,14 +87,14 @@ public sealed class TagsTests
     [Test]
     public Task AggregateTags4()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
@@ -113,21 +113,21 @@ public sealed class TagsTests
     [Test]
     public Task AggregateTags5()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
                 { "tags", new[] { "tag1", "tag2", } },
             },
             null!);
-        var mh3 = new MarkdownHeader(
+        var mh3 = new MarkdownEntry(
             "content3",
             new Dictionary<string, object?>()
             {
@@ -146,7 +146,7 @@ public sealed class TagsTests
     [Test]
     public Task AggregateTags6()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {

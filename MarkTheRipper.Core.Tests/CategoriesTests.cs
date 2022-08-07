@@ -23,7 +23,7 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories1()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
@@ -42,7 +42,7 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories2()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
@@ -61,14 +61,14 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories3()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
@@ -87,14 +87,14 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories4()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
@@ -113,21 +113,21 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories5()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", "cat2" } },
             },
             null!);
-        var mh3 = new MarkdownHeader(
+        var mh3 = new MarkdownEntry(
             "content3",
             new Dictionary<string, object?>()
             {
@@ -146,7 +146,7 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories6()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
@@ -165,21 +165,21 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories7()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", "cat2" } },
             },
             null!);
-        var mh3 = new MarkdownHeader(
+        var mh3 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
@@ -198,14 +198,14 @@ public sealed class CategoriesTests
     [Test]
     public Task AggregateCategories8()
     {
-        var mh1 = new MarkdownHeader(
+        var mh1 = new MarkdownEntry(
             "content1",
             new Dictionary<string, object?>()
             {
                 { "category", new[] { "cat1", "cat2", } },
             },
             null!);
-        var mh2 = new MarkdownHeader(
+        var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {

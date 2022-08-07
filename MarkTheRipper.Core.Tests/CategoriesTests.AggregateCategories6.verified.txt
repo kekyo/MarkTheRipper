@@ -1,8 +1,8 @@
 ﻿{
-  CategoryName: ,
-  Headers: [
+  Name: ,
+  Entries: [
     {
-      RelativeContentPath: content1,
+      RelativePath: content1,
       Metadata: {
         category: []
       }

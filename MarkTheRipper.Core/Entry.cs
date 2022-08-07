@@ -7,44 +7,113 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MarkTheRipper;
 
-public sealed class TagEntry :
-    IEnumerable<MarkdownHeader>
+public interface IEntry
 {
-    public readonly string TagName;
-    public readonly MarkdownHeader[] Headers;
-
-    public TagEntry(
-        string tagName, MarkdownHeader[] headers)
-    {
-        this.TagName = tagName;
-        this.Headers = headers;
-    }
-
-    public IEnumerator<MarkdownHeader> GetEnumerator() =>
-        ((IEnumerable<MarkdownHeader>)this.Headers).GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator() =>
-        this.GetEnumerator();
+    object? GetProperty(string keyName);
 }
 
-public sealed class CategoryEntry
+public interface IEnumerableEntry<T>
 {
-    public readonly string CategoryName;
+    IEnumerable<T> GetEntries();
+}
+
+public sealed class TagEntry :
+    IEntry, IEnumerableEntry<MarkdownEntry>
+{
+    public readonly string Name;
+    public readonly MarkdownEntry[] Entries;
+
+    public TagEntry(
+        string name, MarkdownEntry[] markdownEntries)
+    {
+        this.Name = name;
+        this.Entries = markdownEntries;
+    }
+
+    public object? GetProperty(string keyName) =>
+        keyName switch
+        {
+            "name" => this.Name,
+            _ => null,
+        };
+
+    public IEnumerable<MarkdownEntry> GetEntries() =>
+        this.Entries;
+}
+
+public sealed class CategoryEntry :
+    IEntry, IEnumerableEntry<MarkdownEntry>
+{
+    public readonly string Name;
     public readonly IReadOnlyDictionary<string, CategoryEntry> Children;
-    public readonly MarkdownHeader[] Headers;
+    public readonly MarkdownEntry[] Entries;
 
     public CategoryEntry(
-        string categoryName,
+        string name,
         IReadOnlyDictionary<string, CategoryEntry> children,
-        MarkdownHeader[] headers)
+        MarkdownEntry[] markdownEntries)
     {
-        this.CategoryName = categoryName;
+        this.Name = name;
         this.Children = children;
-        this.Headers = headers;
+        this.Entries = markdownEntries;
     }
+
+    public object? GetProperty(string keyName) =>
+        keyName switch
+        {
+            "name" => this.Name,
+            "children" => this.Children,
+            _ => null,
+        };
+
+    public IEnumerable<MarkdownEntry> GetEntries() =>
+        this.Entries;
+}
+
+public sealed class MarkdownEntry :
+    IEntry, IEquatable<MarkdownEntry>
+{
+    public readonly string RelativePath;
+    public readonly IReadOnlyDictionary<string, object?> Metadata;
+
+    internal readonly string ContentBasePath;
+
+    public MarkdownEntry(
+        string relativePath,
+        IReadOnlyDictionary<string, object?> metadata,
+        string contentBasePath)
+    {
+        this.RelativePath = relativePath;
+        this.Metadata = metadata;
+        this.ContentBasePath = contentBasePath;
+    }
+
+    public object? GetProperty(string keyName) =>
+        keyName switch
+        {
+            "relativePath" => this.RelativePath,
+            _ => this.Metadata.TryGetValue(keyName, out var value) ?
+                value : null,
+        };
+
+    public bool Equals(MarkdownEntry? other) =>
+        other is { } rhs &&
+        this.RelativePath.Equals(rhs.RelativePath) &&
+        this.Metadata.
+            OrderBy(m => m.Key).
+            SequenceEqual(rhs.Metadata.OrderBy(m => m.Key));
+
+    public override bool Equals(object? obj) =>
+        obj is MarkdownEntry rhs && this.Equals(rhs);
+
+    public override int GetHashCode() =>
+        this.Metadata.Aggregate(
+            this.RelativePath.GetHashCode(),
+            (agg, v) => agg ^ v.Key.GetHashCode() ^ v.Value?.GetHashCode() ?? 0);
 }

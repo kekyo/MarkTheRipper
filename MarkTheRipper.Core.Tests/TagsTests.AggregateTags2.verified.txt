@@ -1,24 +1,30 @@
 ﻿{
-  tag1: [
-    {
-      RelativeContentPath: content1,
-      Metadata: {
-        tags: [
-          tag1,
-          tag2
-        ]
+  tag1: {
+    Name: tag1,
+    Entries: [
+      {
+        RelativePath: content1,
+        Metadata: {
+          tags: [
+            tag1,
+            tag2
+          ]
+        }
       }
-    }
-  ],
-  tag2: [
-    {
-      RelativeContentPath: content1,
-      Metadata: {
-        tags: [
-          tag1,
-          tag2
-        ]
+    ]
+  },
+  tag2: {
+    Name: tag2,
+    Entries: [
+      {
+        RelativePath: content1,
+        Metadata: {
+          tags: [
+            tag1,
+            tag2
+          ]
+        }
       }
-    }
-  ]
+    ]
+  }
 }

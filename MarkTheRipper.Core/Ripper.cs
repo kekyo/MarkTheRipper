@@ -39,14 +39,14 @@ public sealed class Ripper
         Parser.ParseTemplateAsync(templatePath, new StringReader(templateText), ct);
 
     /// <summary>
-    /// Parse markdown header.
+    /// Parse markdown markdownEntry.
     /// </summary>
     /// <param name="contentBasePathHint">Markdown content base path (Hint)</param>
     /// <param name="relativeContentPath">Markdown content path</param>
     /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
-    public async ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+    public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentBasePathHint,
         string relativeContentPath,
         TextReader markdownReader,
@@ -72,13 +72,13 @@ public sealed class Ripper
     }
 
     /// <summary>
-    /// Parse markdown header.
+    /// Parse markdown markdownEntry.
     /// </summary>
     /// <param name="contentsBasePath">Markdown content path</param>
     /// <param name="relativeContentPath">Markdown content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
-    public async ValueTask<MarkdownHeader> ParseMarkdownHeaderAsync(
+    public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentsBasePath,
         string relativeContentPath,
         CancellationToken ct)
@@ -98,14 +98,14 @@ public sealed class Ripper
     /// <summary>
     /// Render markdown content.
     /// </summary>
-    /// <param name="markdownHeader">Parsed markdown header</param>
+    /// <param name="markdownEntry">Parsed markdown markdownEntry</param>
     /// <param name="markdownReader">Markdown content path</param>
     /// <param name="getMetadata">Metadata getter</param>
     /// <param name="outputHtmlWriter">Generated html content writer</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
-        MarkdownHeader markdownHeader,
+        MarkdownEntry markdownEntry,
         TextReader markdownReader,
         Func<string, object?> getMetadata,
         TextWriter outputHtmlWriter,
@@ -121,7 +121,7 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var fp = (markdownHeader.GetMetadata("lang") is { } langValue ?
+        var fp = (markdownEntry.GetProperty("lang") is { } langValue ?
             langValue : getMetadata("lang")) switch
         {
             IFormatProvider v => v,
@@ -132,7 +132,7 @@ public sealed class Ripper
         object? GetMetadata(string keyName) =>
             keyName == "contentBody" ?
                 contentBody :
-                markdownHeader.GetMetadata(keyName) is { } value ?
+                markdownEntry.GetProperty(keyName) is { } value ?
                     value :
                     getMetadata(keyName);
 
@@ -158,19 +158,19 @@ public sealed class Ripper
     /// <summary>
     /// Render markdown content.
     /// </summary>
-    /// <param name="markdownHeader">Parsed markdown header</param>
+    /// <param name="markdownEntry">Parsed markdown markdownEntry</param>
     /// <param name="getMetadata">Metadata getter</param>
     /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
-        MarkdownHeader markdownHeader,
+        MarkdownEntry markdownEntry,
         Func<string, object?> getMetadata,
         string outputHtmlPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
-            Path.Combine(markdownHeader.ContentBasePath, markdownHeader.RelativeContentPath),
+            Path.Combine(markdownEntry.ContentBasePath, markdownEntry.RelativePath),
             FileMode.Open, FileAccess.Read, FileShare.Read,
             65536, true);
         using var markdownReader = new StreamReader(
@@ -184,7 +184,7 @@ public sealed class Ripper
             outputHtmlStream, Encoding.UTF8);
 
         var appliedTemplateName = await this.RenderContentAsync(
-            markdownHeader, markdownReader, getMetadata,
+            markdownEntry, markdownReader, getMetadata,
             outputHtmlWriter, ct).
             ConfigureAwait(false);
 
