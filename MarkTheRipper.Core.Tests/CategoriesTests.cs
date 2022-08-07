@@ -194,4 +194,30 @@ public sealed class CategoriesTests
 
         return Verifier.Verify(actual);
     }
+
+    [Test]
+    public Task AggregateCategories8()
+    {
+        var mh1 = new MarkdownHeader(
+            "content1",
+            new Dictionary<string, object?>()
+            {
+                { "category", new[] { "cat1", "cat2", } },
+            },
+            null!);
+        var mh2 = new MarkdownHeader(
+            "content2",
+            new Dictionary<string, object?>()
+            {
+                { "category", new[] { "cat3", "cat2" } },
+            },
+            null!);
+
+        var actual = EntryAggregator.AggregateCategories(new[]
+        {
+            mh1, mh2,
+        });
+
+        return Verifier.Verify(actual);
+    }
 }
