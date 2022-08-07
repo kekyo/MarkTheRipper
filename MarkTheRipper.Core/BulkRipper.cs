@@ -277,7 +277,7 @@ public sealed class BulkRipper
         }
 #else
         await Task.WhenAll(candidates.
-            Select(candidate => RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.path))).
+            Select(candidate => RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.relativeContentPath))).
             ConfigureAwait(false);
 #endif
 
