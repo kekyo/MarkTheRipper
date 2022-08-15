@@ -26,9 +26,9 @@ public sealed class TagsTests
     public Task AggregateTags1()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
@@ -47,9 +47,9 @@ public sealed class TagsTests
     public Task AggregateTags2()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                     new PartialTagEntry("tag2"),
@@ -69,18 +69,18 @@ public sealed class TagsTests
     public Task AggregateTags3()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
@@ -99,18 +99,18 @@ public sealed class TagsTests
     public Task AggregateTags4()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                     new PartialTagEntry("tag2"),
@@ -130,18 +130,18 @@ public sealed class TagsTests
     public Task AggregateTags5()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                     new PartialTagEntry("tag2"),
@@ -149,9 +149,9 @@ public sealed class TagsTests
             },
             null!);
         var mh3 = new MarkdownEntry(
-            "content3",
             new Dictionary<string, object?>()
             {
+                { "path", "content3" },
                 { "tags", new[] {
                     new PartialTagEntry("tag3"),
                 } },
@@ -170,9 +170,9 @@ public sealed class TagsTests
     public Task AggregateTags6()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
             },
             null!);
 

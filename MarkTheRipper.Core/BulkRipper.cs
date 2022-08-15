@@ -197,14 +197,14 @@ public sealed class BulkRipper
             ConfigureAwait(false);
 #endif
 
-        var headerByCandidate = markdownEntries.ToDictionary(
+        var entriesByCandidate = markdownEntries.ToDictionary(
             markdownEntry => (markdownEntry.contentBasePath, markdownEntry.RelativeContentPath));
 
         var tagList = EntryAggregator.AggregateTags(markdownEntries, metadata);
         var rootCategory = EntryAggregator.AggregateCategories(markdownEntries, metadata);
 
         var mc = metadata.Spawn();
-        mc.Set("tagList", tagList);
+        mc.Set("tagList", tagList.Values.ToArray());
         mc.Set("rootCategory", rootCategory);
 
         async ValueTask RunOnceAsync(string contentBasePath, string relativeContentPath)
@@ -215,7 +215,7 @@ public sealed class BulkRipper
             await dc!.CreateIfNotExistAsync(storeToPathElements.BasePath, ct).
                 ConfigureAwait(false);
 
-            if (headerByCandidate.TryGetValue(
+            if (entriesByCandidate.TryGetValue(
                 (contentBasePath, relativeContentPath), out var markdownEntry))
             {
                 var appliedTemplateName = await this.ripper.RenderContentAsync(

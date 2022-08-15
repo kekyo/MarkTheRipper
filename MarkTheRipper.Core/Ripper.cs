@@ -27,14 +27,6 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    private static readonly RootTemplateNode fallbackTemplate =
-        new RootTemplateNode("fallback", "", new ITemplateNode[]
-        {
-            new TextNode("<!DOCTYPE html>\n<!-- Template was not found. -->\n<html>\n<body>\n"),
-            new ReplacerNode("contentBody", null),
-            new TextNode("</body>\n</html>"),
-        });
-
     public static ValueTask<RootTemplateNode> ParseTemplateAsync(
         string templateName, TextReader template, CancellationToken ct) =>
         Parser.ParseTemplateAsync(templateName, template, ct);
@@ -61,7 +53,7 @@ public sealed class Ripper
             relativeContentPath, markdownReader, ct).
             ConfigureAwait(false);
 
-        return new(relativeContentPath, metadata, contentBasePathHint);
+        return new(metadata, contentBasePathHint);
     }
 
     /// <summary>
@@ -135,9 +127,27 @@ public sealed class Ripper
                 {
                     return template;
                 }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Template `{templateName}` was not found.");
+                }
+            }
+            else if (tl.TryGetValue("page", out var template2))
+            {
+                return template2;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Template `page` was not found.");
             }
         }
-        return fallbackTemplate;
+        else
+        {
+            throw new InvalidOperationException(
+                "Template list was not found.");
+        }
     }
 
     /// <summary>

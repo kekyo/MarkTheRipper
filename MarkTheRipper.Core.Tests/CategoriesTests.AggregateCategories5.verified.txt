@@ -8,14 +8,14 @@
           Name: cat2,
           Entries: [
             {
-              RelativeContentPath: content2,
               Metadata: {
                 category: {
                   Name: cat2,
                   Parent: {
                     Name: cat1
                   }
-                }
+                },
+                path: content2
               }
             }
           ]
@@ -23,11 +23,11 @@
       },
       Entries: [
         {
-          RelativeContentPath: content1,
           Metadata: {
             category: {
               Name: cat1
-            }
+            },
+            path: content1
           }
         }
       ]
@@ -36,11 +36,11 @@
       Name: cat3,
       Entries: [
         {
-          RelativeContentPath: content3,
           Metadata: {
             category: {
               Name: cat3
-            }
+            },
+            path: content3
           }
         }
       ]

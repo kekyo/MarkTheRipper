@@ -3,8 +3,8 @@
     Name: tag1,
     Entries: [
       {
-        RelativeContentPath: content1,
         Metadata: {
+          path: content1,
           tags: [
             {
               Name: tag1
@@ -21,8 +21,8 @@
     Name: tag2,
     Entries: [
       {
-        RelativeContentPath: content1,
         Metadata: {
+          path: content1,
           tags: [
             {
               Name: tag1

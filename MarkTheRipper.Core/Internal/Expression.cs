@@ -35,8 +35,6 @@ internal static class Expression
                     _ => CultureInfo.CurrentCulture,
                 }),
             (string str, _) => str,
-            (IEnumerableEntry enumerable, _) =>
-                string.Join(",", enumerable.GetChildren(context).Select(v => FormatValue(v, parameter, context))),
             (IEnumerable enumerable, _) =>
                 string.Join(",", enumerable.Cast<object?>().Select(v => FormatValue(v, parameter, context))),
             _ => value.ToString(),
@@ -48,7 +46,6 @@ internal static class Expression
         {
             null => empty,
             string str => new[] { str },
-            IEnumerableEntry enumerable => enumerable.GetChildren(context),
             IEnumerable enumerable => enumerable.Cast<object?>(),
             _ => new[] { value },
         };

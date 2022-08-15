@@ -26,9 +26,9 @@ public sealed class CategoriesTests
     public Task AggregateCategories1()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat1", null)
                 },
@@ -47,9 +47,9 @@ public sealed class CategoriesTests
     public Task AggregateCategories2()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat1", null))
@@ -69,18 +69,18 @@ public sealed class CategoriesTests
     public Task AggregateCategories3()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat1", null)
                 },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat1", null)
                 },
@@ -99,18 +99,18 @@ public sealed class CategoriesTests
     public Task AggregateCategories4()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat1", null)
                 },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat1", null))
@@ -130,18 +130,18 @@ public sealed class CategoriesTests
     public Task AggregateCategories5()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat1", null)
                 },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat1", null))
@@ -149,9 +149,9 @@ public sealed class CategoriesTests
             },
             null!);
         var mh3 = new MarkdownEntry(
-            "content3",
             new Dictionary<string, object?>()
             {
+                { "path", "content3" },
                 { "category",
                     new PartialCategoryEntry("cat3", null)
                 },
@@ -170,8 +170,10 @@ public sealed class CategoriesTests
     public Task AggregateCategories6()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
-            new Dictionary<string, object?>(),
+            new Dictionary<string, object?>
+            {
+                { "path", "content1" },
+            },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
@@ -186,18 +188,18 @@ public sealed class CategoriesTests
     public Task AggregateCategories7()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat1", null)
                 },
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat1", null))
@@ -205,9 +207,9 @@ public sealed class CategoriesTests
             },
             null!);
         var mh3 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat1", null))
@@ -227,9 +229,9 @@ public sealed class CategoriesTests
     public Task AggregateCategories8()
     {
         var mh1 = new MarkdownEntry(
-            "content1",
             new Dictionary<string, object?>()
             {
+                { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat1", null))
@@ -237,9 +239,9 @@ public sealed class CategoriesTests
             },
             null!);
         var mh2 = new MarkdownEntry(
-            "content2",
             new Dictionary<string, object?>()
             {
+                { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
                     new PartialCategoryEntry("cat3", null))

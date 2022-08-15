@@ -17,8 +17,3 @@ public interface IMetadataEntry
 
     object? GetProperty(string keyName, MetadataContext context);
 }
-
-public interface IEnumerableEntry
-{
-    IEnumerable<object> GetChildren(MetadataContext context);
-}

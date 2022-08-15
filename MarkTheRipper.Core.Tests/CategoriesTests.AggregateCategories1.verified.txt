@@ -5,11 +5,11 @@
       Name: cat1,
       Entries: [
         {
-          RelativeContentPath: content1,
           Metadata: {
             category: {
               Name: cat1
-            }
+            },
+            path: content1
           }
         }
       ]

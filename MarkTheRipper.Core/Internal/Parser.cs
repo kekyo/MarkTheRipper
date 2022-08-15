@@ -319,7 +319,10 @@ internal static class Parser
             }
         }
 
-        var markdownMetadata = new Dictionary<string, object?>();
+        var markdownMetadata = new Dictionary<string, object?>
+        {
+            { "path", relativeContentPathHint },  // TODO:
+        };
 
         // `title: Hello world`
         while (true)

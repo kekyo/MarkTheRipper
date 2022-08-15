@@ -15,7 +15,7 @@ using System.Linq;
 namespace MarkTheRipper.Metadata;
 
 internal sealed class PartialCategoryEntry :
-    IMetadataEntry, IEnumerableEntry
+    IMetadataEntry
 {
     public readonly string Name;
     public readonly PartialCategoryEntry? Parent;
@@ -53,10 +53,6 @@ internal sealed class PartialCategoryEntry :
             "path" => this.Path,
             _ => null,
         };
-
-    public IEnumerable<object> GetChildren(MetadataContext context) =>
-        this.GetRealCategoryEntry(context)?.Entries ??
-        Utilities.Empty<object>();
 
     public override string ToString() =>
         $"PartialCategory: {string.Join("/", this.Path.Select(pc => pc.Name))}";

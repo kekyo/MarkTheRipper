@@ -7,13 +7,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
 using System.Collections.Generic;
 
 namespace MarkTheRipper.Metadata;
 
 internal sealed class PartialTagEntry :
-    IMetadataEntry, IEnumerableEntry
+    IMetadataEntry
 {
     public readonly string Name;
 
@@ -35,10 +34,6 @@ internal sealed class PartialTagEntry :
             "name" => this.Name,
             _ => null,
         };
-
-    public IEnumerable<object> GetChildren(MetadataContext context) =>
-        this.GetRealTagEntry(context)?.Entries ??
-        Utilities.Empty<object>();
 
     public override string ToString() =>
         $"PartialTag: {this.Name}";

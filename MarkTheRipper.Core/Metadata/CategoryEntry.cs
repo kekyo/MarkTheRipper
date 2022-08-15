@@ -14,7 +14,7 @@ using System.Linq;
 namespace MarkTheRipper.Metadata;
 
 public sealed class CategoryEntry :
-    IMetadataEntry, IEnumerableEntry
+    IMetadataEntry
 {
     public readonly string Name;
     public readonly IReadOnlyDictionary<string, CategoryEntry> Children;
@@ -50,15 +50,12 @@ public sealed class CategoryEntry :
         keyName switch
         {
             "name" => this.Name,
-            "children" => this.Children,
+            "children" => this.Children.Values,
             "entries" => this.Entries,
             "parent" => this.parent,
             "path" => this.Path,
             _ => null,
         };
-
-    public IEnumerable<object> GetChildren(MetadataContext context) =>
-        this.Entries;
 
     public override string ToString() =>
         $"Category: {string.Join("/", this.Path.Select(c => c.Name))}";

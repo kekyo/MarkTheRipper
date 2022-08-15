@@ -16,36 +16,33 @@ namespace MarkTheRipper.Metadata;
 public sealed class MarkdownEntry :
     IMetadataEntry, IEquatable<MarkdownEntry>
 {
-    public readonly string RelativeContentPath;
     public readonly IReadOnlyDictionary<string, object?> Metadata;
 
     internal readonly string contentBasePath;
 
     public MarkdownEntry(
-        string relativeContentPath,
         Dictionary<string, object?> metadata,
         string contentBasePath)
     {
-        this.RelativeContentPath = relativeContentPath;
         this.Metadata = metadata;
         this.contentBasePath = contentBasePath;
     }
+
+    internal string RelativeContentPath =>
+        this.Metadata.TryGetValue("path", out var value) &&
+            value is string path ?
+            path : "(unknown)";
 
     object? IMetadataEntry.ImplicitValue =>
         this.Metadata.TryGetValue("title", out var value) ?
             value : null;
 
     public object? GetProperty(string keyName, MetadataContext context) =>
-        keyName switch
-        {
-            "relativePath" => this.RelativeContentPath,
-            _ => this.Metadata.TryGetValue(keyName, out var value) ?
-                value : null,
-        };
+        this.Metadata.TryGetValue(keyName, out var value) ?
+            value : null;
 
     public bool Equals(MarkdownEntry? other) =>
         other is { } rhs &&
-        this.RelativeContentPath.Equals(rhs.RelativeContentPath) &&
         this.Metadata.
             OrderBy(m => m.Key).
             SequenceEqual(rhs.Metadata.OrderBy(m => m.Key));
@@ -54,7 +51,6 @@ public sealed class MarkdownEntry :
         obj is MarkdownEntry rhs && Equals(rhs);
 
     public override int GetHashCode() =>
-        this.Metadata.Aggregate(
-            this.RelativeContentPath.GetHashCode(),
+        this.Metadata.Aggregate(0, 
             (agg, v) => agg ^ v.Key.GetHashCode() ^ v.Value?.GetHashCode() ?? 0);
 }

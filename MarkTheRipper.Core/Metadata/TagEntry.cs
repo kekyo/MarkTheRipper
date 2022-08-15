@@ -8,12 +8,11 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
-using System.Collections.Generic;
 
 namespace MarkTheRipper.Metadata;
 
 public sealed class TagEntry :
-    IMetadataEntry, IEnumerableEntry
+    IMetadataEntry
 {
     public readonly string Name;
     public readonly MarkdownEntry[] Entries;
@@ -37,11 +36,9 @@ public sealed class TagEntry :
         keyName switch
         {
             "name" => this.Name,
+            "entries" => this.Entries,
             _ => null,
         };
-
-    public IEnumerable<object> GetChildren(MetadataContext context) =>
-        this.Entries;
 
     public override string ToString() =>
         $"Tag: {this.Name}";

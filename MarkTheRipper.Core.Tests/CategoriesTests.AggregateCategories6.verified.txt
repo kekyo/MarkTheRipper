@@ -2,7 +2,9 @@
   Name: (root),
   Entries: [
     {
-      RelativeContentPath: content1
+      Metadata: {
+        path: content1
+      }
     }
   ]
 }

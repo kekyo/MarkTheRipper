@@ -50,9 +50,16 @@
         </div>
     </nav>
 
-    <!-- Contents body -->
-    <div style="padding: 1.5rem; counter-reset: level1 0; counter-reset: cpage 0;">
-        {contentBody}
-    </div>
+    <section style="padding: 1.5rem; counter-reset: level1 0; counter-reset: cpage 0;">
+        <!-- Contents header -->
+        <header>
+            <h1>{title}</h1>
+            <p>Tags:{foreach:tags tag} {tag}{/}</p>
+        </header>
+        <!-- Contents body -->
+        <article>
+            {contentBody}
+        </article>
+    </section>
 </body>
 </html>
