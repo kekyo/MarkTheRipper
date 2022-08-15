@@ -241,14 +241,14 @@ They are listed below:
 
 |Keyword|Content|
 |:----|:----|
-|`now`|Date and time when the site was generated.|
+|`generated`|Date and time when the site was generated.|
 |`template`|The name of the template to apply.|
 |`lang`|Locale (`en-us`, `ja-jp`, etc.)|
 |`date`|Date of the post.|
 |`generator`|MarkTheRipper version information.|
 
 These keywords can be overridden by writing them in the markdown header.
-It may not make sense to override `now`, but just know that MarkTheRipper does not treat metadata dictionary definitions specially.
+It may not make sense to override `generated`, but just know that MarkTheRipper does not treat metadata dictionary definitions specially.
 
 You may be wondering what the default values of `lang` and `template` are.
 Metadata dictionaries can be placed in `resources/metadata.json`,

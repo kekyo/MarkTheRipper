@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
+using MarkTheRipper.Metadata;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,6 +20,8 @@ namespace MarkTheRipper;
 [TestFixture]
 public sealed class TagsTests
 {
+    private static readonly MetadataContext empty = new();
+
     [Test]
     public Task AggregateTags1()
     {
@@ -27,14 +29,16 @@ public sealed class TagsTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                } },
             },
             null!);
 
         var actual = EntryAggregator.AggregateTags(new[]
         {
             mh1,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -46,14 +50,17 @@ public sealed class TagsTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", "tag2", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                    new PartialTagEntry("tag2"),
+                } },
             },
             null!);
 
         var actual = EntryAggregator.AggregateTags(new[]
         {
             mh1,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -65,21 +72,25 @@ public sealed class TagsTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                } },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                } },
             },
             null!);
 
         var actual = EntryAggregator.AggregateTags(new[]
         {
             mh1, mh2,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -91,21 +102,26 @@ public sealed class TagsTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                } },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", "tag2", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                    new PartialTagEntry("tag2"),
+                } },
             },
             null!);
 
         var actual = EntryAggregator.AggregateTags(new[]
         {
             mh1, mh2,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -117,28 +133,35 @@ public sealed class TagsTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                } },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag1", "tag2", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag1"),
+                    new PartialTagEntry("tag2"),
+                } },
             },
             null!);
         var mh3 = new MarkdownEntry(
             "content3",
             new Dictionary<string, object?>()
             {
-                { "tags", new[] { "tag3", } },
+                { "tags", new[] {
+                    new PartialTagEntry("tag3"),
+                } },
             },
             null!);
 
         var actual = EntryAggregator.AggregateTags(new[]
         {
             mh1, mh2, mh3,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -156,7 +179,7 @@ public sealed class TagsTests
         var actual = EntryAggregator.AggregateTags(new[]
         {
             mh1,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }

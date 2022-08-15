@@ -1,23 +1,23 @@
 ﻿{
-  Name: ,
+  Name: (root),
   Children: {
     cat1: {
       Name: cat1,
       Entries: [
         {
-          RelativePath: content1,
+          RelativeContentPath: content1,
           Metadata: {
-            category: [
-              cat1
-            ]
+            category: {
+              Name: cat1
+            }
           }
         },
         {
-          RelativePath: content2,
+          RelativeContentPath: content2,
           Metadata: {
-            category: [
-              cat1
-            ]
+            category: {
+              Name: cat1
+            }
           }
         }
       ]

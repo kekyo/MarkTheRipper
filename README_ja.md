@@ -219,14 +219,14 @@ stylesheet: darcula
 
 |キーワード|内容|
 |:----|:----|
-|`now`|MarkTheRipperでサイトを生成した日時|
+|`generated`|MarkTheRipperでサイトを生成した日時|
 |`template`|適用するテンプレート名|
 |`lang`|ロケール(`en-us`や`ja-jp`など)|
 |`date`|記事の日時|
 |`generator`|MarkTheRipperのバージョン情報|
 
 これらのキーワードは、マークダウンのヘッダに書いて、上書きする事が出来ます。
-`now`を上書きする事に、意味は無いかも知れませんが、
+`generated`を上書きする事に意味は無いかも知れませんが、
 MarkTheRipperがメタデータ辞書の定義を特別扱いしない、と言う事だけ知っておけば問題ありません。
 
 上記のキーワードのうち、`lang`や`template`のデフォルト値は何なのかが気になった人もいると思います。
@@ -239,7 +239,7 @@ MarkTheRipperがメタデータ辞書の定義を特別扱いしない、と言�
   "title": "(Draft)",
   "author": "Mark the Ripper",
   "template": "page",
-  "lang": "en-us"
+  "lang": "ja-jp"
 }
 ```
 

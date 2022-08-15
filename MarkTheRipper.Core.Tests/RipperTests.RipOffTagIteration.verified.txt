@@ -2,11 +2,12 @@
 <html>
   <head>
     <title>hoehoe</title>
-    <meta name="keywords" content="foo,bar" />
   </head>
   <body>
-      <h1>Category: </h1>
-    <p>Hello MarkTheRipper!
+    <p>tag: foo</p>
+    <p>tag: bar</p>
+    <p>tag: baz</p>
+<p>Hello MarkTheRipper!
 This is test contents.</p>
-  </body>
+</body>
 </html>

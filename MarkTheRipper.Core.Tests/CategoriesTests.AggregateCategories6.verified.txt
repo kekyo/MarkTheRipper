@@ -1,11 +1,8 @@
 ﻿{
-  Name: ,
+  Name: (root),
   Entries: [
     {
-      RelativePath: content1,
-      Metadata: {
-        category: []
-      }
+      RelativeContentPath: content1
     }
   ]
 }

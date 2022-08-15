@@ -1,5 +1,5 @@
 ﻿{
-  Name: ,
+  Name: (root),
   Children: {
     cat1: {
       Name: cat1,
@@ -8,12 +8,14 @@
           Name: cat2,
           Entries: [
             {
-              RelativePath: content1,
+              RelativeContentPath: content1,
               Metadata: {
-                category: [
-                  cat1,
-                  cat2
-                ]
+                category: {
+                  Name: cat2,
+                  Parent: {
+                    Name: cat1
+                  }
+                }
               }
             }
           ]
@@ -27,12 +29,14 @@
           Name: cat2,
           Entries: [
             {
-              RelativePath: content2,
+              RelativeContentPath: content2,
               Metadata: {
-                category: [
-                  cat3,
-                  cat2
-                ]
+                category: {
+                  Name: cat2,
+                  Parent: {
+                    Name: cat3
+                  }
+                }
               }
             }
           ]

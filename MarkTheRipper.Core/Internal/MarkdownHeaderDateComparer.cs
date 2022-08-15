@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +16,8 @@ namespace MarkTheRipper.Internal;
 internal sealed class MarkdownHeaderDateComparer :
     IComparer<MarkdownEntry>
 {
+    private static readonly MetadataContext empty = new();
+
     public static readonly MarkdownHeaderDateComparer Instance =
         new MarkdownHeaderDateComparer();
 
@@ -24,7 +27,7 @@ internal sealed class MarkdownHeaderDateComparer :
 
     private static DateTimeOffset GetValue(MarkdownEntry? markdownEntry) =>
         markdownEntry is { } &&
-        markdownEntry.GetProperty("date") is DateTimeOffset dto ?
+        markdownEntry.GetProperty("date", empty) is DateTimeOffset dto ?
             dto :
             DateTimeOffset.MaxValue;
 

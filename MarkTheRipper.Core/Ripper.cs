@@ -10,8 +10,10 @@
 using Markdig.Parsers;
 using Markdig.Renderers;
 using MarkTheRipper.Internal;
+using MarkTheRipper.Metadata;
+using MarkTheRipper.Template;
 using System;
-using System.Globalization;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,18 +27,21 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    private readonly Func<string, RootTemplateNode?> getTemplate;
-
-    public Ripper(Func<string, RootTemplateNode?> getTemplate) =>
-        this.getTemplate = getTemplate;
+    private static readonly RootTemplateNode fallbackTemplate =
+        new RootTemplateNode("fallback", "", new ITemplateNode[]
+        {
+            new TextNode("<!DOCTYPE html>\n<!-- Template was not found. -->\n<html>\n<body>\n"),
+            new ReplacerNode("contentBody", null),
+            new TextNode("</body>\n</html>"),
+        });
 
     public static ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templatePath, TextReader template, CancellationToken ct) =>
-        Parser.ParseTemplateAsync(templatePath, template, ct);
+        string templateName, TextReader template, CancellationToken ct) =>
+        Parser.ParseTemplateAsync(templateName, template, ct);
 
     public static ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templatePath, string templateText, CancellationToken ct) =>
-        Parser.ParseTemplateAsync(templatePath, new StringReader(templateText), ct);
+        string templateName, string templateText, CancellationToken ct) =>
+        Parser.ParseTemplateAsync(templateName, new StringReader(templateText), ct);
 
     /// <summary>
     /// Parse markdown markdownEntry.
@@ -56,18 +61,6 @@ public sealed class Ripper
             relativeContentPath, markdownReader, ct).
             ConfigureAwait(false);
 
-        // Special: category
-        if (!metadata.ContainsKey("category"))
-        {
-            var relativeDirectoryPath =
-                Path.GetDirectoryName(relativeContentPath) ??
-                Path.DirectorySeparatorChar.ToString();
-            var pathElements = relativeDirectoryPath.
-                Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-
-            metadata.Add("category", pathElements);
-        }
-
         return new(relativeContentPath, metadata, contentBasePathHint);
     }
 
@@ -85,107 +78,156 @@ public sealed class Ripper
     {
         using var markdownStream = new FileStream(
             Path.Combine(contentsBasePath, relativeContentPath),
-            FileMode.Open, FileAccess.Read, FileShare.Read,
-            65536, true);
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            65536,
+            true);
         using var markdownReader = new StreamReader(
-            markdownStream, Encoding.UTF8, true);
+            markdownStream,
+            Encoding.UTF8,
+            true);
 
         return await this.ParseMarkdownHeaderAsync(
-            contentsBasePath, relativeContentPath, markdownReader, ct).
+            contentsBasePath,
+            relativeContentPath,
+            markdownReader,
+            ct).
             ConfigureAwait(false);
+    }
+
+    private static MetadataContext InjectMetadata(
+        MetadataContext parentMetadata,
+        string relativeContentPathHint,
+        string contentBody,
+        IReadOnlyDictionary<string, object?> markdownMetadata)
+    {
+        var mc = parentMetadata.Spawn();
+        mc.Set("contentBody", contentBody);
+
+        // Special: category
+        var relativeDirectoryPath =
+            Path.GetDirectoryName(relativeContentPathHint) ??
+            Path.DirectorySeparatorChar.ToString();
+        var pathElements = relativeDirectoryPath.
+            Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+        mc.Set("category", pathElements.
+            Aggregate(
+                new PartialCategoryEntry(),
+                (agg, v) => new PartialCategoryEntry(v, agg)));
+
+        foreach (var kv in markdownMetadata)
+        {
+            mc.Set(kv.Key, kv.Value);
+        }
+
+        return mc;
+    }
+
+    private static RootTemplateNode GetTemplate(MetadataContext context)
+    {
+        if (context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> tl)
+        {
+            if (context.Lookup("template") is { } tn &&
+                Expression.FormatValue(tn, null, context) is { } templateName)
+            {
+                if (tl.TryGetValue(templateName, out var template))
+                {
+                    return template;
+                }
+            }
+        }
+        return fallbackTemplate;
     }
 
     /// <summary>
     /// Render markdown content.
     /// </summary>
-    /// <param name="markdownEntry">Parsed markdown markdownEntry</param>
-    /// <param name="markdownReader">Markdown content path</param>
-    /// <param name="getMetadata">Metadata getter</param>
+    /// <param name="relativeContentPathHint">Markdown content path</param>
+    /// <param name="markdownReader">Markdown content reader</param>
+    /// <param name="metadata">Metadata context</param>
     /// <param name="outputHtmlWriter">Generated html content writer</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
-        MarkdownEntry markdownEntry,
+        string relativeContentPathHint,
         TextReader markdownReader,
-        Func<string, object?> getMetadata,
+        MetadataContext metadata,
         TextWriter outputHtmlWriter,
         CancellationToken ct)
     {
-        var body = await Parser.ParseMarkdownBodyAsync(
-            markdownReader, ct).
+        var (markdownMetadata, markdownBody) = await Parser.ParseMarkdownBodyAsync(
+            relativeContentPathHint, markdownReader, ct).
             ConfigureAwait(false);
 
-        var markdownDocument = MarkdownParser.Parse(body);
+        var markdownDocument = MarkdownParser.Parse(markdownBody);
 
         var contentBody = new StringBuilder();
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var fp = (markdownEntry.GetProperty("lang") is { } langValue ?
-            langValue : getMetadata("lang")) switch
-        {
-            IFormatProvider v => v,
-            string lang => new CultureInfo(lang),
-            _ => CultureInfo.CurrentCulture,
-        };
+        var template = GetTemplate(metadata);
 
-        object? GetMetadata(string keyName) =>
-            keyName == "contentBody" ?
-                contentBody :
-                markdownEntry.GetProperty(keyName) is { } value ?
-                    value :
-                    getMetadata(keyName);
+        var mc = InjectMetadata(
+            metadata,
+            relativeContentPathHint,
+            contentBody.ToString(),
+            markdownMetadata);
 
-        var templateName =
-            GetMetadata("template")?.ToString() ?? "page";
+        await template.RenderAsync(
+            (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
+            mc,
+            ct).
+            ConfigureAwait(false);
 
-        if (this.getTemplate(templateName) is { } template)
-        {
-            await template.RenderAsync(
-                (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
-                GetMetadata, fp, ct).
-                ConfigureAwait(false);
-
-            return templateName;
-        }
-        else
-        {
-            throw new FormatException(
-                $"Could not find template. Name={templateName}");
-        }
+        return template.Name;
     }
 
     /// <summary>
     /// Render markdown content.
     /// </summary>
-    /// <param name="markdownEntry">Parsed markdown markdownEntry</param>
-    /// <param name="getMetadata">Metadata getter</param>
+    /// <param name="markdownEntry">Markdown entry</param>
+    /// <param name="metadata">Metadata context</param>
     /// <param name="outputHtmlPath">Generated html content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
         MarkdownEntry markdownEntry,
-        Func<string, object?> getMetadata,
+        MetadataContext metadata,
         string outputHtmlPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
-            Path.Combine(markdownEntry.ContentBasePath, markdownEntry.RelativePath),
-            FileMode.Open, FileAccess.Read, FileShare.Read,
-            65536, true);
+            Path.Combine(
+                markdownEntry.contentBasePath,
+                markdownEntry.RelativeContentPath),
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            65536,
+            true);
         using var markdownReader = new StreamReader(
-            markdownStream, Encoding.UTF8, true);
+            markdownStream,
+            Encoding.UTF8,
+            true);
 
         using var outputHtmlStream = new FileStream(
             outputHtmlPath,
-            FileMode.Create, FileAccess.ReadWrite, FileShare.None,
-            65536, true);
+            FileMode.Create,
+            FileAccess.ReadWrite,
+            FileShare.None,
+            65536,
+            true);
         using var outputHtmlWriter = new StreamWriter(
-            outputHtmlStream, Encoding.UTF8);
+            outputHtmlStream,
+            Encoding.UTF8);
 
         var appliedTemplateName = await this.RenderContentAsync(
-            markdownEntry, markdownReader, getMetadata,
-            outputHtmlWriter, ct).
+            markdownEntry.RelativeContentPath,
+            markdownReader,
+            metadata,
+            outputHtmlWriter,
+            ct).
             ConfigureAwait(false);
 
         await outputHtmlWriter.FlushAsync().

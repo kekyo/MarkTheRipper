@@ -58,36 +58,6 @@ internal static class Utilities
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static string? FormatValue(
-        object? value, object? parameter, IFormatProvider fp) =>
-        (value, parameter) switch
-        {
-            (null, _) => null,
-            (IEntry entry, _) => FormatValue(entry.ImplicitValue, parameter, fp),
-            (IFormattable formattable, string format) =>
-                formattable.ToString(format, fp),
-            (string str, _) => str,
-            (IEnumerableEntry enumerable, _) =>
-                string.Join(",", enumerable.GetEntries().Select(v => FormatValue(v, parameter, fp))),
-            (IEnumerable enumerable, _) =>
-                string.Join(",", enumerable.Cast<object?>().Select(v => FormatValue(v, parameter, fp))),
-            _ => value.ToString(),
-        };
-
-    private static readonly object?[] empty = new object?[0];
-
-    public static IEnumerable<object?> EnumerateValue(object? value) =>
-        value switch
-        {
-            null => empty,
-            string str => new[] { str },
-            IEnumerableEntry enumerable => enumerable.GetEntries(),
-            IEnumerable enumerable => enumerable.Cast<object?>(),
-            _ => new[] { value },
-        };
-
-    ///////////////////////////////////////////////////////////////////////////////////
-
 #if !NET6_0_OR_GREATER
     public static IEnumerable<T> DistinctBy<T, TKey>(
         this IEnumerable<T> enumerable, Func<T, TKey> selector)
@@ -102,6 +72,16 @@ internal static class Utilities
         }
     }
 #endif
+
+    public static IEnumerable<T> Unfold<T>(this T value, Func<T, T?> selector)
+    {
+        var current = value;
+        while (current != null)
+        {
+            yield return current;
+            current = selector(current);
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////
 

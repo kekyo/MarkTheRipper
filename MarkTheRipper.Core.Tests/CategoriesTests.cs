@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
+using MarkTheRipper.Metadata;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,6 +20,8 @@ namespace MarkTheRipper;
 [TestFixture]
 public sealed class CategoriesTests
 {
+    private static readonly MetadataContext empty = new();
+
     [Test]
     public Task AggregateCategories1()
     {
@@ -27,14 +29,16 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", } },
+                { "category",
+                    new PartialCategoryEntry("cat1", null)
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -46,14 +50,17 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", "cat2", } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat1", null))
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -65,21 +72,25 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", } },
+                { "category",
+                    new PartialCategoryEntry("cat1", null)
+                },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", } },
+                { "category",
+                    new PartialCategoryEntry("cat1", null)
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1, mh2,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -91,21 +102,26 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", } },
+                { "category",
+                    new PartialCategoryEntry("cat1", null)
+                },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", "cat2" } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat1", null))
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1, mh2,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -117,28 +133,35 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", } },
+                { "category",
+                    new PartialCategoryEntry("cat1", null)
+                },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", "cat2" } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat1", null))
+                },
             },
             null!);
         var mh3 = new MarkdownEntry(
             "content3",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat3" } },
+                { "category",
+                    new PartialCategoryEntry("cat3", null)
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1, mh2, mh3,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -148,16 +171,13 @@ public sealed class CategoriesTests
     {
         var mh1 = new MarkdownEntry(
             "content1",
-            new Dictionary<string, object?>()
-            {
-                { "category", new string[0] },
-            },
+            new Dictionary<string, object?>(),
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -169,28 +189,36 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", } },
+                { "category",
+                    new PartialCategoryEntry("cat1", null)
+                },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", "cat2" } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat1", null))
+                },
             },
             null!);
         var mh3 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", "cat2" } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat1", null))
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1, mh2, mh3,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }
@@ -202,21 +230,27 @@ public sealed class CategoriesTests
             "content1",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat1", "cat2", } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat1", null))
+                },
             },
             null!);
         var mh2 = new MarkdownEntry(
             "content2",
             new Dictionary<string, object?>()
             {
-                { "category", new[] { "cat3", "cat2" } },
+                { "category",
+                    new PartialCategoryEntry("cat2",
+                    new PartialCategoryEntry("cat3", null))
+                },
             },
             null!);
 
         var actual = EntryAggregator.AggregateCategories(new[]
         {
             mh1, mh2,
-        });
+        }, empty);
 
         return Verifier.Verify(actual);
     }

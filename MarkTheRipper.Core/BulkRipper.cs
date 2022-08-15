@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
+using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,18 +41,10 @@ public sealed class BulkRipper
     }
 
     private readonly string storeToBasePath;
-    private readonly Func<string, object?> getMetadata;
-    private readonly Ripper ripper;
+    private readonly Ripper ripper = new();
 
-    public BulkRipper(
-        string storeToBasePath,
-        Func<string, RootTemplateNode?> getTemplate,
-        Func<string, object?> getMetadata)
-    {
+    public BulkRipper(string storeToBasePath) =>
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
-        this.getMetadata = getMetadata;
-        this.ripper = new Ripper(getTemplate);
-    }
 
     private StoreToPathElements GetStoreToPathElements(string relativeContentPath)
     {
@@ -63,23 +55,6 @@ public sealed class BulkRipper
         var relativePath = explicitPath.Substring(this.storeToBasePath.Length + 1);
 
         return new(basePath, fileName, relativePath, explicitPath);
-    }
-
-    private async ValueTask<(string storeToRelativePath, string appliedTemplateName)> RipOffRelativeContentAsync(
-        StoreToPathElements storeToPathElements,
-        MarkdownEntry markdownEntry,
-        CancellationToken ct)
-    {
-        object? GetMetadata(string keyName) =>
-            markdownEntry.GetProperty(keyName) is { } value ?
-                value :
-                this.getMetadata(keyName);
-
-        var appliedTemplateName = await this.ripper.RenderContentAsync(
-            markdownEntry, GetMetadata, storeToPathElements.ExplicitPath, ct).
-            ConfigureAwait(false);
-
-        return (storeToPathElements.RelativePath, appliedTemplateName);
     }
 
     /// <summary>
@@ -134,45 +109,54 @@ public sealed class BulkRipper
     /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
+    /// <param name="metadata">Metadata context</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
+        MetadataContext metadata,
         params string[] contentsBasePathList) =>
-        this.RipOffAsync(contentsBasePathList, (_, _, _, _) => default, default);
+        this.RipOffAsync(contentsBasePathList, (_, _, _, _) => default, metadata, default);
 
     /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
     /// <param name="generated">Generated callback</param>
+    /// <param name="metadata">Metadata context</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         Func<string, string, string, string, ValueTask> generated,
+        MetadataContext metadata,
         params string[] contentsBasePathList) =>
-        this.RipOffAsync(contentsBasePathList, generated, default);
+        this.RipOffAsync(contentsBasePathList, generated, metadata, default);
 
     /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
     /// <param name="generated">Generated callback</param>
+    /// <param name="metadata">Metadata context</param>
     /// <param name="ct">CancellationToken</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         Func<string, string, string, string, ValueTask> generated,
-        CancellationToken ct, params string[] contentsBasePathList) =>
-        this.RipOffAsync(contentsBasePathList, generated, ct);
+        MetadataContext metadata,
+        CancellationToken ct,
+        params string[] contentsBasePathList) =>
+        this.RipOffAsync(contentsBasePathList, generated, metadata, ct);
 
     /// <summary>
     /// Rip off and generate from Markdown contents.
     /// </summary>
     /// <param name="contentsBasePathList">Markdown content placed directory path iterator</param>
     /// <param name="generated">Generated callback</param>
+    /// <param name="metadata">Metadata context</param>
     /// <param name="ct">CancellationToken</param>
     /// <remarks>Coverage</remarks>
     public async ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         IEnumerable<string> contentsBasePathList,
         Func<string, string, string, string, ValueTask> generated,
+        MetadataContext metadata,
         CancellationToken ct)
     {
         var utcNow = DateTimeOffset.UtcNow;
@@ -193,8 +177,10 @@ public sealed class BulkRipper
         foreach (var candidate in candidates.
             Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md"))
         {
-            var markdownEntry = await ripper.ParseMarkdownHeaderAsync(
-                candidate.contentsBasePath, candidate.relativeContentPath, ct).
+            var markdownEntry = await this.ripper.ParseMarkdownHeaderAsync(
+                candidate.contentsBasePath,
+                candidate.relativeContentPath,
+                ct).
                 ConfigureAwait(false);
             markdownEntries.Add(markdownEntry);
         }
@@ -203,17 +189,23 @@ public sealed class BulkRipper
             candidates.
             Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md").
             Select(candidate =>
-                ripper.ParseMarkdownHeaderAsync(
-                    candidate.contentsBasePath, candidate.relativeContentPath, ct).
+                this.ripper.ParseMarkdownHeaderAsync(
+                    candidate.contentsBasePath,
+                    candidate.relativeContentPath,
+                    ct).
                 AsTask())).
             ConfigureAwait(false);
 #endif
 
         var headerByCandidate = markdownEntries.ToDictionary(
-            markdownEntry => (markdownEntry.ContentBasePath, markdownEntry.RelativePath));
+            markdownEntry => (markdownEntry.contentBasePath, markdownEntry.RelativeContentPath));
 
-        var tags = EntryAggregator.AggregateTags(markdownEntries);
-        var categories = EntryAggregator.AggregateCategories(markdownEntries);
+        var tagList = EntryAggregator.AggregateTags(markdownEntries, metadata);
+        var rootCategory = EntryAggregator.AggregateCategories(markdownEntries, metadata);
+
+        var mc = metadata.Spawn();
+        mc.Set("tagList", tagList);
+        mc.Set("rootCategory", rootCategory);
 
         async ValueTask RunOnceAsync(string contentBasePath, string relativeContentPath)
         {
@@ -226,14 +218,16 @@ public sealed class BulkRipper
             if (headerByCandidate.TryGetValue(
                 (contentBasePath, relativeContentPath), out var markdownEntry))
             {
-                var (relativeGeneratedPath, appliedTemplateName) =
-                    await this.RipOffRelativeContentAsync(
-                        storeToPathElements, markdownEntry, ct).
-                        ConfigureAwait(false);
+                var appliedTemplateName = await this.ripper.RenderContentAsync(
+                    markdownEntry,
+                    mc,
+                    storeToPathElements.ExplicitPath,
+                    ct).
+                    ConfigureAwait(false);
 
                 await generated(
                     relativeContentPath,
-                    relativeGeneratedPath,
+                    storeToPathElements.RelativePath,
                     contentBasePath,
                     appliedTemplateName).
                     ConfigureAwait(false);

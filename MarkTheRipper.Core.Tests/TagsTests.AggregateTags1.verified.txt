@@ -3,10 +3,12 @@
     Name: tag1,
     Entries: [
       {
-        RelativePath: content1,
+        RelativeContentPath: content1,
         Metadata: {
           tags: [
-            tag1
+            {
+              Name: tag1
+            }
           ]
         }
       }

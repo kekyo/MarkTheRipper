@@ -7,6 +7,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Metadata;
+using MarkTheRipper.Template;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -14,8 +16,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using VerifyNUnit;
-
-using static NUnit.Framework.Assert;
 
 namespace MarkTheRipper;
 
@@ -26,15 +26,21 @@ public sealed class BulkRipperTests
         string[] categoryNames, string markdownText, string templateName, string templateText,
         params (string keyName, object? value)[] baseMetadata)
     {
-        var template = await Ripper.ParseTemplateAsync(
-            "test.html", templateText, default);
-        var templates = new Dictionary<string, RootTemplateNode>()
-        {
-            { templateName, template },
-        };
+        var metadata = new MetadataContext();
 
-        var metadata = baseMetadata.ToDictionary(
-            entry => entry.keyName, entry => entry.value);
+        var template = await Ripper.ParseTemplateAsync(
+            templateName, templateText, default);
+        var templateList = new Dictionary<string, RootTemplateNode>
+        {
+            { templateName, template }
+        };
+        metadata.Set("template", new PartialTemplateEntry(templateName));
+        metadata.Set("templateList", templateList);
+
+        foreach (var entry in baseMetadata)
+        {
+            metadata.Set(entry.keyName, entry.value);
+        }
 
         var basePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(basePath);
@@ -52,12 +58,9 @@ public sealed class BulkRipperTests
                 contentBasePath, categoryUnderContentBasePath, "temp.md");
             File.WriteAllText(contentPath, markdownText);
 
-            var ripper = new BulkRipper(
-                storeToBasePath,
-                templateName => templates.TryGetValue(templateName, out var template) ? template : null,
-                keyName => metadata.TryGetValue(keyName, out var value) ? value : null);
+            var bulkRipper = new BulkRipper(storeToBasePath);
 
-            await ripper.RipOffAsync(contentBasePath);
+            await bulkRipper.RipOffAsync(metadata, contentBasePath);
 
             var html = File.ReadAllText(
                 Path.Combine(storeToBasePath, categoryUnderContentBasePath, "temp.html"));
@@ -95,9 +98,10 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {foreach:category}
-      <h1>Category: {category.item}</h1>
-    {/}
+      <h1>Category: {category}</h1>
+{foreach:category.path}
+      <h2>Category: {item.name}</h1>
+{/}
     {contentBody}
   </body>
 </html>
@@ -132,9 +136,10 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {foreach:category}
-      <h1>Category: {category.item}</h1>
-    {/}
+      <h1>Category: {category}</h1>
+{foreach:category.path}
+      <h2>Category: {item.name}</h1>
+{/}
     {contentBody}
   </body>
 </html>
