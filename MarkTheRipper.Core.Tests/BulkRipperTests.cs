@@ -196,4 +196,42 @@ This is test contents.
 ");
         await Verifier.Verify(actual);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [TestCase("")]
+    [TestCase("aaa")]
+    [TestCase("aaa/bbb")]
+    public async Task RipOffBreadcrumb(string subNames)
+    {
+        var actual = await RipOffContentAsync(
+            subNames.Split('/'),
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <ul>
+      {foreach:category.breadcrumb}
+      <li>{item.name}</li>
+      {/}
+    </ul>
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
 }

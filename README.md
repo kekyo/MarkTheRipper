@@ -654,7 +654,9 @@ It is very simple:
 ```
 
 The ``breadcrumb`` property returns a value that allows you to enumerate the categories leading to the target category,
-starting from the root (but excluding the root itself).
+starting from the root.
+(However, if the target category is root, the root category is included; otherwise, it is not included.)
+
 The individual elements enumerated are the same as for the categories described so far.
 In the above example, the `name` property outputs the name of the category.
 
