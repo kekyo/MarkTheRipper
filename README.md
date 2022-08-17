@@ -380,6 +380,8 @@ This is the template included in minimum:
 <p>Tags:{foreach:tags} '{item}'{/}</p>
 ```
 
+* The `tags` keyword indicates a list of tags (see below)
+
 This means that documents between `{foreach:tags}` and `{/}` will be repeated as many times as the number of `tags`.
 "Documents between" are, in this case: ` '{item}'`.
 Note the inclusion of spaces.
@@ -476,11 +478,11 @@ Result:
 If the bound name is omitted, `item` is used.
 Now you have a grasp of how to use `foreach` for repetition.
 
-### Aggregate tags and categories
+### Aggregate tags
 
 Once you understand how to use repetition, you are as good as done with tags and categories.
 MarkTheRipper automatically aggregates all the tags and categorizations of your content.
-They can be referenced by the following special keywords:
+Tags can be referenced by the following special keywords:
 
 |Keywords|Note|
 |:----|:----|
@@ -535,6 +537,126 @@ Using the property `title` to get its title (the `title` described in the markdo
 
 * The `path` gives the relative path to the converted HTML file, not the path to the markdown.
   Therefore, it is safe to use it as is.
+
+### Aggregate categories
+
+Categories can be referenced by the following special keywords:
+
+|keywords|content|
+|:----|:----|
+|`category`|a hierarchical list of categories. Describe in the header part of each markdown|
+|`rootCategory`|The root (unclassified) category|
+
+The critical difference between tags and categories is that tags are defined in parallel,
+while categories are defined with hierarchy. For example:
+
+````
+(root) --+-- foo --+-- bar --+-- baz --+-- foobarbaz1.md
+         |         |         |         +-- foobarbaz2.md
+         |         |         |
+         |         |         +-- foobar1.md
+         |         |
+         |         +--- foo1.md
+         |         +--- foo2.md
+         |         +--- foo3.md
+         |
+         +--- blog1.md
+         +--- blog2.md
+````
+
+In the above example, `foobarbaz1.md` belongs to the category `foo/bar/baz`.
+And `blog1.md` does not belong to any category,
+it is supposed to belong to implicit hidden `(root)` category inside MarkTheRipper.
+It is the `rootCategory` keyword.
+
+For tags we defined it using the `tags` keyword, but for categories we use the keyword `category`.
+The definition corresponding to `foobarbaz1.md` above is:
+
+```markdown.
+---
+title: Hello MarkTheRipper
+category: [foo,bar,baz]
+---
+
+(... Body ...)
+```
+
+Specifies the hierarchy as a list. Note that unlike tags, this list represents a hierarchy.
+CMSs and site generators often refer to such hierarchies as "breadcrumb" lists.
+
+By the way, MarkTheRipper can determine the category from the directory name by simply placing
+the content in a categorized subdirectory,
+without having to specify the category with the `category` keyword.
+Therefore, to categorize content by category, you only need to place it in categorized subdirectories.
+
+Now that we have grasped the basic structure of categories,
+let's actually write the template.
+First, enumerate the root category:
+
+```html
+<h1>{rootCategory.name}</h1>
+<ul>
+  {foreach:rootCategory.entries entry entry}
+  <li>{entry.path}</li>
+  {/}
+</ul>
+```
+
+Result:
+
+```html
+<h1>(root)</h1>
+<ul>
+  <li>blog1.html</li>
+  <li>blog2.html</li>
+</ul>
+```
+
+Since `rootCategory` represents the root category, its property `name` is `(root)`.
+If this name is not appropriate for display,
+you can replace it using recursive keyword search expression,
+or you can write it directly since it is root in this example.
+
+Then, like the tags, you can pull the header information for each markdown
+from each of the elements enumerated in the `entries`.
+
+Here, `path` is used to output the path to the content, but you can use `title` to output the title.
+If you use `item.path.relative`, you can get the path relative to the current content,
+which can be used as the URL of the link to realize the link.
+
+To enumerate categories, use the `children` property:
+
+```html
+<h1>{rootCategory.name}</h1>
+{foreach:rootCategory.children child1}
+<h2>{child1.name}</h2>
+{foreach:child1.children child2}
+<h3>{child2.name}</h3>
+{/}
+{/}
+```
+
+If we nest the enumerations repeately, we can enumerate all deep category structures.
+Unfortunately, it is not possible to dynamically enumerate the category structure,
+i.e., automatic recursively enumerate even the descendant categories that exist.
+This is by design because MarkTheRipper does not have the ability to define any functions and recursive functions.
+(Such a request is probably only for outputting a site-wide structure list, as we did not see the need for such a request.)
+
+At the end of the category operation is an example of outputting a breadcrumb list.
+It is very simple:
+
+```html
+<ul>
+  {foreach:category.breadcrumb}
+  <li>{item.name}</li>
+  {/}
+</ul>
+```
+
+The ``breadcrumb`` property returns a value that allows you to enumerate the categories leading to the target category,
+starting from the root (but excluding the root itself).
+The individual elements enumerated are the same as for the categories described so far.
+In the above example, the `name` property outputs the name of the category.
 
 ----
 
