@@ -36,5 +36,5 @@ internal sealed class PartialTagEntry :
         };
 
     public override string ToString() =>
-        $"PartialTag: {this.Name}";
+        $"PartialTag={this.Name}";
 }

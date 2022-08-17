@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,14 +29,18 @@ public sealed class MarkdownEntry :
         this.contentBasePath = contentBasePath;
     }
 
-    internal string RelativeContentPath =>
+    internal PathEntry RelativeContentPath =>
         this.Metadata.TryGetValue("path", out var value) &&
-            value is string path ?
-            path : "(unknown)";
+            value is PathEntry path ?
+            path : PathEntry.Unknown;
+
+    internal string Title =>
+        this.Metadata.TryGetValue("title", out var value) &&
+            Expression.FormatValue(value, null, MetadataContext.Empty) is { } title ? 
+            title : null ?? "(Untitled)";
 
     object? IMetadataEntry.ImplicitValue =>
-        this.Metadata.TryGetValue("title", out var value) ?
-            value : null;
+        this.Title;
 
     public object? GetProperty(string keyName, MetadataContext context) =>
         this.Metadata.TryGetValue(keyName, out var value) ?
@@ -53,4 +58,7 @@ public sealed class MarkdownEntry :
     public override int GetHashCode() =>
         this.Metadata.Aggregate(0, 
             (agg, v) => agg ^ v.Key.GetHashCode() ^ v.Value?.GetHashCode() ?? 0);
+
+    public override string ToString() =>
+        $"Markdown={this.Title}";
 }

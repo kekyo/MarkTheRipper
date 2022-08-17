@@ -34,5 +34,5 @@ internal sealed class PartialTemplateEntry :
             };
 
     public override string ToString() =>
-        $"PartialTemplate: {this.Name}";
+        $"PartialTemplate={this.Name}";
 }

@@ -40,11 +40,11 @@ public sealed class CategoryEntry :
     internal CategoryEntry? Parent =>
         this.parent;
 
-    internal CategoryEntry[] Path =>
+    internal CategoryEntry[] Breadcrumbs =>
         this.Unfold(c => c.parent).Reverse().Skip(1).ToArray();
 
     object? IMetadataEntry.ImplicitValue =>
-        string.Join("/", this.Path.Select(c => c.Name));
+        string.Join("/", this.Breadcrumbs.Select(c => c.Name));
 
     public object? GetProperty(string keyName, MetadataContext context) =>
         keyName switch
@@ -53,10 +53,10 @@ public sealed class CategoryEntry :
             "children" => this.Children.Values,
             "entries" => this.Entries,
             "parent" => this.parent,
-            "path" => this.Path,
+            "breadcrumbs" => this.Breadcrumbs,
             _ => null,
         };
 
     public override string ToString() =>
-        $"Category: {string.Join("/", this.Path.Select(c => c.Name))}";
+        $"Category={string.Join("/", this.Breadcrumbs.Select(c => c.Name))}";
 }

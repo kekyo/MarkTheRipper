@@ -294,7 +294,7 @@ internal static class Parser
     }
 
     public static async ValueTask<Dictionary<string, object?>> ParseMarkdownHeaderAsync(
-        string relativeContentPathHint,
+        PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
     {
@@ -307,7 +307,7 @@ internal static class Parser
             if (line == null)
             {
                 throw new FormatException(
-                    $"Could not find any markdown header: Path={relativeContentPathHint}");
+                    $"Could not find any markdown header: {relativeContentPathHint}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -321,7 +321,7 @@ internal static class Parser
 
         var markdownMetadata = new Dictionary<string, object?>
         {
-            { "path", relativeContentPathHint },  // TODO:
+            { "path", relativeContentPathHint },
         };
 
         // `title: Hello world`
@@ -385,6 +385,12 @@ internal static class Parser
                             ParseTypes.DateOnly,
                             ListTypes.Ignore,
                             default(object)),
+                        "path" => ParseYamlLikeString(
+                            valueText,
+                            (text, _) => new PathEntry(text),
+                            ParseTypes.StringOnly,
+                            ListTypes.Ignore,
+                            default(PathEntry)),
                         _ => ParseYamlLikeString(
                             valueText,
                             null,
@@ -418,7 +424,7 @@ internal static class Parser
     }
 
     public static async ValueTask<(Dictionary<string, object?> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
-        string relativeContentPathHint,
+        PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
     {

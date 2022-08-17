@@ -45,7 +45,7 @@ public sealed class Ripper
     /// <returns>Applied template name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentBasePathHint,
-        string relativeContentPath,
+        PathEntry relativeContentPath,
         TextReader markdownReader,
         CancellationToken ct)
     {
@@ -65,17 +65,17 @@ public sealed class Ripper
     /// <returns>Applied template name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentsBasePath,
-        string relativeContentPath,
+        PathEntry relativeContentPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
-            Path.Combine(contentsBasePath, relativeContentPath),
+            Path.Combine(contentsBasePath, relativeContentPath.RealPath),
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
             65536,
             true);
-        using var markdownReader = new StreamReader(
+        var markdownReader = new StreamReader(
             markdownStream,
             Encoding.UTF8,
             true);
@@ -90,16 +90,19 @@ public sealed class Ripper
 
     private static MetadataContext InjectMetadata(
         MetadataContext parentMetadata,
-        string relativeContentPathHint,
+        PathEntry relativeContentPathHint,
         string contentBody,
         IReadOnlyDictionary<string, object?> markdownMetadata)
     {
         var mc = parentMetadata.Spawn();
         mc.Set("contentBody", contentBody);
 
+        // HACK: Relative path calculation in PathEntry needs this metadata.
+        mc.Set("currentContentPath", relativeContentPathHint);
+
         // Special: category
         var relativeDirectoryPath =
-            Path.GetDirectoryName(relativeContentPathHint) ??
+            Path.GetDirectoryName(relativeContentPathHint.RealPath) ??
             Path.DirectorySeparatorChar.ToString();
         var pathElements = relativeDirectoryPath.
             Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
@@ -160,7 +163,7 @@ public sealed class Ripper
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
-        string relativeContentPathHint,
+        PathEntry relativeContentPathHint,
         TextReader markdownReader,
         MetadataContext metadata,
         TextWriter outputHtmlWriter,
@@ -210,13 +213,13 @@ public sealed class Ripper
         using var markdownStream = new FileStream(
             Path.Combine(
                 markdownEntry.contentBasePath,
-                markdownEntry.RelativeContentPath),
+                markdownEntry.RelativeContentPath.RealPath),
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
             65536,
             true);
-        using var markdownReader = new StreamReader(
+        var markdownReader = new StreamReader(
             markdownStream,
             Encoding.UTF8,
             true);
@@ -228,7 +231,7 @@ public sealed class Ripper
             FileShare.None,
             65536,
             true);
-        using var outputHtmlWriter = new StreamWriter(
+        var outputHtmlWriter = new StreamWriter(
             outputHtmlStream,
             Encoding.UTF8);
 

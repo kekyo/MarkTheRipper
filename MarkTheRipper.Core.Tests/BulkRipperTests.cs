@@ -58,6 +58,17 @@ public sealed class BulkRipperTests
                 contentBasePath, categoryUnderContentBasePath, "temp.md");
             File.WriteAllText(contentPath, markdownText);
 
+            var refContentPath = Path.Combine(
+                contentBasePath, "ref.md");
+            File.WriteAllText(refContentPath, 
+@"---
+title: ref
+tags: reftag
+---
+
+ref doc.
+");
+
             var bulkRipper = new BulkRipper(storeToBasePath);
 
             await bulkRipper.RipOffAsync(metadata, contentBasePath);
@@ -99,7 +110,7 @@ This is test contents.
   </head>
   <body>
       <h1>Category: {category}</h1>
-{foreach:category.path}
+{foreach:category.breadcrumbs}
       <h2>Category: {item.name}</h1>
 {/}
     {contentBody}
@@ -137,8 +148,47 @@ This is test contents.
   </head>
   <body>
       <h1>Category: {category}</h1>
-{foreach:category.path}
+{foreach:category.breadcrumbs}
       <h2>Category: {item.name}</h1>
+{/}
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [TestCase("")]
+    [TestCase("aaa")]
+    [TestCase("aaa/bbb")]
+    public async Task RipOffRelativePathCalculation(string subNames)
+    {
+        var actual = await RipOffContentAsync(
+            subNames.Split('/'),
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+{foreach:tagList tag}
+     <h1>Tags: {tag}</h1>
+{foreach:tag.entries entry}
+     <h2>Title: <a href='{entry.path.relative}' alt='{entry.path}'>{entry.title}</a>
+{/}
 {/}
     {contentBody}
   </body>

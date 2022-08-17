@@ -9,7 +9,6 @@
 
 using MarkTheRipper.Internal;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MarkTheRipper.Metadata;
@@ -32,14 +31,14 @@ internal sealed class PartialCategoryEntry :
         this.Parent = parent;
     }
 
-    internal PartialCategoryEntry[] Path =>
+    internal PartialCategoryEntry[] Breadcrumbs =>
         this.Unfold(pc => pc.Parent).Reverse().Skip(1).ToArray();
 
     object? IMetadataEntry.ImplicitValue =>
-        string.Join("/", this.Path.Select(pc => pc.Name));
+        string.Join("/", this.Breadcrumbs.Select(pc => pc.Name));
 
     private CategoryEntry? GetRealCategoryEntry(MetadataContext context) =>
-        this.Path.
+        this.Breadcrumbs.
         Aggregate(
             context.Lookup("rootCategory") as CategoryEntry,
             (agg, pc) => (agg != null && agg.Children.TryGetValue(pc.Name, out var child)) ? child : null!);
@@ -50,10 +49,10 @@ internal sealed class PartialCategoryEntry :
         {
             "name" => this.Name,
             "parent" => this.Parent,
-            "path" => this.Path,
+            "breadcrumbs" => this.Breadcrumbs,
             _ => null,
         };
 
     public override string ToString() =>
-        $"PartialCategory: {string.Join("/", this.Path.Select(pc => pc.Name))}";
+        $"PartialCategory={string.Join("/", this.Breadcrumbs.Select(pc => pc.Name))}";
 }

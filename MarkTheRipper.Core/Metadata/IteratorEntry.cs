@@ -31,4 +31,7 @@ internal sealed class IteratorEntry :
             "index" => this.Index,
             _ => null,
         };
+
+    public override string ToString() =>
+        $"Iterator={this.Index}";
 }

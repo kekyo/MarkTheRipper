@@ -39,4 +39,7 @@ public sealed class MetadataContext
 
     public MetadataContext Spawn() =>
         new MetadataContext(this);
+
+    public static readonly MetadataContext Empty =
+        new MetadataContext();
 }

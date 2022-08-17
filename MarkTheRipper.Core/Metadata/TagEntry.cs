@@ -41,5 +41,5 @@ public sealed class TagEntry :
         };
 
     public override string ToString() =>
-        $"Tag: {this.Name}";
+        $"Tag={this.Name}";
 }

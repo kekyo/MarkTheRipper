@@ -528,8 +528,10 @@ but in fact tags can be enumerated using `foreach`:
 Note that we specify the bound name to make it easier to understand what we are trying to enumerate.
 
 Enumerating the `entries` property gives access to information about the corresponding markdowns.
-Using the property `path`, you get the path to the file corresponding to the content,
-and use `title` to get its title (the `title` described in the markdown's header).
+Using the property `path` as in this example,
+gives the path to the file corresponding to the content,
+and referencing its `relative` property again gives the path relative to the current content.
+Using the property `title` to get its title (the `title` described in the markdown header).
 
 * The `path` gives the relative path to the converted HTML file, not the path to the markdown.
   Therefore, it is safe to use it as is.

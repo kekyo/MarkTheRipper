@@ -472,7 +472,7 @@ MarkTheRipperは、コンテンツのすべてのタグとカテゴリの分類�
 {foreach:tagList tag}
 <h1>{tag}</h1>
 {foreach:tag.entries entry}
-<h2><a href="{entry.path}">{entry.title}</a>
+<h2><a href="{entry.path.relative}">{entry.title}</a>
 {/}
 {/}
 ```
@@ -481,6 +481,7 @@ MarkTheRipperは、コンテンツのすべてのタグとカテゴリの分類�
 
 `entries`プロパティを列挙すると、対応するマークダウン群の情報にアクセスできます。
 この例のように`path`というプロパティを使用すると、コンテンツに対応するファイルへのパスが得られ、
+その`relative`プロパティを参照すると、現在のコンテンツからの相対パスが得られます。
 `title`を使用すれば、そのタイトル（マークダウンのヘッダに記述された`title`）が得られます。
 
 * `path`は、マークダウンへのパスではなく、変換されたHTMLファイルへの相対パスが得られます。

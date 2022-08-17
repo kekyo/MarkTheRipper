@@ -47,7 +47,7 @@ public sealed class RipperTests
 
         var htmlWriter = new StringWriter();
         var appliedTemplateName = await ripper.RenderContentAsync(
-            "RipperTests",
+            new PathEntry("RipperTests.md"),
             new StringReader(markdownText),
             metadata,
             htmlWriter,
@@ -317,7 +317,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:category.path}
+{foreach:category.breadcrumbs}
       <h1>Category: {item.name}</h1>
 {/}
     {contentBody}
@@ -436,9 +436,9 @@ This is test contents.
     <title>{title}</title>
   </head>
   <body>
-{foreach:category.path}
+{foreach:category.breadcrumbs}
     <h1>{item.name}</h1>
-{foreach:item.path}
+{foreach:item.breadcrumbs}
     <h2>{item.name}</h2>
 {/}
 {/}
