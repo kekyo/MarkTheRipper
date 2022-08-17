@@ -14,7 +14,8 @@
     <section style="flex-grow: 1;">
         <header>
             <h1>{title}</h1>
-            <p>Tags:{foreach:tags tag} {tag}{/}</p>
+            <p>Category:{foreach:category.breadcrumb} {item}{/}</p>
+            <p>Tags:{foreach:tags} {item}{/}</p>
         </header>
         <hr />
         <article>

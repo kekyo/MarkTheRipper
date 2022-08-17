@@ -88,6 +88,8 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
+        <p>Category:{foreach:category.breadcrumb} {item}{/}</p>
+        <p>Tags:{foreach:tags} {item}{/}</p>
     </header>
     <hr />
     <article>

@@ -40,8 +40,18 @@ public sealed class CategoryEntry :
     internal CategoryEntry? Parent =>
         this.parent;
 
-    internal CategoryEntry[] Breadcrumbs =>
-        this.Unfold(c => c.parent).Reverse().Skip(1).ToArray();
+    internal CategoryEntry[] Breadcrumbs
+    {
+        get
+        {
+            var entries = this.Unfold(pc => pc.Parent).Reverse().ToList();
+            if (entries.Count >= 2)
+            {
+                entries.RemoveAt(0);
+            }
+            return entries.ToArray();
+        }
+    }
 
     object? IMetadataEntry.ImplicitValue =>
         string.Join("/", this.Breadcrumbs.Select(c => c.Name));

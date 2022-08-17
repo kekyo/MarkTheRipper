@@ -36,12 +36,19 @@
             <a class="navbar-brand" href="/">MarkTheRipper</a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="#">Home</a>
+{foreach:rootCategory.children cat1}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#"
+                           id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                           {cat1.name}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+{foreach:cat1.entries entry}
+                            <li><a class="dropdown-item" href="{entry.path.relative}">{entry.title}</a></li>
+{/}
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Link</a>
-                    </li>
+{/}
                 </ul>
             </div>
         </div>
@@ -51,8 +58,10 @@
         <!-- Contents header -->
         <header>
             <h1>{title}</h1>
-            <p>Tags:{foreach:tags tag} {tag}{/}</p>
+            <p>Category:{foreach:category.breadcrumb} {item}{/}</p>
+            <p>Tags:{foreach:tags} {item}{/}</p>
         </header>
+        <hr />
         <!-- Contents body -->
         <article>
             {contentBody}

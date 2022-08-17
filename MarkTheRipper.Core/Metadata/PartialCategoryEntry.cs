@@ -31,8 +31,18 @@ internal sealed class PartialCategoryEntry :
         this.Parent = parent;
     }
 
-    internal PartialCategoryEntry[] Breadcrumbs =>
-        this.Unfold(pc => pc.Parent).Reverse().Skip(1).ToArray();
+    internal PartialCategoryEntry[] Breadcrumbs
+    {
+        get
+        {
+            var entries = this.Unfold(pc => pc.Parent).Reverse().ToList();
+            if (entries.Count >= 2)
+            {
+                entries.RemoveAt(0);
+            }
+            return entries.ToArray();
+        }
+    }
 
     object? IMetadataEntry.ImplicitValue =>
         string.Join("/", this.Breadcrumbs.Select(pc => pc.Name));
