@@ -12,7 +12,10 @@
                 category: {
                   Name: cat2,
                   Parent: {
-                    Name: cat1
+                    Name: cat1,
+                    Parent: {
+                      Name: (root)
+                    }
                   }
                 },
                 path: content2
@@ -25,7 +28,10 @@
         {
           Metadata: {
             category: {
-              Name: cat1
+              Name: cat1,
+              Parent: {
+                Name: (root)
+              }
             },
             path: content1
           }
@@ -38,7 +44,10 @@
         {
           Metadata: {
             category: {
-              Name: cat3
+              Name: cat3,
+              Parent: {
+                Name: (root)
+              }
             },
             path: content3
           }

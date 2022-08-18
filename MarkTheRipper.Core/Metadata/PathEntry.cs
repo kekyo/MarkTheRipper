@@ -32,7 +32,7 @@ public sealed class PathEntry :
     public string Path =>
         string.Join("/", this.PathElements);
 
-    internal string RealPath =>
+    internal string PhysicalPath =>
         System.IO.Path.Combine(this.PathElements);
 
     object? IMetadataEntry.ImplicitValue =>
@@ -62,9 +62,8 @@ public sealed class PathEntry :
     public object? GetProperty(string keyName, MetadataContext context) =>
         keyName switch
         {
-            // HACK: See Ripper.InjectMetadata.
-            "relative" => context.Lookup("__currentContentPath") is PathEntry contentPath ?
-                CalculateRelativePath(contentPath, this) : null,
+            "relative" => context.Lookup("path") is PathEntry currentPath ?
+                CalculateRelativePath(currentPath, this) : null,
             _ => null,
         };
 

@@ -30,7 +30,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content1" },
                 { "category",
-                    new PartialCategoryEntry("cat1", null)
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -52,7 +53,8 @@ public sealed class CategoriesTests
                 { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat1", null))
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);
@@ -73,7 +75,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content1" },
                 { "category",
-                    new PartialCategoryEntry("cat1", null)
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -82,7 +85,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content2" },
                 { "category",
-                    new PartialCategoryEntry("cat1", null)
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -103,7 +107,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content1" },
                 { "category",
-                    new PartialCategoryEntry("cat1", null)
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -113,7 +118,8 @@ public sealed class CategoriesTests
                 { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat1", null))
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);
@@ -134,7 +140,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content1" },
                 { "category",
-                    new PartialCategoryEntry("cat1", null)
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -144,7 +151,8 @@ public sealed class CategoriesTests
                 { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat1", null))
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);
@@ -153,7 +161,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content3" },
                 { "category",
-                    new PartialCategoryEntry("cat3", null)
+                    new PartialCategoryEntry("cat3",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -192,7 +201,8 @@ public sealed class CategoriesTests
             {
                 { "path", "content1" },
                 { "category",
-                    new PartialCategoryEntry("cat1", null)
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null))
                 },
             },
             null!);
@@ -202,7 +212,8 @@ public sealed class CategoriesTests
                 { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat1", null))
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);
@@ -212,7 +223,8 @@ public sealed class CategoriesTests
                 { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat1", null))
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);
@@ -234,7 +246,8 @@ public sealed class CategoriesTests
                 { "path", "content1" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat1", null))
+                    new PartialCategoryEntry("cat1",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);
@@ -244,7 +257,8 @@ public sealed class CategoriesTests
                 { "path", "content2" },
                 { "category",
                     new PartialCategoryEntry("cat2",
-                    new PartialCategoryEntry("cat3", null))
+                    new PartialCategoryEntry("cat3",
+                    new PartialCategoryEntry("(root)", null)))
                 },
             },
             null!);

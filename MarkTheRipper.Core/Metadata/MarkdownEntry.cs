@@ -29,7 +29,12 @@ public sealed class MarkdownEntry :
         this.contentBasePath = contentBasePath;
     }
 
-    internal PathEntry RelativeContentPath =>
+    internal PathEntry MarkdownPath =>
+        this.Metadata.TryGetValue("markdownPath", out var value) &&
+            value is PathEntry markdownPath ?
+            markdownPath : PathEntry.Unknown;
+
+    internal PathEntry StoreToPath =>
         this.Metadata.TryGetValue("path", out var value) &&
             value is PathEntry path ?
             path : PathEntry.Unknown;

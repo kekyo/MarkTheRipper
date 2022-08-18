@@ -37,17 +37,23 @@ public sealed class Ripper
 
     private static void InjectAdditionalMetadata(
         Dictionary<string, object?> markdownMetadata,
-        PathEntry relativeContentPath,
+        PathEntry markdownPath,
         string? contentBody)
     {
-        // HACK: Relative path calculation in PathEntry needs this metadata.
-        markdownMetadata["__currentContentPath"] = relativeContentPath;
+        var storeToPathHint = new PathEntry(
+            Path.Combine(
+                Path.GetDirectoryName(markdownPath.PhysicalPath) ??
+                Path.DirectorySeparatorChar.ToString(),
+                Path.GetFileNameWithoutExtension(markdownPath.PhysicalPath) + ".html"));
+
+        markdownMetadata["markdownPath"] = markdownPath;
+        markdownMetadata["path"] = storeToPathHint;
 
         // Special: Automatic insertion for category when not available.
         if (!markdownMetadata.ContainsKey("category"))
         {
             var relativeDirectoryPath =
-                Path.GetDirectoryName(relativeContentPath.RealPath) ??
+                Path.GetDirectoryName(markdownPath.PhysicalPath) ??
                 Path.DirectorySeparatorChar.ToString();
             var pathElements = relativeDirectoryPath.
                 Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
@@ -67,21 +73,22 @@ public sealed class Ripper
     /// Parse markdown markdownEntry.
     /// </summary>
     /// <param name="contentBasePathHint">Markdown content base path (Hint)</param>
-    /// <param name="relativeContentPath">Markdown content path</param>
+    /// <param name="markdownPath">Markdown content path</param>
     /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentBasePathHint,
-        PathEntry relativeContentPath,
+        PathEntry markdownPath,
         TextReader markdownReader,
         CancellationToken ct)
     {
         var metadata = await Parser.ParseMarkdownHeaderAsync(
-            relativeContentPath, markdownReader, ct).
+            markdownPath, markdownReader, ct).
             ConfigureAwait(false);
 
-        InjectAdditionalMetadata(metadata, relativeContentPath, null);
+        InjectAdditionalMetadata
+            (metadata, markdownPath, null);
 
         return new(metadata, contentBasePathHint);
     }
@@ -90,16 +97,16 @@ public sealed class Ripper
     /// Parse markdown markdownEntry.
     /// </summary>
     /// <param name="contentsBasePath">Markdown content path</param>
-    /// <param name="relativeContentPath">Markdown content path</param>
+    /// <param name="markdownPath">Markdown content path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentsBasePath,
-        PathEntry relativeContentPath,
+        PathEntry markdownPath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
-            Path.Combine(contentsBasePath, relativeContentPath.RealPath),
+            Path.Combine(contentsBasePath, markdownPath.PhysicalPath),
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
@@ -112,7 +119,7 @@ public sealed class Ripper
 
         return await this.ParseMarkdownHeaderAsync(
             contentsBasePath,
-            relativeContentPath,
+            markdownPath,
             markdownReader,
             ct).
             ConfigureAwait(false);
@@ -155,11 +162,13 @@ public sealed class Ripper
     private static MetadataContext SpawnWithAdditionalMetadata(
         Dictionary<string, object?> markdownMetadata,
         MetadataContext parentMetadata,
-        PathEntry relativeContentPath,
+        PathEntry markdownPath,
         string? contentBody)
     {
         InjectAdditionalMetadata(
-            markdownMetadata, relativeContentPath, contentBody);
+            markdownMetadata,
+            markdownPath,
+            contentBody);
 
         var mc = parentMetadata.Spawn();
         foreach (var kv in markdownMetadata)
@@ -173,21 +182,21 @@ public sealed class Ripper
     /// <summary>
     /// Render markdown content.
     /// </summary>
-    /// <param name="relativeContentPathHint">Markdown content path</param>
+    /// <param name="markdownPath">Markdown content path</param>
     /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="metadata">Metadata context</param>
     /// <param name="outputHtmlWriter">Generated html content writer</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
-        PathEntry relativeContentPathHint,
+        PathEntry markdownPath,
         TextReader markdownReader,
         MetadataContext metadata,
         TextWriter outputHtmlWriter,
         CancellationToken ct)
     {
         var (markdownMetadata, markdownBody) = await Parser.ParseMarkdownBodyAsync(
-            relativeContentPathHint, markdownReader, ct).
+            markdownPath, markdownReader, ct).
             ConfigureAwait(false);
 
         var markdownDocument = MarkdownParser.Parse(markdownBody);
@@ -201,7 +210,7 @@ public sealed class Ripper
         var mc = SpawnWithAdditionalMetadata(
             markdownMetadata,
             metadata,
-            relativeContentPathHint,
+            markdownPath,
             contentBody.ToString());
 
         await template.RenderAsync(
@@ -218,19 +227,19 @@ public sealed class Ripper
     /// </summary>
     /// <param name="markdownEntry">Markdown entry</param>
     /// <param name="metadata">Metadata context</param>
-    /// <param name="outputHtmlPath">Generated html content path</param>
+    /// <param name="storeToBasePath">Generated html content base path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied template name.</returns>
     public async ValueTask<string> RenderContentAsync(
         MarkdownEntry markdownEntry,
         MetadataContext metadata,
-        string outputHtmlPath,
+        string storeToBasePath,
         CancellationToken ct)
     {
         using var markdownStream = new FileStream(
             Path.Combine(
                 markdownEntry.contentBasePath,
-                markdownEntry.RelativeContentPath.RealPath),
+                markdownEntry.MarkdownPath.PhysicalPath),
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
@@ -242,7 +251,9 @@ public sealed class Ripper
             true);
 
         using var outputHtmlStream = new FileStream(
-            outputHtmlPath,
+            Path.Combine(
+                storeToBasePath,
+                markdownEntry.StoreToPath.PhysicalPath),
             FileMode.Create,
             FileAccess.ReadWrite,
             FileShare.None,
@@ -253,7 +264,7 @@ public sealed class Ripper
             Encoding.UTF8);
 
         var appliedTemplateName = await this.RenderContentAsync(
-            markdownEntry.RelativeContentPath,
+            markdownEntry.MarkdownPath,
             markdownReader,
             metadata,
             outputHtmlWriter,

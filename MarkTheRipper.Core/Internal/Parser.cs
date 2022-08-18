@@ -319,10 +319,7 @@ internal static class Parser
             }
         }
 
-        var markdownMetadata = new Dictionary<string, object?>
-        {
-            { "path", relativeContentPathHint },
-        };
+        var markdownMetadata = new Dictionary<string, object?>();
 
         // `title: Hello world`
         while (true)
@@ -385,12 +382,6 @@ internal static class Parser
                             ParseTypes.DateOnly,
                             ListTypes.Ignore,
                             default(object)),
-                        "path" => ParseYamlLikeString(
-                            valueText,
-                            (text, _) => new PathEntry(text),
-                            ParseTypes.StringOnly,
-                            ListTypes.Ignore,
-                            default(PathEntry)),
                         _ => ParseYamlLikeString(
                             valueText,
                             null,

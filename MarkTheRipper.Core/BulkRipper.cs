@@ -24,19 +24,16 @@ public sealed class BulkRipper
 {
     private sealed class StoreToPathElements
     {
-        public readonly string BasePath;
+        public readonly string DirPath;
         public readonly string FileName;
         public readonly string RelativePath;
-        public readonly string ExplicitPath;
 
         public StoreToPathElements(
-            string basePath, string fileName,
-            string relativePath, string explicitPath)
+            string dirPath, string fileName, string relativePath)
         {
-            this.BasePath = basePath;
+            this.DirPath = dirPath;
             this.FileName = fileName;
             this.RelativePath = relativePath;
-            this.ExplicitPath = explicitPath;
         }
     }
 
@@ -46,15 +43,16 @@ public sealed class BulkRipper
     public BulkRipper(string storeToBasePath) =>
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
 
-    private StoreToPathElements GetStoreToPathElements(PathEntry relativeContentPath)
+    private StoreToPathElements GetStoreToPathElements(PathEntry markdownPath)
     {
-        var basePath = Path.GetDirectoryName(
-            Path.Combine(this.storeToBasePath, relativeContentPath.RealPath))!;
-        var fileName = Path.GetFileNameWithoutExtension(relativeContentPath.RealPath);
-        var explicitPath = Path.Combine(basePath, fileName + ".html");
+        var dirPath = Path.GetDirectoryName(
+            Path.Combine(this.storeToBasePath, markdownPath.PhysicalPath)) ??
+            Path.DirectorySeparatorChar.ToString();
+        var fileName = Path.GetFileNameWithoutExtension(dirPath);
+        var explicitPath = Path.Combine(dirPath, fileName + ".html");
         var relativePath = explicitPath.Substring(this.storeToBasePath.Length + 1);
 
-        return new(basePath, fileName, relativePath, explicitPath);
+        return new(dirPath, fileName, relativePath);
     }
 
     /// <summary>
@@ -174,7 +172,7 @@ public sealed class BulkRipper
 #if DEBUG
         var markdownEntries = new List<MarkdownEntry>();
         foreach (var candidate in candidates.
-            Where(candidate => Path.GetExtension(candidate.relativeContentPath.RealPath) == ".md"))
+            Where(candidate => Path.GetExtension(candidate.relativeContentPath.PhysicalPath) == ".md"))
         {
             var markdownEntry = await this.ripper.ParseMarkdownHeaderAsync(
                 candidate.contentsBasePath,
@@ -197,7 +195,7 @@ public sealed class BulkRipper
 #endif
 
         var entriesByCandidate = markdownEntries.ToDictionary(
-            markdownEntry => (markdownEntry.contentBasePath, markdownEntry.RelativeContentPath));
+            markdownEntry => (markdownEntry.contentBasePath, markdownEntry.MarkdownPath));
 
         var tagList = EntryAggregator.AggregateTags(markdownEntries, metadata);
         var rootCategory = EntryAggregator.AggregateCategories(markdownEntries, metadata);
@@ -212,7 +210,7 @@ public sealed class BulkRipper
             var storeToPathElements = this.GetStoreToPathElements(
                 relativeContentPath);
 
-            await dc!.CreateIfNotExistAsync(storeToPathElements.BasePath, ct).
+            await dc!.CreateIfNotExistAsync(storeToPathElements.DirPath, ct).
                 ConfigureAwait(false);
 
             if (entriesByCandidate.TryGetValue(
@@ -221,12 +219,12 @@ public sealed class BulkRipper
                 var appliedTemplateName = await this.ripper.RenderContentAsync(
                     markdownEntry,
                     mc,
-                    storeToPathElements.ExplicitPath,
+                    this.storeToBasePath,
                     ct).
                     ConfigureAwait(false);
 
                 await generated(
-                    relativeContentPath.RealPath,
+                    relativeContentPath.PhysicalPath,
                     storeToPathElements.RelativePath,
                     contentBasePath,
                     appliedTemplateName).
@@ -235,7 +233,7 @@ public sealed class BulkRipper
             else
             {
                 await this.CopyRelativeContentAsync(
-                    relativeContentPath.RealPath, contentBasePath, ct).
+                    relativeContentPath.PhysicalPath, contentBasePath, ct).
                     ConfigureAwait(false);
             }
         }
