@@ -88,8 +88,8 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach:category.breadcrumb} {item}{/}</p>
-        <p>Tags:{foreach:tags} {item}{/}</p>
+        <p>Category:{foreach:category.breadcrumb} {item.name}{/}</p>
+        <p>Tags:{foreach:tags} {item.name}{/}</p>
     </header>
     <hr />
     <article>
@@ -99,7 +99,7 @@ H3 body.
 </html>
 ```
 
-If you look at the content, you can probably guess what happens:
+If you look at the content, you can probably guess what happens.
 MarkTheRipper simply converts the keywords and body into HTML and inserts it into the template.
 Therefore when customizing a template,
 common HTML/CSS/JavaScript techniques can be applied as is,
