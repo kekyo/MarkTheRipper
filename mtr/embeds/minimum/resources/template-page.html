@@ -1,13 +1,19 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="{lang}">
 <head>
     <meta charset="utf-8" />
     <meta name="keywords" content="{tags}" />
     <title>{title}</title>
 </head>
 <body>
-    {contentBody}
+    <header>
+        <h1>{title}</h1>
+        <p>Category:{foreach:category.breadcrumb} {item.name}{/}</p>
+        <p>Tags:{foreach:tags} {item.name}{/}</p>
+    </header>
     <hr />
-    <p>Tags:{foreach:tags} '{tags-item}'{/}</p>
+    <article>
+        {contentBody}
+    </article>
 </body>
 </html>

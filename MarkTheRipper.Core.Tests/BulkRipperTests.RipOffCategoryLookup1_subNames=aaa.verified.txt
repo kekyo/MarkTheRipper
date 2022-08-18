@@ -5,8 +5,9 @@
     <meta name="keywords" content="foo,bar" />
   </head>
   <body>
-          <h1>Category: aaa</h1>
-        <p>Hello MarkTheRipper!
+      <h1>Category: aaa</h1>
+      <h2>Category: aaa</h1>
+    <p>Hello MarkTheRipper!
 This is test contents.</p>
   </body>
 </html>

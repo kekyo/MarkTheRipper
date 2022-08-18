@@ -13,6 +13,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,14 @@ namespace MarkTheRipper.Internal;
 
 internal static class Utilities
 {
+    public static readonly char[] PathSeparators = new[]
+    {
+        Path.DirectorySeparatorChar,
+        Path.AltDirectorySeparatorChar,
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static JsonSerializer GetDefaultJsonSerializer()
     {
         var defaultNamingStrategy = new CamelCaseNamingStrategy();
@@ -36,32 +45,16 @@ internal static class Utilities
         serializer.Converters.Add(new StringEnumConverter(defaultNamingStrategy));
         return serializer;
     }
-    
+
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static string? FormatValue(
-        object? value, object? parameter, IFormatProvider fp) =>
-        (value, parameter) switch
-        {
-            (null, _) => null,
-            (IFormattable formattable, string format) =>
-                formattable.ToString(format, fp),
-            (string str, _) => str,
-            (IEnumerable enumerable, _) =>
-                string.Join(",", enumerable.Cast<object?>().Select(v => FormatValue(v, parameter, fp))),
-            _ => value.ToString(),
-        };
+    private static class EmtyArray<T>
+    {
+        public static readonly T[] Empty = new T[0];
+    }
 
-    private static readonly object?[] empty = new object?[0];
-
-    public static IEnumerable EnumerateValue(object? value) =>
-        value switch
-        {
-            null => empty,
-            string str => new[] { str },
-            IEnumerable enumerable => enumerable,
-            _ => new[] { value },
-        };
+    public static T[] Empty<T>() =>
+        EmtyArray<T>.Empty;
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -79,6 +72,16 @@ internal static class Utilities
         }
     }
 #endif
+
+    public static IEnumerable<T> Unfold<T>(this T value, Func<T, T?> selector)
+    {
+        var current = value;
+        while (current != null)
+        {
+            yield return current;
+            current = selector(current);
+        }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////
 

@@ -3,8 +3,6 @@ title: Hello MarkTheRipper!
 tags: [foo,bar]
 ---
 
-# Hello MarkTheRipper!
-
 This is sample post.
 
 ## H2

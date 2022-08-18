@@ -7,11 +7,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Metadata;
+using MarkTheRipper.Template;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using VerifyNUnit;
 
@@ -26,29 +27,33 @@ public sealed class RipperTests
         string markdownText, string templateName, string templateText,
         params (string keyName, object? value)[] baseMetadata)
     {
+        var metadata = new MetadataContext();
+
         var template = await Ripper.ParseTemplateAsync(
-            "test.html", templateText, default);
-        var templates = new Dictionary<string, RootTemplateNode>()
+            templateName, templateText, default);
+        var templateList = new Dictionary<string, RootTemplateNode>
         {
-            { templateName, template },
+            { templateName, template }
         };
+        metadata.Set("template", new PartialTemplateEntry(templateName));
+        metadata.Set("templateList", templateList);
 
-        var metadata = baseMetadata.ToDictionary(
-            entry => entry.keyName, entry => entry.value);
+        foreach (var entry in baseMetadata)
+        {
+            metadata.Set(entry.keyName, entry.value);
+        }
 
-        var markdownReader = new StringReader(markdownText);
+        var ripper = new Ripper();
+
         var htmlWriter = new StringWriter();
-
-        var ripper = new Ripper(
-            templateName => templates.TryGetValue(templateName, out var template) ? template : null);
-
-        var appliedName = await ripper.RipOffContentAsync(
-            markdownReader,
-            keyName => metadata.TryGetValue(keyName, out var value) ? value : null,
+        var appliedTemplateName = await ripper.RenderContentAsync(
+            new PathEntry("RipperTests.md"),
+            new StringReader(markdownText),
+            metadata,
             htmlWriter,
             default);
 
-        AreEqual(templateName, appliedName);
+        AreEqual(templateName, appliedTemplateName);
 
         return htmlWriter.ToString();
     }
@@ -170,7 +175,7 @@ This is test contents.
   <body>
     <ul>
 {foreach:tags}
-        <li>{tags-item}</li>
+        <li>{item}</li>
 {/}
     </ul>
 {contentBody}</body>
@@ -204,7 +209,7 @@ This is test contents.
   <body>
     <ul>
 {foreach:tags}
-        <li>{tags-index}</li>
+        <li>{item.index}</li>
 {/}
     </ul>
 {contentBody}</body>
@@ -224,7 +229,7 @@ This is test contents.
 ---
 title: hoehoe
 tags: [foo,bar]
-authors: [hoge,hoe]
+author: [hoge,hoe]
 ---
 
 Hello MarkTheRipper!
@@ -238,11 +243,11 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:authors}
-    <h3>{authors-item}</h3>
+{foreach:author item1}
+    <h3>{item1}</h3>
     <ul>
-{foreach:tags}
-        <li>{authors-item}: {tags-item} [{authors-index}-{tags-index}]</li>
+{foreach:tags item2}
+        <li>{item1}: {item2} [{item1.index}-{item2.index}]</li>
 {/}
     </ul>
 {/}
@@ -312,9 +317,9 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {foreach:category}
-      <h1>Category: {category-item}</h1>
-    {/}
+{foreach:category.breadcrumbs}
+      <h1>Category: {item.name}</h1>
+{/}
     {contentBody}
   </body>
 </html>
@@ -374,6 +379,69 @@ This is test contents.
   </head>
   <body>
     <p>{title}}}<==Bracket right</p>
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffTagIteration()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{foreach:tags}
+    <p>tag: {item}</p>
+{/}
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffCategoryIterationWithProperties()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+category: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{foreach:category.breadcrumbs}
+    <h1>{item.name}</h1>
+{foreach:item.breadcrumbs}
+    <h2>{item.name}</h2>
+{/}
+{/}
 {contentBody}</body>
 </html>
 ");
