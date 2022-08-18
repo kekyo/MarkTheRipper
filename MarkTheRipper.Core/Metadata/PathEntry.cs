@@ -63,7 +63,7 @@ public sealed class PathEntry :
         keyName switch
         {
             // HACK: See Ripper.InjectMetadata.
-            "relative" => context.Lookup("currentContentPath") is PathEntry contentPath ?
+            "relative" => context.Lookup("__currentContentPath") is PathEntry contentPath ?
                 CalculateRelativePath(contentPath, this) : null,
             _ => null,
         };

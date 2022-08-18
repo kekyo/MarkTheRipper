@@ -186,7 +186,7 @@ public sealed class BulkRipper
 #else
         var markdownEntries = await Task.WhenAll(
             candidates.
-            Where(candidate => Path.GetExtension(candidate.relativeContentPath) == ".md").
+            Where(candidate => Path.GetExtension(candidate.relativeContentPath.RealPath) == ".md").
             Select(candidate =>
                 this.ripper.ParseMarkdownHeaderAsync(
                     candidate.contentsBasePath,

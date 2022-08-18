@@ -35,6 +35,34 @@ public sealed class Ripper
         string templateName, string templateText, CancellationToken ct) =>
         Parser.ParseTemplateAsync(templateName, new StringReader(templateText), ct);
 
+    private static void InjectAdditionalMetadata(
+        Dictionary<string, object?> markdownMetadata,
+        PathEntry relativeContentPath,
+        string? contentBody)
+    {
+        // HACK: Relative path calculation in PathEntry needs this metadata.
+        markdownMetadata["__currentContentPath"] = relativeContentPath;
+
+        // Special: Automatic insertion for category when not available.
+        if (!markdownMetadata.ContainsKey("category"))
+        {
+            var relativeDirectoryPath =
+                Path.GetDirectoryName(relativeContentPath.RealPath) ??
+                Path.DirectorySeparatorChar.ToString();
+            var pathElements = relativeDirectoryPath.
+                Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
+            markdownMetadata.Add("category",
+                pathElements.Aggregate(
+                    new PartialCategoryEntry(),
+                    (agg, v) => new PartialCategoryEntry(v, agg)));
+        }
+
+        if (contentBody != null)
+        {
+            markdownMetadata["contentBody"] = contentBody;
+        }
+    }
+
     /// <summary>
     /// Parse markdown markdownEntry.
     /// </summary>
@@ -52,6 +80,8 @@ public sealed class Ripper
         var metadata = await Parser.ParseMarkdownHeaderAsync(
             relativeContentPath, markdownReader, ct).
             ConfigureAwait(false);
+
+        InjectAdditionalMetadata(metadata, relativeContentPath, null);
 
         return new(metadata, contentBasePathHint);
     }
@@ -88,37 +118,6 @@ public sealed class Ripper
             ConfigureAwait(false);
     }
 
-    private static MetadataContext InjectMetadata(
-        MetadataContext parentMetadata,
-        PathEntry relativeContentPathHint,
-        string contentBody,
-        IReadOnlyDictionary<string, object?> markdownMetadata)
-    {
-        var mc = parentMetadata.Spawn();
-        mc.Set("contentBody", contentBody);
-
-        // HACK: Relative path calculation in PathEntry needs this metadata.
-        mc.Set("currentContentPath", relativeContentPathHint);
-
-        // Special: category
-        var relativeDirectoryPath =
-            Path.GetDirectoryName(relativeContentPathHint.RealPath) ??
-            Path.DirectorySeparatorChar.ToString();
-        var pathElements = relativeDirectoryPath.
-            Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-        mc.Set("category", pathElements.
-            Aggregate(
-                new PartialCategoryEntry(),
-                (agg, v) => new PartialCategoryEntry(v, agg)));
-
-        foreach (var kv in markdownMetadata)
-        {
-            mc.Set(kv.Key, kv.Value);
-        }
-
-        return mc;
-    }
-
     private static RootTemplateNode GetTemplate(MetadataContext context)
     {
         if (context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> tl)
@@ -153,6 +152,24 @@ public sealed class Ripper
         }
     }
 
+    private static MetadataContext SpawnWithAdditionalMetadata(
+        Dictionary<string, object?> markdownMetadata,
+        MetadataContext parentMetadata,
+        PathEntry relativeContentPath,
+        string? contentBody)
+    {
+        InjectAdditionalMetadata(
+            markdownMetadata, relativeContentPath, contentBody);
+
+        var mc = parentMetadata.Spawn();
+        foreach (var kv in markdownMetadata)
+        {
+            mc.Set(kv.Key, kv.Value);
+        }
+
+        return mc;
+    }
+
     /// <summary>
     /// Render markdown content.
     /// </summary>
@@ -181,11 +198,11 @@ public sealed class Ripper
 
         var template = GetTemplate(metadata);
 
-        var mc = InjectMetadata(
+        var mc = SpawnWithAdditionalMetadata(
+            markdownMetadata,
             metadata,
             relativeContentPathHint,
-            contentBody.ToString(),
-            markdownMetadata);
+            contentBody.ToString());
 
         await template.RenderAsync(
             (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
