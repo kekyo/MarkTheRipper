@@ -45,7 +45,7 @@ internal static class EntryAggregator
                 (markdownEntry,
                  categoryList:
                     markdownEntry.GetProperty("category", context) is PartialCategoryEntry entry ?
-                    entry.Unfold(e => e.Parent).Reverse().ToArray() :
+                    entry.Unfold(e => e.Parent).Reverse().Skip(1).ToArray() :
                     Utilities.Empty<PartialCategoryEntry>())).
             ToArray();
 
