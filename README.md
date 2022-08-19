@@ -558,6 +558,10 @@ To do this calculation, use MarkTheRipper's built-in function keyword `relative`
 <h2><a href="{relative:entry.path}">{entry.title}</a></h2>
 ```
 
+Using `relative` to calculate the path will work correctly
+how the HTML output by MarkTheRipper is deployed on any server.
+This will be safer than using the reference path for hard-coded URLs.
+
 The details of the function keywords are explained in later chapters.
 
 ----
