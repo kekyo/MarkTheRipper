@@ -21,7 +21,7 @@ internal static class EntryAggregator
         MetadataContext context) =>
         markdownEntries.SelectMany(markdownEntry =>
              markdownEntry.GetProperty("tags", context) is { } tagsValue ?
-                Expression.EnumerateValue(tagsValue, context).
+                Reducer.EnumerateValue(tagsValue, context).
                 OfType<PartialTagEntry>().
                 Select(tag => (tag, markdownEntry)).
                 Where(entry => !string.IsNullOrWhiteSpace(entry.tag.Name)) :

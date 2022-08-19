@@ -35,8 +35,8 @@ internal sealed class ForEachNode : ITemplateNode
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (Expression.Reduce(keyName, metadata) is { } rawValue &&
-            Expression.EnumerateValue(rawValue, metadata) is { } enumerable)
+        if (Reducer.Reduce(keyName, metadata) is { } rawValue &&
+            Reducer.EnumerateValue(rawValue, metadata) is { } enumerable)
         {
             var iterationMetadata = metadata.Spawn();
 

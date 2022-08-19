@@ -48,8 +48,8 @@ internal static class CalculateRelativePath
                 return InternalCalculate(currentPath, path);
             }
             else if (parameter is string expr &&
-                Expression.Reduce(expr, context) is { } rawValue &&
-                await Expression.FormatValueAsync(
+                Reducer.Reduce(expr, context) is { } rawValue &&
+                await Reducer.FormatValueAsync(
                     rawValue, null, context, ct).ConfigureAwait(false) is { } value)
             {
                 return InternalCalculate(currentPath, new PathEntry(value));

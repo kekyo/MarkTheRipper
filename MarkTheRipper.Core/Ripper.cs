@@ -132,7 +132,7 @@ public sealed class Ripper
         if (context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> tl)
         {
             if (context.Lookup("template") is { } tn &&
-                await Expression.FormatValueAsync(tn, null, context, ct).ConfigureAwait(false) is { } templateName)
+                await Reducer.FormatValueAsync(tn, null, context, ct).ConfigureAwait(false) is { } templateName)
             {
                 if (tl.TryGetValue(templateName, out var template))
                 {

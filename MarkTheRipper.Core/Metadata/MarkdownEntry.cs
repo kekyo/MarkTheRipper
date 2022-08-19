@@ -43,12 +43,12 @@ public sealed class MarkdownEntry :
 
     internal string Title =>
         this.Metadata.TryGetValue("title", out var value) &&
-            Expression.UnsafeFormatValue(value, null, MetadataContext.Empty) is { } title ? 
+            Reducer.UnsafeFormatValue(value, null, MetadataContext.Empty) is { } title ? 
             title : null ?? "(Untitled)";
 
     async ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
         this.Metadata.TryGetValue("title", out var value) &&
-            await Expression.FormatValueAsync(value, null, MetadataContext.Empty, ct) is { } title ?
+            await Reducer.FormatValueAsync(value, null, MetadataContext.Empty, ct) is { } title ?
             title : null ?? "(Untitled)";
 
     public object? GetProperty(string keyName, MetadataContext context) =>

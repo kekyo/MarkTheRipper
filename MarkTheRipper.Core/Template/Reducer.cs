@@ -21,7 +21,7 @@ namespace MarkTheRipper.Template;
 public delegate ValueTask<object?> AsyncFunctionDelegate(
     object? parameter, MetadataContext context, CancellationToken ct);
 
-internal static class Expression
+internal static class Reducer
 {
     private static readonly object?[] empty = new object?[0];
     private static readonly char[] dotOperator = new[] { '.' };

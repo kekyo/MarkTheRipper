@@ -32,8 +32,8 @@ internal sealed class ReplacerNode : ITemplateNode
     {
         async ValueTask RenderAsync(string keyName)
         {
-            if (Expression.Reduce(keyName, metadata) is { } rawValue &&
-                await Expression.FormatValueAsync(
+            if (Reducer.Reduce(keyName, metadata) is { } rawValue &&
+                await Reducer.FormatValueAsync(
                     rawValue, this.parameter, metadata, ct).ConfigureAwait(false) is { } value)
             {
                 await writer(value, ct).
@@ -50,8 +50,8 @@ internal sealed class ReplacerNode : ITemplateNode
         if (this.keyName[0] == '*')
         {
             var keyName = this.keyName.Substring(1);
-            if (Expression.Reduce(keyName, metadata) is { } rawNestedKeyName &&
-                await Expression.FormatValueAsync(
+            if (Reducer.Reduce(keyName, metadata) is { } rawNestedKeyName &&
+                await Reducer.FormatValueAsync(
                     rawNestedKeyName, null, metadata, ct).ConfigureAwait(false) is { } nestedKeyName)
             {
                 await RenderAsync(nestedKeyName);
