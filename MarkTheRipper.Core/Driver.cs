@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;

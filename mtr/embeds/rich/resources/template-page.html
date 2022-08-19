@@ -12,7 +12,7 @@
     <link rel="preconnect"
           href="https://cdn.jsdelivr.net"
           crossorigin="anonymous">
-    <link rel="stylesheet" href="github.css">
+    <link rel="stylesheet" href="{relative:'github.css'}">
     <!-- https://getbootstrap.jp/docs/5.0/getting-started/introduction/ -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
@@ -43,7 +43,7 @@
                     {foreach:rootCategory.entries entry}
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page"
-                           href="{entry.path.relative}">{entry.title}</a>
+                           href="{relative:entry.path}">{entry.title}</a>
                     </li>
                     {/}
                     <!-- 2nd category -->
@@ -56,7 +56,7 @@
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <!-- Enumerate 2nd category entries -->
                             {foreach:cat2.entries entry}
-                            <li><a class="dropdown-item" href="{entry.path.relative}">{entry.title}</a></li>
+                            <li><a class="dropdown-item" href="{relative:entry.path}">{entry.title}</a></li>
                             {/}
                         </ul>
                     </li>

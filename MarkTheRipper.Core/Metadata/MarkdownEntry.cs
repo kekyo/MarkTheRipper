@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
+using MarkTheRipper.Template;
 using System;
 using System.Collections.Generic;
 using System.Linq;

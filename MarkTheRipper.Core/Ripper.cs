@@ -9,6 +9,7 @@
 
 using Markdig.Parsers;
 using Markdig.Renderers;
+using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
@@ -166,12 +167,14 @@ public sealed class Ripper
         PathEntry markdownPath,
         string? contentBody)
     {
+        var mc = parentMetadata.Spawn();
+
+        mc.Set("relative", CalculateRelativePath.Function);
+
         InjectAdditionalMetadata(
             markdownMetadata,
             markdownPath,
             contentBody);
-
-        var mc = parentMetadata.Spawn();
         foreach (var kv in markdownMetadata)
         {
             mc.Set(kv.Key, kv.Value);

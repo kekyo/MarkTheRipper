@@ -187,7 +187,7 @@ This is test contents.
 {foreach:tagList tag}
      <h1>Tags: {tag}</h1>
 {foreach:tag.entries entry}
-     <h2>Title: <a href='{entry.path.relative}' alt='{entry.path}'>{entry.title}</a>
+     <h2>Title: <a href='{relative:entry.path}' alt='{entry.path}'>{entry.title}</a>
 {/}
 {/}
     {contentBody}

@@ -183,6 +183,8 @@ The templates provide all keyword substitutions by referencing a "Metadata dicti
 
 Here is an example of a template substitution.
 
+----
+
 ### Keyword Substitution
 
 The simplest example is a simple keyword substitution. Suppose you define the following template:
@@ -239,6 +241,8 @@ stylesheet: darcula
 ````
 
 Perhaps this feature alone will solve most of the problems.
+
+----
 
 ### Special keywords and fallbacks
 
@@ -317,9 +321,13 @@ the date and time of generation will be inserted into the markdown header automa
 You may feel that `lang` is simply one of the ordinary keywords.
 This is explained in the next section.
 
+----
+
 ### Format parameters
 
 TODO:
+
+----
 
 ### Recursive keyword search
 
@@ -366,6 +374,8 @@ such as `resource/metadata-category.json`.
 
 This recursive search can be performed only once (by design).
 In other words, it is not possible to keep searching repeatedly using the obtained values as keys.
+
+----
 
 ### Enumeration and nesting
 
@@ -480,6 +490,8 @@ Result:
 If the bound name is omitted, `item` is used.
 Now you have a grasp of how to use `foreach` for repetition.
 
+----
+
 ### Aggregate tags
 
 Once you understand how to use repetition, you are as good as done with tags and categories.
@@ -524,21 +536,31 @@ but in fact tags can be enumerated using `foreach`:
 {foreach:tagList tag}
 <h1>{tag}</h1>
 {foreach:tag.entries entry}
-<h2><a href="{entry.path}">{entry.title}</a>
+<h2><a href="{relative:entry.path}">{entry.title}</a></h2>
 {/}
 {/}
 ```
 
 Note that we specify the bound name to make it easier to understand what we are trying to enumerate.
 
-Enumerating the `entries` property gives access to information about the corresponding markdowns.
-Using the property `path` as in this example,
-gives the path to the file corresponding to the content,
-and referencing its `relative` property again gives the path relative to the current content.
-Using the property `title` to get its title (the `title` described in the markdown header).
+Enumerating the `entries` property gives access to information about
+the corresponding markdown group.
+Using the property `path`, you get the path to the file corresponding to the content,
+and use `title` to get its title (the `title` described in the markdown's header).
 
-* The `path` gives the relative path to the converted HTML file, not the path to the markdown.
-  Therefore, it is safe to use it as is.
+* `path` yields the path to the converted HTML file, not the path to the markdown.
+
+By the way, this path is relative to the output directory.
+If you embed the path in HTML, it must be relative to the directory where the HTML file resides.
+To do this calculation, use MarkTheRipper's built-in function keyword `relative`:
+
+```html
+<h2><a href="{relative:entry.path}">{entry.title}</a></h2>
+```
+
+The details of the function keywords are explained in later chapters.
+
+----
 
 ### Aggregate categories
 
@@ -661,6 +683,12 @@ starting from the root.
 
 The individual elements enumerated are the same as for the categories described so far.
 In the above example, the `name` property outputs the name of the category.
+
+----
+
+### Function keywords
+
+TODO:
 
 ----
 

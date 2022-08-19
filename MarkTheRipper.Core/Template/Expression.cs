@@ -16,7 +16,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Internal;
+namespace MarkTheRipper.Template;
+
+public delegate ValueTask<object?> AsyncFunctionDelegate(
+    object? parameter, MetadataContext context, CancellationToken ct);
 
 internal static class Expression
 {
@@ -34,10 +37,9 @@ internal static class Expression
                     entry.GetImplicitValueAsync(default).Result,
                     parameter,
                     context),
-            (Func<object?, string?> func, _) =>
-                func(parameter),
-            (Func<object?, CancellationToken, ValueTask<string?>> func, _) =>
-                func(parameter, default).Result,
+            (AsyncFunctionDelegate func, _) =>
+                UnsafeFormatValue(
+                    func(parameter, context, default).Result, null, context),
             (IFormattable formattable, string format) =>
                 formattable.ToString(format, context.Lookup("lang") switch
                 {
@@ -68,10 +70,9 @@ internal static class Expression
                     context,
                     ct).
                     ConfigureAwait(false),
-            (Func<object?, string?> func, _) =>
-                func(parameter),
-            (Func<object?, CancellationToken, ValueTask<string?>> func, _) =>
-                await func(parameter, ct).
+            (AsyncFunctionDelegate func, _) =>
+                await FormatValueAsync(
+                    await func(parameter, context, ct).ConfigureAwait(false), null, context, ct).
                     ConfigureAwait(false),
             (IFormattable formattable, string format) =>
                 formattable.ToString(format, context.Lookup("lang") switch

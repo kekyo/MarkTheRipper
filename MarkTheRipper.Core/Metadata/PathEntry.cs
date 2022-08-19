@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Functions;
 using System;
 using System.Linq;
 using System.Threading;
@@ -28,7 +29,7 @@ public sealed class PathEntry :
     public PathEntry(string path) =>
         this.PathElements = path.Split(separators, StringSplitOptions.RemoveEmptyEntries);
 
-    private PathEntry(string[] pathElements) =>
+    internal PathEntry(string[] pathElements) =>
         this.PathElements = pathElements;
 
     public string Path =>
@@ -40,34 +41,8 @@ public sealed class PathEntry :
     ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
         new ValueTask<object?>(this.Path);
 
-    private static PathEntry CalculateRelativePath(
-        PathEntry fromPath, PathEntry toPath)
-    {
-        var basePathElements = fromPath.PathElements.
-            Take(fromPath.PathElements.Length - 1).
-            ToArray();
-
-        var commonPathElementCount = basePathElements.
-            Zip(toPath.PathElements.Take(toPath.PathElements.Length - 1),
-                (bp, tp) => bp == tp).
-            Count();
-
-        var relativePathElements =
-            Enumerable.Range(0, basePathElements.Length - commonPathElementCount).
-            Select(_ => "..").
-            Concat(toPath.PathElements.Skip(commonPathElementCount)).
-            ToArray();
-
-        return new(relativePathElements);
-    }
-
     public object? GetProperty(string keyName, MetadataContext context) =>
-        keyName switch
-        {
-            "relative" => context.Lookup("path") is PathEntry currentPath ?
-                CalculateRelativePath(currentPath, this) : null,
-            _ => null,
-        };
+        null;
 
     public bool Equals(PathEntry? other) =>
         other is { } rhs &&

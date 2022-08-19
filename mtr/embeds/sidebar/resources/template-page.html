@@ -28,7 +28,7 @@
         <p>{tag}</p>
         <ul>
             {foreach:tag.entries entry}
-            <li><a href="{entry.path.relative}">{entry.title}</a></li>
+            <li><a href="{relative:entry.path}">{entry.title}</a></li>
             {/}
         </ul>
         {/}
