@@ -13,6 +13,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
@@ -21,12 +23,21 @@ internal static class Expression
     private static readonly object?[] empty = new object?[0];
     private static readonly char[] dotOperator = new[] { '.' };
 
-    public static string? FormatValue(
+    public static string? UnsafeFormatValue(
         object? value, object? parameter, MetadataContext context) =>
         (value, parameter) switch
         {
-            (null, _) => null,
-            (IMetadataEntry entry, _) => FormatValue(entry.ImplicitValue, parameter, context),
+            (null, _) =>
+                null,
+            (IMetadataEntry entry, _) =>
+                UnsafeFormatValue(
+                    entry.GetImplicitValueAsync(default).Result,
+                    parameter,
+                    context),
+            (Func<object?, string?> func, _) =>
+                func(parameter),
+            (Func<object?, CancellationToken, ValueTask<string?>> func, _) =>
+                func(parameter, default).Result,
             (IFormattable formattable, string format) =>
                 formattable.ToString(format, context.Lookup("lang") switch
                 {
@@ -34,10 +45,51 @@ internal static class Expression
                     string lang => new CultureInfo(lang),
                     _ => CultureInfo.CurrentCulture,
                 }),
-            (string str, _) => str,
+            (string str, _) =>
+                str,
             (IEnumerable enumerable, _) =>
-                string.Join(",", enumerable.Cast<object?>().Select(v => FormatValue(v, parameter, context))),
-            _ => value.ToString(),
+                string.Join(",",
+                    enumerable.Cast<object?>().
+                    Select(v => UnsafeFormatValue(v, parameter, context))),
+            _ =>
+                value.ToString(),
+        };
+
+    public static async ValueTask<string?> FormatValueAsync(
+        object? value, object? parameter, MetadataContext context, CancellationToken ct) =>
+        (value, parameter) switch
+        {
+            (null, _) =>
+                null,
+            (IMetadataEntry entry, _) =>
+                await FormatValueAsync(
+                    await entry.GetImplicitValueAsync(ct).ConfigureAwait(false),
+                    parameter,
+                    context,
+                    ct).
+                    ConfigureAwait(false),
+            (Func<object?, string?> func, _) =>
+                func(parameter),
+            (Func<object?, CancellationToken, ValueTask<string?>> func, _) =>
+                await func(parameter, ct).
+                    ConfigureAwait(false),
+            (IFormattable formattable, string format) =>
+                formattable.ToString(format, context.Lookup("lang") switch
+                {
+                    IFormatProvider fp => fp,
+                    string lang => new CultureInfo(lang),
+                    _ => CultureInfo.CurrentCulture,
+                }),
+            (string str, _) =>
+                str,
+            (IEnumerable enumerable, _) =>
+                string.Join(",",
+                    await Task.WhenAll(
+                        enumerable.Cast<object?>().
+                        Select(v => FormatValueAsync(v, parameter, context, ct).AsTask())).
+                        ConfigureAwait(false)),
+            _ =>
+                value.ToString(),
         };
 
     public static IEnumerable<object?> EnumerateValue(

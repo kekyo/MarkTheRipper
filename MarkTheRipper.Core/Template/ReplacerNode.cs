@@ -31,24 +31,31 @@ internal sealed class ReplacerNode : ITemplateNode
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (keyName[0] == '*')
+        async ValueTask RenderAsync(string keyName)
+        {
+            if (Expression.Reduce(keyName, metadata) is { } rawValue &&
+                await Expression.FormatValueAsync(
+                    rawValue, this.parameter, metadata, ct).ConfigureAwait(false) is { } value)
+            {
+                await writer(value, ct).
+                    ConfigureAwait(false);
+            }
+            // Not found from all metadata.
+            else
+            {
+                await writer(keyName, ct).
+                    ConfigureAwait(false);
+            }
+        }
+
+        if (this.keyName[0] == '*')
         {
             var keyName = this.keyName.Substring(1);
             if (Expression.Reduce(keyName, metadata) is { } rawNestedKeyName &&
-                Expression.FormatValue(rawNestedKeyName, null, metadata) is { } nestedKeyName)
+                await Expression.FormatValueAsync(
+                    rawNestedKeyName, null, metadata, ct).ConfigureAwait(false) is { } nestedKeyName)
             {
-                if (Expression.Reduce(nestedKeyName, metadata) is { } rawValue &&
-                    Expression.FormatValue(rawValue, parameter, metadata) is { } value)
-                {
-                    await writer(value, ct).
-                        ConfigureAwait(false);
-                }
-                // Not found from all metadata.
-                else
-                {
-                    await writer(nestedKeyName, ct).
-                        ConfigureAwait(false);
-                }
+                await RenderAsync(nestedKeyName);
             }
             // Not found from all metadata.
             else
@@ -59,23 +66,12 @@ internal sealed class ReplacerNode : ITemplateNode
         }
         else
         {
-            if (Expression.Reduce(keyName, metadata) is { } rawValue &&
-                Expression.FormatValue(rawValue, parameter, metadata) is { } value)
-            {
-                await writer(value, ct).
-                    ConfigureAwait(false);
-            }
-            // Not found from all metadata.
-            else
-            {
-                await writer($"<!-- Key: {keyName} -->", ct).
-                    ConfigureAwait(false);
-            }
+            await RenderAsync(this.keyName);
         }
     }
 
     public override string ToString() =>
-        parameter is { } ?
-            $"Replacer: {{{keyName}:{parameter}}}" :
-            $"Replacer: {{{keyName}}}";
+        this.parameter is { } ?
+            $"Replacer: {{{this.keyName}:{this.parameter}}}" :
+            $"Replacer: {{{this.keyName}}}";
 }

@@ -125,12 +125,13 @@ public sealed class Ripper
             ConfigureAwait(false);
     }
 
-    private static RootTemplateNode GetTemplate(MetadataContext context)
+    private static async ValueTask<RootTemplateNode> GetTemplateAsync(
+        MetadataContext context, CancellationToken ct)
     {
         if (context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> tl)
         {
             if (context.Lookup("template") is { } tn &&
-                Expression.FormatValue(tn, null, context) is { } templateName)
+                await Expression.FormatValueAsync(tn, null, context, ct).ConfigureAwait(false) is { } templateName)
             {
                 if (tl.TryGetValue(templateName, out var template))
                 {
@@ -205,7 +206,8 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var template = GetTemplate(metadata);
+        var template = await GetTemplateAsync(metadata, ct).
+            ConfigureAwait(false);
 
         var mc = SpawnWithAdditionalMetadata(
             markdownMetadata,

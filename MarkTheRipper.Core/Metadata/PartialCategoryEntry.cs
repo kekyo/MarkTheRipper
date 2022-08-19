@@ -10,6 +10,8 @@
 using MarkTheRipper.Internal;
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -44,8 +46,8 @@ internal sealed class PartialCategoryEntry :
         }
     }
 
-    object? IMetadataEntry.ImplicitValue =>
-        string.Join("/", this.Breadcrumbs.Select(pc => pc.Name));
+    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
+        new ValueTask<object?>(string.Join("/", this.Breadcrumbs.Select(pc => pc.Name)));
 
     private CategoryEntry? GetRealCategoryEntry(MetadataContext context) =>
         this.Breadcrumbs.

@@ -9,6 +9,8 @@
 
 using MarkTheRipper.Template;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -20,8 +22,8 @@ internal sealed class PartialTemplateEntry :
     public PartialTemplateEntry(string name) =>
         this.Name = name;
 
-    object? IMetadataEntry.ImplicitValue =>
-        this.Name;
+    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
+        new ValueTask<object?>(this.Name);
 
     public object? GetProperty(string keyName, MetadataContext context) =>
         context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> templateList &&

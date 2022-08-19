@@ -8,6 +8,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -19,8 +21,8 @@ internal sealed class PartialTagEntry :
     public PartialTagEntry(string name) =>
         this.Name = name;
 
-    object? IMetadataEntry.ImplicitValue =>
-        this.Name;
+    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
+        new ValueTask<object?>(this.Name);
 
     private TagEntry? GetRealTagEntry(MetadataContext context) =>
         context.Lookup("tagList") is IReadOnlyDictionary<string, TagEntry> tagList &&

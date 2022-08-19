@@ -7,6 +7,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace MarkTheRipper.Metadata;
 
 internal sealed class IteratorEntry :
@@ -21,8 +24,8 @@ internal sealed class IteratorEntry :
         this.Value = value;
     }
 
-    object? IMetadataEntry.ImplicitValue =>
-        this.Value;
+    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
+        new ValueTask<object?>(this.Value);
 
     public object? GetProperty(string keyName, MetadataContext context) =>
         (this.Value as IMetadataEntry)?.GetProperty(keyName, context) ??

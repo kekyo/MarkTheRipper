@@ -7,13 +7,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
 public interface IMetadataEntry
 {
-    object? ImplicitValue { get; }
+    ValueTask<object?> GetImplicitValueAsync(CancellationToken ct);
 
     object? GetProperty(string keyName, MetadataContext context);
 }

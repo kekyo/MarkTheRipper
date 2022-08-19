@@ -9,6 +9,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -35,8 +37,8 @@ public sealed class PathEntry :
     internal string PhysicalPath =>
         System.IO.Path.Combine(this.PathElements);
 
-    object? IMetadataEntry.ImplicitValue =>
-        this.Path;
+    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
+        new ValueTask<object?>(this.Path);
 
     private static PathEntry CalculateRelativePath(
         PathEntry fromPath, PathEntry toPath)
