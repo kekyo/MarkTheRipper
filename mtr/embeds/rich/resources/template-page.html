@@ -75,13 +75,13 @@
                 <ol class="breadcrumb">
                     <li style="padding-right: 0.5em;">Category:</li>
                     {foreach category.breadcrumb}
-                    <li class="breadcrumb-item"><span aria-label="category" class="badge rounded-pill bg-light text-dark">{*item.name}</span></li>
+                    <li class="breadcrumb-item"><span aria-label="category" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span></li>
                     {/}
                 </ol>
             </nav>
             <!-- Tags use Bootstrap badge -->
             <nav aria-label="tags">
-                Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{*item.name}</span>{/}
+                Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span>{/}
             </nav>
         </header>
         <hr />
