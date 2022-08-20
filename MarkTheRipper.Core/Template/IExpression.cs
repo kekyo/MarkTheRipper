@@ -7,6 +7,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using System;
+using System.Globalization;
 using System.Linq;
 
 namespace MarkTheRipper.Template;
@@ -41,7 +43,12 @@ public sealed class ValueExpression : IExpression
         this.Value = value;
 
     string IExpression.ImplicitValue =>
-        this.Value?.ToString() ?? string.Empty;
+        this.Value switch
+        {
+            IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+            null => string.Empty,
+            _ => this.Value.ToString() ?? string.Empty,
+        };
 
     public string Type =>
         this.Value?.GetType().Name ?? "(null)";
@@ -54,6 +61,7 @@ public sealed class ValueExpression : IExpression
         {
             string str => $"\"{str}\"",
             char ch => $"'{ch}'",
+            IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
             null => "(null)",
             _ => this.Value.ToString() ?? string.Empty,
         };
