@@ -28,7 +28,7 @@ internal static class Parser
         CancellationToken ct)
     {
         var nestedIterations =
-            new Stack<(string[] iteratorArguments, List<ITemplateNode> nodes)>();
+            new Stack<(string iteratorExpression, List<ITemplateNode> nodes)>();
 
         var originalText = new StringBuilder();
         var nodes = new List<ITemplateNode>();
@@ -95,14 +95,26 @@ internal static class Parser
 
                 startIndex = closeIndex + 1;
 
-                var metadataWords = line.Substring(
-                    openIndex + 1, closeIndex - openIndex - 1);
-                var metadataWordSplitterIndex = metadataWords.IndexOf(':');
+                static (string keyName, string? parameter) ParseWithWhitespace(string expression)
+                {
+                    var firstSplitterIndex = expression.IndexOf(' ');
 
-                var keyName = metadataWordSplitterIndex >= 0 ?
-                    metadataWords.Substring(0, metadataWordSplitterIndex) : metadataWords;
-                var parameter = metadataWordSplitterIndex >= 0 ?
-                    metadataWords.Substring(metadataWordSplitterIndex + 1) : null;
+                    var keyName = firstSplitterIndex >= 0 ?
+                        expression.Substring(0, firstSplitterIndex).Trim() : expression.Trim();
+                    var parameter = firstSplitterIndex >= 0 ?
+                        expression.Substring(firstSplitterIndex + 1).Trim() : null;
+
+                    if (string.IsNullOrWhiteSpace(parameter))
+                    {
+                        parameter = null;
+                    }
+
+                    return (keyName, parameter);
+                }
+
+                var expression = line.Substring(
+                    openIndex + 1, closeIndex - openIndex - 1);
+                var (keyName, parameter) = ParseWithWhitespace(expression);
 
                 // Special case: iterator begin
                 if (keyName == "foreach")
@@ -113,9 +125,7 @@ internal static class Parser
                             $"`foreach` parameter required. Template={templateName}");
                     }
 
-                    var iteratorArguments =
-                        parameter!.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    nestedIterations.Push((iteratorArguments, nodes));
+                    nestedIterations.Push((expression, nodes));
                     nodes = new();
                 }
                 // Special case: iterator end
@@ -133,12 +143,10 @@ internal static class Parser
                     }
 
                     var childNodes = nodes.ToArray();
-                    var (iteratorArguments, lastNodes) = nestedIterations.Pop();
+                    var (iteratorExpression, lastNodes) = nestedIterations.Pop();
 
-                    var iteratorKeyName =
-                        iteratorArguments[0];
-                    var iteratorBoundName =
-                        iteratorArguments.ElementAtOrDefault(1) ?? "item";
+                    var (iteratorKeyName, iteratorParameter) = ParseWithWhitespace(iteratorExpression);
+                    var iteratorBoundName = iteratorParameter ?? "item";
 
                     nodes = lastNodes;
                     nodes.Add(new ForEachNode(iteratorKeyName, iteratorBoundName, childNodes));
