@@ -355,11 +355,13 @@ The HTML will look like `Category: blog`.
 This may work fine in some cases, but you may want to replace it with a more polite statement.
 So you can have the metadata dictionary search for the value again,
 using `blog` as the keyword.
-Add an asterisk `*` before the keyword:
+Use the `lookup` function keyword built-in MarkTheRipper:
 
 ```html
-<p>Category: {*category}</p>
+<p>Category: {lookup category}</p>
 ```
+
+* The details of the function keywords are explained in later chapters.
 
 If you do this and register the pair `blog` and `Private diary` in the metadata dictionary,
 the HTML will show `Category: Private diary`.
@@ -561,8 +563,6 @@ To do this calculation, use MarkTheRipper's built-in function keyword `relative`
 Using `relative` to calculate the path will work correctly
 how the HTML output by MarkTheRipper is deployed on any server.
 This will be safer than using the reference path for hard-coded URLs.
-
-The details of the function keywords are explained in later chapters.
 
 ----
 

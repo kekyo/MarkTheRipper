@@ -172,6 +172,7 @@ public sealed class Ripper
         var mc = parentMetadata.Spawn();
 
         mc.Set("relative", CalculateRelativePath.Function);
+        mc.Set("lookup", Lookup.Function);
 
         InjectAdditionalMetadata(
             markdownMetadata,

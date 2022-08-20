@@ -282,9 +282,9 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <h1>{*category}</h1>
-
-{contentBody}</body>
+    <h1>{lookup category}</h1>
+    {contentBody}
+  </body>
 </html>
 ",
 ("main", "MAIN CATEGORY"),

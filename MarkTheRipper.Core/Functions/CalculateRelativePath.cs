@@ -41,7 +41,7 @@ internal static class CalculateRelativePath
     }
 
     private static async ValueTask<object?> CalculateAsync(
-        IExpression[] parameters, MetadataContext context, CancellationToken ct)
+        IExpression[] parameters, MetadataContext metadata, CancellationToken ct)
     {
         if (parameters.Length != 1)
         {
@@ -50,11 +50,11 @@ internal static class CalculateRelativePath
         }
 
         var parameter = parameters[0];
-        if (context.Lookup("path") is PathEntry currentPath)
+        if (metadata.Lookup("path") is PathEntry currentPath)
         {
-            if (Reducer.ReduceExpression(parameter, context) is { } rawValue &&
+            if (Reducer.ReduceExpression(parameter, metadata) is { } rawValue &&
                 await Reducer.FormatValueAsync(
-                    rawValue, parameters.Skip(1).ToArray(), context, ct).
+                    rawValue, parameters.Skip(1).ToArray(), metadata, ct).
                     ConfigureAwait(false) is { } value)
             {
                 return InternalCalculate(currentPath, new PathEntry(value));

@@ -134,35 +134,11 @@ internal static class Reducer
     private static object? ReduceExpressionElements(
         string[] elements,
         int index,
-        MetadataContext metadata)
-    {
-        if (index < elements.Length)
-        {
-            object? LookupAndReduceProperty(string id, int index) =>
-                metadata.Lookup(id) is { } value ?
-                    ReduceProperty(elements, index, value, metadata) :
-                    null;
-
-            var element = elements[index++];
-            if (element.StartsWith("*"))
-            {
-                return LookupAndReduceProperty(element.Substring(1), index) switch
-                {
-                    null => element,
-                    var v => ReduceProperty(
-                        elements, index, v, metadata),
-                };
-            }
-            else
-            {
-                return LookupAndReduceProperty(element, index);
-            }
-        }
-        else
-        {
-            return null;
-        }
-    }
+        MetadataContext metadata) =>
+        index < elements.Length &&
+        metadata.Lookup(elements[index++]) is { } value ?
+            ReduceProperty(elements, index, value, metadata) :
+            null;
 
     public static object? ReduceExpression(
         IExpression expression,
