@@ -20,15 +20,228 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
+internal enum ListTypes
+{
+    List = 0,
+    Array,
+}
+
 internal static class Parser
 {
+    private static readonly char[][] idleSeparators = new[]
+    {
+        new[] { ' ' },  // List
+        new[] { ',', ' ' },  // Array
+    };
+    private static readonly char[][] skipDetectionSeparators = new[]
+    {
+        new[] { '(', ')', '[', ']', '\'', '"', ' ' },  // List
+        new[] { '(', ')', '[', ']', '\'', '"', ',' },  // Array
+    };
+
+    private static bool IsValidVariableName(string text)
+    {
+        static bool IsVariableChars0(char ch) =>
+            char.IsLetter(ch) || ch == '_';
+
+        if (text.Length >= 1)
+        {
+            if (!IsVariableChars0(text[0]))
+            {
+                return false;
+            }
+
+            for (var index = 1; index < text.Length; index++)
+            {
+                var ch = text[index];
+                if (!(IsVariableChars0(ch) || char.IsDigit(ch) || ch == '.'))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static IExpression[] ParseExpression(
+        string expressionString, ListTypes outerType = ListTypes.List)
+    {
+        var expressions = new List<IExpression>();
+        var nested = new Stack<(ListTypes lastType, List<IExpression> lastExpressions)>();
+        var currentType = outerType;
+
+        var index = 0;
+        while (index < expressionString.Length)
+        {
+            var startIndex = expressionString.IndexOfNotAll(
+                idleSeparators[(int)currentType], index);
+            if (startIndex == -1)
+            {
+                break;
+            }
+
+            var ch = expressionString[startIndex];
+            if (ch == '"')
+            {
+                var endIndex = expressionString.IndexOf('"', startIndex + 1);
+                if (endIndex == -1)
+                {
+                    throw new FormatException("Could not find close quote.");
+                }
+
+                var text = expressionString.Substring(startIndex + 1, endIndex - 1 - startIndex);
+                expressions.Add(new ValueExpression(text));
+
+                index = endIndex + 1;
+            }
+            else if (ch == '\'')
+            {
+                var endIndex = expressionString.IndexOf('\'', startIndex + 1);
+                if (endIndex == -1)
+                {
+                    throw new FormatException("Could not find close quote.");
+                }
+
+                var text = expressionString.Substring(startIndex + 1, endIndex - 1 - startIndex);
+                expressions.Add(new ValueExpression(text));
+
+                index = endIndex + 1;
+            }
+            else if (ch == '(')
+            {
+                nested.Push((currentType, expressions));
+                expressions = new List<IExpression>();
+
+                currentType = ListTypes.List;
+                index = startIndex + 1;
+            }
+            else if (ch == ')')
+            {
+                if (nested.Count <= 0)
+                {
+                    throw new FormatException("Could not find open bracket.");
+                }
+                if (currentType != ListTypes.List)
+                {
+                    throw new FormatException("Unmatched close bracket.");
+                }
+
+                var (lastType, lastExpressions) = nested.Pop();
+
+                switch (expressions.Count)
+                {
+                    // "()"
+                    case 0:
+                        break;
+                    // "(value)"
+                    case 1:
+                        lastExpressions.Add(expressions[0]);
+                        break;
+                    // "(value0, value1, ...)"
+                    default:
+                        lastExpressions.Add(new ListExpression(expressions.ToArray()));
+                        break;
+                }
+                expressions = lastExpressions;
+
+                currentType = lastType;
+                index++;
+            }
+            else if (ch == '[')
+            {
+                nested.Push((currentType, expressions));
+                expressions = new List<IExpression>();
+
+                currentType = ListTypes.Array;
+                index = startIndex + 1;
+            }
+            else if (ch == ']')
+            {
+                if (nested.Count <= 0)
+                {
+                    throw new FormatException("Could not find array beginning.");
+                }
+                if (currentType != ListTypes.Array)
+                {
+                    throw new FormatException("Unmatched array finishing.");
+                }
+
+                var (lastType, lastExpressions) = nested.Pop();
+
+                lastExpressions.Add(new ArrayExpression(expressions.ToArray()));
+                expressions = lastExpressions;
+
+                currentType = lastType;
+                index++;
+            }
+            else
+            {
+                var nextIndex = expressionString.IndexOfAny(
+                    skipDetectionSeparators[(int)currentType], startIndex + 1);
+                if (nextIndex == -1)
+                {
+                    nextIndex = expressionString.Length;
+                }
+
+                var text = expressionString.
+                    Substring(startIndex, nextIndex - startIndex).
+                    Trim();
+                if (bool.TryParse(text, out var bv))
+                {
+                    expressions.Add(new ValueExpression(bv));
+                }
+                else if (long.TryParse(text, out var lv))
+                {
+                    expressions.Add(new ValueExpression(lv));
+                }
+                else if (double.TryParse(text, out var dv))
+                {
+                    expressions.Add(new ValueExpression(dv));
+                }
+                else if (IsValidVariableName(text))
+                {
+                    expressions.Add(new VariableExpression(text));
+                }
+                else if (DateTimeOffset.TryParse(
+                    text,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AllowWhiteSpaces,
+                    out var dtv))
+                {
+                    expressions.Add(new ValueExpression(dtv));
+                }
+                else
+                {
+                    expressions.Add(new ValueExpression(text));
+                }
+
+                index = nextIndex;
+            }
+        }
+
+        if (nested.Count >= 1)
+        {
+            switch (nested.Pop().lastType)
+            {
+                case ListTypes.List:
+                    throw new FormatException("Unmatched close bracket.");
+                case ListTypes.Array:
+                    throw new FormatException("Unmatched array finishing.");
+            }
+        }
+
+        return expressions.ToArray();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static async ValueTask<RootTemplateNode> ParseTemplateAsync(
         string templateName,
         TextReader templateReader,
         CancellationToken ct)
     {
         var nestedIterations =
-            new Stack<(string iteratorExpression, List<ITemplateNode> nodes)>();
+            new Stack<(IExpression[] iteratorExpressions, List<ITemplateNode> nodes)>();
 
         var originalText = new StringBuilder();
         var nodes = new List<ITemplateNode>();
@@ -95,43 +308,28 @@ internal static class Parser
 
                 startIndex = closeIndex + 1;
 
-                static (string keyName, string? parameter) ParseWithWhitespace(string expression)
-                {
-                    var firstSplitterIndex = expression.IndexOf(' ');
-
-                    var keyName = firstSplitterIndex >= 0 ?
-                        expression.Substring(0, firstSplitterIndex).Trim() : expression.Trim();
-                    var parameter = firstSplitterIndex >= 0 ?
-                        expression.Substring(firstSplitterIndex + 1).Trim() : null;
-
-                    if (string.IsNullOrWhiteSpace(parameter))
-                    {
-                        parameter = null;
-                    }
-
-                    return (keyName, parameter);
-                }
-
-                var expression = line.Substring(
+                var expressionString = line.Substring(
                     openIndex + 1, closeIndex - openIndex - 1);
-                var (keyName, parameter) = ParseWithWhitespace(expression);
+
+                var expressions = ParseExpression(expressionString, ListTypes.List);
+                var expression0 = expressions.FirstOrDefault();
 
                 // Special case: iterator begin
-                if (keyName == "foreach")
+                if (expression0 is VariableExpression("foreach"))
                 {
-                    if (string.IsNullOrWhiteSpace(parameter))
+                    if (expressions.Length <= 1)
                     {
                         throw new FormatException(
                             $"`foreach` parameter required. Template={templateName}");
                     }
 
-                    nestedIterations.Push((expression, nodes));
+                    nestedIterations.Push((expressions, nodes));
                     nodes = new();
                 }
                 // Special case: iterator end
-                else if (keyName == "/")
+                else if (expression0 is ValueExpression("/"))
                 {
-                    if (!string.IsNullOrWhiteSpace(parameter))
+                    if (expressions.Length >= 2)
                     {
                         throw new FormatException(
                             $"Invalid iterator-end parameter. Template={templateName}");
@@ -143,17 +341,16 @@ internal static class Parser
                     }
 
                     var childNodes = nodes.ToArray();
-                    var (iteratorExpression, lastNodes) = nestedIterations.Pop();
-
-                    var (iteratorKeyName, iteratorParameter) = ParseWithWhitespace(iteratorExpression);
-                    var iteratorBoundName = iteratorParameter ?? "item";
+                    var (iteratorExpressions, lastNodes) = nestedIterations.Pop();
 
                     nodes = lastNodes;
-                    nodes.Add(new ForEachNode(iteratorKeyName, iteratorBoundName, childNodes));
+                    nodes.Add(new ForEachNode(
+                        iteratorExpressions.Skip(1).ToArray(),
+                        childNodes));
                 }
                 else
                 {
-                    nodes.Add(new ReplacerNode(keyName, parameter));
+                    nodes.Add(new ExpressionNode(expressions));
                 }
             }
         }
@@ -178,7 +375,7 @@ internal static class Parser
         StringOnly,
         DateOnly,
     }
-    private enum ListTypes
+    private enum __ListTypes
     {
         Ignore,
         AcceptOnce,
@@ -189,13 +386,13 @@ internal static class Parser
         string text,
         Func<string, TResult?, TResult?>? parserOverride,
         ParseTypes parseType,
-        ListTypes listType,
+        __ListTypes listType,
         TResult? previousValue)
     {
         // `title: [Hello world]`
         // * Assume yaml array-like: `tags: [aaa, bbb]` --> `tags: aaa, bbb`
         if (
-            listType != ListTypes.Ignore &&
+            listType != __ListTypes.Ignore &&
             text.StartsWith("[") &&
             text.EndsWith("]"))
         {
@@ -209,8 +406,8 @@ internal static class Parser
                             v.Trim(),
                             parserOverride,
                             parseType,
-                            listType == ListTypes.AcceptOnce ?
-                                ListTypes.Ignore : ListTypes.Accept,
+                            listType == __ListTypes.AcceptOnce ?
+                                __ListTypes.Ignore : __ListTypes.Accept,
                             agg.last);
                         agg.results.Add(result);
                         return (agg.results, result);
@@ -354,25 +551,25 @@ internal static class Parser
                             valueText,
                             null,
                             ParseTypes.StringOnly,
-                            ListTypes.Ignore,
+                            __ListTypes.Ignore,
                             default(string)),
                         "author" => ParseYamlLikeString(
                             valueText,
                             null,
                             ParseTypes.StringOnly,
-                            ListTypes.AcceptOnce,
+                            __ListTypes.AcceptOnce,
                             default(object)),
                         "template" => ParseYamlLikeString(
                             valueText,
                             (text, _) => new PartialTemplateEntry(text),
                             ParseTypes.StringOnly,
-                            ListTypes.Ignore,
+                            __ListTypes.Ignore,
                             default(PartialTemplateEntry)),
                         "category" => ParseYamlLikeString(
                             valueText,
                             (text, previous) => new PartialCategoryEntry(text, previous),
                             ParseTypes.StringOnly,
-                            ListTypes.AcceptOnce,
+                            __ListTypes.AcceptOnce,
                             new PartialCategoryEntry()) switch
                             {
                                 PartialCategoryEntry[] entries => entries.LastOrDefault(),
@@ -382,19 +579,19 @@ internal static class Parser
                             valueText,
                             (text, _) => new PartialTagEntry(text),
                             ParseTypes.StringOnly,
-                            ListTypes.AcceptOnce,
+                            __ListTypes.AcceptOnce,
                             default(PartialTagEntry)),
                         "date" => ParseYamlLikeString(
                             valueText,
                             null,
                             ParseTypes.DateOnly,
-                            ListTypes.Ignore,
+                            __ListTypes.Ignore,
                             default(object)),
                         _ => ParseYamlLikeString(
                             valueText,
                             null,
                             ParseTypes.AutoDetect,
-                            ListTypes.Accept,
+                            __ListTypes.Accept,
                             default(object)),
                     };
 

@@ -141,7 +141,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <p>Date: {date:yyyy/MM/dd HH:mm:ss.fff zzz}</p>
+    <p>Date: {date 'yyyy/MM/dd HH:mm:ss.fff zzz'}</p>
 {contentBody}</body>
 </html>
 ",
@@ -174,7 +174,7 @@ This is test contents.
   </head>
   <body>
     <ul>
-{foreach:tags}
+{foreach tags}
         <li>{item}</li>
 {/}
     </ul>
@@ -208,7 +208,7 @@ This is test contents.
   </head>
   <body>
     <ul>
-{foreach:tags}
+{foreach tags}
         <li>{item.index}</li>
 {/}
     </ul>
@@ -243,10 +243,10 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:author item1}
+{foreach author item1}
     <h3>{item1}</h3>
     <ul>
-{foreach:tags item2}
+{foreach tags item2}
         <li>{item1}: {item2} [{item1.index}-{item2.index}]</li>
 {/}
     </ul>
@@ -317,7 +317,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:category.breadcrumbs}
+{foreach category.breadcrumbs}
       <h1>Category: {item.name}</h1>
 {/}
     {contentBody}
@@ -407,7 +407,7 @@ This is test contents.
     <title>{title}</title>
   </head>
   <body>
-{foreach:tags}
+{foreach tags}
     <p>tag: {item}</p>
 {/}
 {contentBody}</body>
@@ -436,9 +436,9 @@ This is test contents.
     <title>{title}</title>
   </head>
   <body>
-{foreach:category.breadcrumbs}
+{foreach category.breadcrumbs}
     <h1>{item.name}</h1>
-{foreach:item.breadcrumbs}
+{foreach item.breadcrumbs}
     <h2>{item.name}</h2>
 {/}
 {/}

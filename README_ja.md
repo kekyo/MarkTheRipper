@@ -84,8 +84,8 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach:category.breadcrumb} {item.name}{/}</p>
-        <p>Tags:{foreach:tags} {item.name}{/}</p>
+        <p>Category:{foreach category.breadcrumb} {item.name}{/}</p>
+        <p>Tags:{foreach tags} {item.name}{/}</p>
     </header>
     <hr />
     <article>
@@ -346,12 +346,12 @@ HTMLには `Category: blog` のように表示されます。これで問題な�
 例によって、小さい例から始めましょう。これはminimumに含まれているテンプレートです:
 
 ```html
-<p>Tags:{foreach:tags} '{item}'{/}</p>
+<p>Tags:{foreach tags} '{item}'{/}</p>
 ```
 
 * `tags`キーワードは、タグのリストを示します（後述）
 
-これは、`{foreach:tags}`と`{/}`の間にある文書が、`tags`の個数だけ繰り返し出力されるというものです。
+これは、`{foreach tags}`と`{/}`の間にある文書が、`tags`の個数だけ繰り返し出力されるというものです。
 「間にある文書」とは、ここでは ` '{item}'` の事です。スペースが含まれてることに注意してください。
 同様に、改行やHTMLのタグなど、この間には何を含んでいても構いません。
 
@@ -369,11 +369,11 @@ tags: [foo,bar]
 すると、`<p>Tags: 'foo' 'bar'</p>` と出力されます。
 `tags`の`foo,bar`が、スペースで区切られて展開されて、クオートされて出力されました。
 
-`{foreach:tags}`と`{/}`の間にある文書が繰り返し出力されるので、以下のように使う事も出来ます:
+`{foreach tags}`と`{/}`の間にある文書が繰り返し出力されるので、以下のように使う事も出来ます:
 
 ```html
 <ul>
-  {foreach:tags}
+  {foreach tags}
   <li>{item.index} {item}</li>
   {/}
 </ul>
@@ -395,8 +395,8 @@ tags: [foo,bar]
 
 ```html
 <ul>
-  {foreach:tags}
-  {foreach:tags}
+  {foreach tags}
+  {foreach tags}
   <li>{item.index} {item}</li>
   {/}
   {/}
@@ -420,8 +420,8 @@ tags: [foo,bar]
 
 ```html
 <ul>
-  {foreach:tags tag1}
-  {foreach:tags tag2}
+  {foreach tags tag1}
+  {foreach tags tag2}
   <li>{tag1.index}-{tag2.index} {tag1}/{tag2}</li>
   {/}
   {/}
@@ -459,7 +459,7 @@ MarkTheRipperは、コンテンツのすべてのタグとカテゴリの分類�
 
 ```html
 <ul>
-  {foreach:tagList tag}
+  {foreach tagList tag}
   <li>{tag}</li>
   {/}
 </ul>
@@ -484,9 +484,9 @@ MarkTheRipperは、コンテンツのすべてのタグとカテゴリの分類�
 タグだけでは、タグに紐づいたコンテンツ群は分かりませんが、実はタグは`foreach`で列挙することが出来ます:
 
 ```html
-{foreach:tagList tag}
+{foreach tagList tag}
 <h1>{tag}</h1>
-{foreach:tag.entries entry}
+{foreach tag.entries entry}
 <h2><a href="{entry.path}">{entry.title}</a></h2>
 {/}
 {/}
@@ -505,7 +505,7 @@ HTMLにパスを埋め込む場合、HTMLファイルが存在するディレク
 この計算を行うには、MarkTheRipper内蔵の関数キーワード `relative` を使います:
 
 ```html
-<h2><a href="{relative:entry.path}">{entry.title}</a></h2>
+<h2><a href="{relative entry.path}">{entry.title}</a></h2>
 ```
 
 `relative`を使ってパスを計算すると、MarkTheRipperが出力したHTMLがどのサーバーにどのようにデプロイされたとしても、正しくリンクが機能するようになります。
@@ -568,7 +568,7 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 ```html
 <h1>{rootCategory.name}</h1>
 <ul>
-  {foreach:rootCategory.entries entry}
+  {foreach rootCategory.entries entry}
   <li>{entry.path}</li>
   {/}
 </ul>
@@ -594,9 +594,9 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 
 ```html
 <h1>{rootCategory.name}</h1>
-{foreach:rootCategory.children child1}
+{foreach rootCategory.children child1}
 <h2>{child1.name}</h2>
-{foreach:child1.children child2}
+{foreach child1.children child2}
 <h3>{child2.name}</h3>
 {/}
 {/}
@@ -611,7 +611,7 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 
 ```html
 <ul>
-  {foreach:category.breadcrumb}
+  {foreach category.breadcrumb}
   <li>{item.name}</li>
   {/}
 </ul>

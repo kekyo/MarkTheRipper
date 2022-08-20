@@ -17,6 +17,90 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="ParserTests.AggregateTags1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.AggregateTags2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.AggregateTags3.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.AggregateTags4.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.AggregateTags5.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.AggregateTags6.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOff.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup1_subNames=.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup1_subNames=aaa-bbb.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup1_subNames=aaa.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup2_subNames=.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup2_subNames=aaa-bbb.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffCategoryLookup2_subNames=aaa.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffDateFormatting.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffIndexIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffItemIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffNestedIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffNestedLookup.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
+    <None Update="ParserTests.RipOffWithExplicitTemplate.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>ParserTests.cs</DependentUpon>
+    </None>
     <None Update="TagsTests.AggregateTags6.verified.txt">
       <DependentUpon>TagsTests.cs</DependentUpon>
     </None>

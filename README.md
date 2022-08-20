@@ -88,8 +88,8 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach:category.breadcrumb} {item.name}{/}</p>
-        <p>Tags:{foreach:tags} {item.name}{/}</p>
+        <p>Category:{foreach category.breadcrumb} {item.name}{/}</p>
+        <p>Tags:{foreach tags} {item.name}{/}</p>
     </header>
     <hr />
     <article>
@@ -389,12 +389,12 @@ As usual, let's start with a small example.
 This is the template included in minimum:
 
 ```html
-<p>Tags:{foreach:tags} '{item}'{/}</p>
+<p>Tags:{foreach tags} '{item}'{/}</p>
 ```
 
 * The `tags` keyword indicates a list of tags (see below)
 
-This means that documents between `{foreach:tags}` and `{/}` will be repeated as many times as the number of `tags`.
+This means that documents between `{foreach tags}` and `{/}` will be repeated as many times as the number of `tags`.
 "Documents between" are, in this case: ` '{item}'`.
 Note the inclusion of spaces.
 Likewise, it can contain line breaks, HTML tags, or anything else in between.
@@ -413,11 +413,11 @@ tags: [foo,bar]
 Then the output will be `<p>Tags: 'foo' 'bar'</p>`.
 The `foo,bar` in `tags` have been expanded and quoted in the output, each separated by space.
 
-Again, documents between `{foreach:tags}` and `{/}` are output repeatedly, so you can use the following:
+Again, documents between `{foreach tags}` and `{/}` are output repeatedly, so you can use the following:
 
 ```html
 <ul>
-  {foreach:tags}
+  {foreach tags}
   <li>{item.index} {item}</li>
   {/}
 </ul>
@@ -443,8 +443,8 @@ The following example repeats the tag twice:
 
 ```html
 <ul>
-  {foreach:tags}
-  {foreach:tags}
+  {foreach tags}
+  {foreach tags}
   <li>{item.index} {item}</li>
   {/}
   {/}
@@ -468,8 +468,8 @@ In that situation, you can specify a "bound name" for the `foreach`:
 
 ```html
 <ul>
-  {foreach:tags tag1}
-  {foreach:tags tag2}
+  {foreach tags tag1}
+  {foreach tags tag2}
   <li>{tag1.index}-{tag2.index} {tag1}/{tag2}</li>
   {/}
   {/}
@@ -507,7 +507,7 @@ First, let's make a list of tags:
 
 ```html
 <ul>
-  {foreach:tagList}
+  {foreach tagList}
   <li>{item}</li>
   {/}
 </ul>
@@ -533,10 +533,10 @@ Tags alone do not tell us the set of contents associated with a tag,
 but in fact tags can be enumerated using `foreach`:
 
 ```html
-{foreach:tagList tag}
+{foreach tagList tag}
 <h1>{tag}</h1>
-{foreach:tag.entries entry}
-<h2><a href="{relative:entry.path}">{entry.title}</a></h2>
+{foreach tag.entries entry}
+<h2><a href="{relative entry.path}">{entry.title}</a></h2>
 {/}
 {/}
 ```
@@ -555,7 +555,7 @@ If you embed the path in HTML, it must be relative to the directory where the HT
 To do this calculation, use MarkTheRipper's built-in function keyword `relative`:
 
 ```html
-<h2><a href="{relative:entry.path}">{entry.title}</a></h2>
+<h2><a href="{relative entry.path}">{entry.title}</a></h2>
 ```
 
 Using `relative` to calculate the path will work correctly
@@ -624,7 +624,7 @@ First, enumerate the root category:
 ```html
 <h1>{rootCategory.name}</h1>
 <ul>
-  {foreach:rootCategory.entries entry entry}
+  {foreach rootCategory.entries entry entry}
   <li>{entry.path}</li>
   {/}
 </ul>
@@ -656,9 +656,9 @@ To enumerate categories, use the `children` property:
 
 ```html
 <h1>{rootCategory.name}</h1>
-{foreach:rootCategory.children child1}
+{foreach rootCategory.children child1}
 <h2>{child1.name}</h2>
-{foreach:child1.children child2}
+{foreach child1.children child2}
 <h3>{child2.name}</h3>
 {/}
 {/}
@@ -675,7 +675,7 @@ It is very simple:
 
 ```html
 <ul>
-  {foreach:category.breadcrumb}
+  {foreach category.breadcrumb}
   <li>{item.name}</li>
   {/}
 </ul>

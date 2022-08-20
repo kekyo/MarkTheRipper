@@ -1,0 +1,6 @@
+﻿[
+  {
+    Value: abc,
+    Type: String
+  }
+]

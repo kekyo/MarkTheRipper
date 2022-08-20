@@ -1,0 +1,6 @@
+﻿[
+  {
+    Value: true,
+    Type: Boolean
+  }
+]

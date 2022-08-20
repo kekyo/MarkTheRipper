@@ -1,0 +1,19 @@
+﻿[
+  {
+    Name: abc
+  },
+  {
+    Values: [
+      {
+        Name: def
+      },
+      {
+        Value: 123,
+        Type: Int64
+      }
+    ]
+  },
+  {
+    Name: ghi
+  }
+]

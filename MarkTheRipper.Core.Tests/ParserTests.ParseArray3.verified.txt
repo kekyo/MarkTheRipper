@@ -1,0 +1,22 @@
+﻿[
+  {
+    Elements: [
+      {
+        Value: 123,
+        Type: Int64
+      },
+      {
+        Elements: [
+          {
+            Value: 456,
+            Type: Int64
+          },
+          {
+            Value: 789,
+            Type: Int64
+          }
+        ]
+      }
+    ]
+  }
+]

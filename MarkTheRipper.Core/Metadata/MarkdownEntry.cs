@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using MarkTheRipper.Template;
 using System;
 using System.Collections.Generic;
@@ -43,12 +44,15 @@ public sealed class MarkdownEntry :
 
     internal string Title =>
         this.Metadata.TryGetValue("title", out var value) &&
-            Reducer.UnsafeFormatValue(value, null, MetadataContext.Empty) is { } title ? 
+            Reducer.UnsafeFormatValue(
+                value, Utilities.Empty<IExpression>(), MetadataContext.Empty) is { } title ? 
             title : null ?? "(Untitled)";
 
     async ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
         this.Metadata.TryGetValue("title", out var value) &&
-            await Reducer.FormatValueAsync(value, null, MetadataContext.Empty, ct) is { } title ?
+            await Reducer.FormatValueAsync(
+                value, Utilities.Empty<IExpression>(), MetadataContext.Empty, ct).
+                ConfigureAwait(false) is { } title ?
             title : null ?? "(Untitled)";
 
     public object? GetProperty(string keyName, MetadataContext context) =>

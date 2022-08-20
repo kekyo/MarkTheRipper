@@ -7,8 +7,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,22 +41,26 @@ internal static class CalculateRelativePath
     }
 
     private static async ValueTask<object?> CalculateAsync(
-        object? parameter, MetadataContext context, CancellationToken ct)
+        IExpression[] parameters, MetadataContext context, CancellationToken ct)
     {
+        if (parameters.Length != 1)
+        {
+            throw new ArgumentException(
+                $"Invalid relative function arguments: Count={parameters.Length}");
+        }
+
+        var parameter = parameters[0];
         if (context.Lookup("path") is PathEntry currentPath)
         {
-            if (parameter is PathEntry path)
-            {
-                return InternalCalculate(currentPath, path);
-            }
-            else if (parameter is string expr &&
-                Reducer.Reduce(expr, context) is { } rawValue &&
+            if (Reducer.ReduceExpression(parameter, context) is { } rawValue &&
                 await Reducer.FormatValueAsync(
-                    rawValue, null, context, ct).ConfigureAwait(false) is { } value)
+                    rawValue, parameters.Skip(1).ToArray(), context, ct).
+                    ConfigureAwait(false) is { } value)
             {
                 return InternalCalculate(currentPath, new PathEntry(value));
             }
         }
+
         return parameter;
     }
 

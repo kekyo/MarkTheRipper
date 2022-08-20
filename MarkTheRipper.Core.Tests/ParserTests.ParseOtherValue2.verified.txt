@@ -1,0 +1,6 @@
+﻿[
+  {
+    Value: https://example.com/,
+    Type: String
+  }
+]

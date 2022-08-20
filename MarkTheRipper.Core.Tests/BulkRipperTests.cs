@@ -110,7 +110,7 @@ This is test contents.
   </head>
   <body>
       <h1>Category: {category}</h1>
-{foreach:category.breadcrumbs}
+{foreach category.breadcrumbs}
       <h2>Category: {item.name}</h1>
 {/}
     {contentBody}
@@ -148,7 +148,7 @@ This is test contents.
   </head>
   <body>
       <h1>Category: {category}</h1>
-{foreach:category.breadcrumbs}
+{foreach category.breadcrumbs}
       <h2>Category: {item.name}</h1>
 {/}
     {contentBody}
@@ -184,10 +184,10 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:tagList tag}
+{foreach tagList tag}
      <h1>Tags: {tag}</h1>
-{foreach:tag.entries entry}
-     <h2>Title: <a href='{relative:entry.path}' alt='{entry.path}'>{entry.title}</a>
+{foreach tag.entries entry}
+     <h2>Title: <a href='{relative entry.path}' alt='{entry.path}'>{entry.title}</a>
 {/}
 {/}
     {contentBody}
@@ -224,7 +224,7 @@ This is test contents.
   </head>
   <body>
     <ul>
-      {foreach:category.breadcrumb}
+      {foreach category.breadcrumb}
       <li>{item.name}</li>
       {/}
     </ul>

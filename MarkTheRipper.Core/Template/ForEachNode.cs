@@ -7,8 +7,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,17 +18,14 @@ namespace MarkTheRipper.Template;
 
 internal sealed class ForEachNode : ITemplateNode
 {
-    private readonly string keyName;
-    private readonly string boundName;
+    private readonly IExpression[] expressions;
     private readonly ITemplateNode[] childNodes;
 
     public ForEachNode(
-        string keyName,
-        string boundName,
+        IExpression[] expressions,
         ITemplateNode[] childNodes)
     {
-        this.keyName = keyName;
-        this.boundName = boundName;
+        this.expressions = expressions;
         this.childNodes = childNodes;
     }
 
@@ -35,16 +34,21 @@ internal sealed class ForEachNode : ITemplateNode
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (Reducer.Reduce(keyName, metadata) is { } rawValue &&
+        if (this.expressions.FirstOrDefault() is { } expression0 &&
+            Reducer.ReduceExpression(expression0, metadata) is { } rawValue &&
             Reducer.EnumerateValue(rawValue, metadata) is { } enumerable)
         {
             var iterationMetadata = metadata.Spawn();
+
+            var boundName =
+                this.expressions.ElementAtOrDefault(1)?.ImplicitValue ??
+                "item";
 
             var index = 0;
             foreach (var iterationValue in enumerable)
             {
                 iterationMetadata.Set(
-                    this.boundName,
+                    boundName,
                     new IteratorEntry(index, iterationValue));
 
                 foreach (var childNode in childNodes)
@@ -59,5 +63,5 @@ internal sealed class ForEachNode : ITemplateNode
     }
 
     public override string ToString() =>
-        $"ForEach: {{{keyName}}}";
+        $"ForEach: {{{string.Join(" ", (object[])this.expressions)}}}";
 }
