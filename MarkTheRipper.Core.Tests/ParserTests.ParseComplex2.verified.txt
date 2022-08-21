@@ -1,29 +1,31 @@
-﻿[
-  {
+﻿{
+  Function: {
     Name: abc
   },
-  {
-    Values: [
-      {
+  Parameters: [
+    {
+      Function: {
         Value: def,
         Type: String
       },
-      {
-        Elements: [
-          {
-            Value: 123,
-            Type: Int64
-          },
-          {
-            Value: 456,
-            Type: Int64
-          }
-        ]
-      }
-    ]
-  },
-  {
-    Value: ghi,
-    Type: String
-  }
-]
+      Parameters: [
+        {
+          Elements: [
+            {
+              Value: 123,
+              Type: Int64
+            },
+            {
+              Value: 456,
+              Type: Int64
+            }
+          ]
+        }
+      ]
+    },
+    {
+      Value: ghi,
+      Type: String
+    }
+  ]
+}

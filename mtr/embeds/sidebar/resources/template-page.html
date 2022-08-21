@@ -14,8 +14,8 @@
     <section style="flex-grow: 1;">
         <header>
             <h1>{title}</h1>
-            <p>Category:{foreach category.breadcrumb} {lookup item.name}{/}</p>
-            <p>Tags:{foreach tags} {lookup item.name}{/}</p>
+            <p>Category:{foreach category.breadcrumb} {lookup item.name}{end}</p>
+            <p>Tags:{foreach tags} {lookup item.name}{end}</p>
         </header>
         <hr />
         <article>
@@ -29,9 +29,9 @@
         <ul>
             {foreach tag.entries entry}
             <li><a href="{relative entry.path}">{entry.title}</a></li>
-            {/}
+            {end}
         </ul>
-        {/}
+        {end}
     </div>
 </body>
 </html>

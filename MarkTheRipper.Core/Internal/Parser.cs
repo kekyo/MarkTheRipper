@@ -23,6 +23,8 @@ namespace MarkTheRipper.Internal;
 internal enum ListTypes
 {
     List = 0,
+    StrictArray,
+    Value,
     Array,
 }
 
@@ -30,13 +32,17 @@ internal static class Parser
 {
     private static readonly char[][] idleSeparators = new[]
     {
-        new[] { ' ' },  // List
+        new[] { ' ' },       // List
         new[] { ',', ' ' },  // Array
+        new[] { ' ' },       // Value
+        new[] { ',', ' ' },  // ValueOrArray
     };
     private static readonly char[][] skipDetectionSeparators = new[]
     {
         new[] { '(', ')', '[', ']', '\'', '"', ' ' },  // List
         new[] { '(', ')', '[', ']', '\'', '"', ',' },  // Array
+        new[] { '(', ')', '[', ']', '\'', '"', ' ' },  // Value
+        new[] { '(', ')', '[', ']', '\'', '"', ',' },  // ValueOrArray
     };
 
     private static bool IsValidVariableName(string text)
@@ -63,7 +69,7 @@ internal static class Parser
         return true;
     }
 
-    public static IExpression[] ParseExpression(
+    public static IExpression ParseExpression(
         string expressionString, ListTypes outerType = ListTypes.List)
     {
         var expressions = new List<IExpression>();
@@ -78,6 +84,14 @@ internal static class Parser
             if (startIndex == -1)
             {
                 break;
+            }
+
+            if (currentType == ListTypes.Value &&
+                nested.Count == 0 &&
+                expressions.Count >= 1)
+            {
+                throw new FormatException(
+                    "Expression must be only one term at this point.");
             }
 
             var ch = expressionString[startIndex];
@@ -128,20 +142,17 @@ internal static class Parser
 
                 var (lastType, lastExpressions) = nested.Pop();
 
-                switch (expressions.Count)
+                var expression = expressions.Count switch
                 {
                     // "()"
-                    case 0:
-                        break;
-                    // "(value)"
-                    case 1:
-                        lastExpressions.Add(expressions[0]);
-                        break;
-                    // "(value0, value1, ...)"
-                    default:
-                        lastExpressions.Add(new ListExpression(expressions.ToArray()));
-                        break;
-                }
+                    0 => throw new FormatException("Could not make empty at this point."),
+                    // "(expr)"
+                    1 => expressions[0],  // unwrap
+                    // "(expr0, expr1, ...)"
+                    _ => new ApplyExpression(expressions[0], expressions.Skip(1).ToArray()),
+                };
+                lastExpressions.Add(expression);
+
                 expressions = lastExpressions;
 
                 currentType = lastType;
@@ -152,7 +163,7 @@ internal static class Parser
                 nested.Push((currentType, expressions));
                 expressions = new List<IExpression>();
 
-                currentType = ListTypes.Array;
+                currentType = ListTypes.StrictArray;
                 index = startIndex + 1;
             }
             else if (ch == ']')
@@ -161,7 +172,7 @@ internal static class Parser
                 {
                     throw new FormatException("Could not find array beginning.");
                 }
-                if (currentType != ListTypes.Array)
+                if (currentType != ListTypes.StrictArray)
                 {
                     throw new FormatException("Unmatched array finishing.");
                 }
@@ -225,12 +236,23 @@ internal static class Parser
             {
                 case ListTypes.List:
                     throw new FormatException("Unmatched close bracket.");
-                case ListTypes.Array:
+                case ListTypes.StrictArray:
                     throw new FormatException("Unmatched array finishing.");
             }
         }
 
-        return expressions.ToArray();
+        return (currentType, expressions.Count) switch
+        {
+            (ListTypes.StrictArray, 1) when expressions[0] is ArrayExpression => expressions[0],  // unwrap
+            (ListTypes.StrictArray, _) => new ArrayExpression(expressions.ToArray()),
+            (ListTypes.Array, 1) => expressions[0],  // unwrap
+            (ListTypes.Array, _) => new ArrayExpression(expressions.ToArray()),
+            (_, 0) => throw new FormatException("Could not make empty at this point."),
+            (ListTypes.List, 1) => expressions[0],  // unwrap
+            (ListTypes.List, _) => new ApplyExpression(expressions[0], expressions.Skip(1).ToArray()),
+            (ListTypes.Value, 1) => expressions[0],
+            _ => throw new FormatException("Could not make list/array at this point."),
+        };
     }
 
     ///////////////////////////////////////////////////////////////////////////////////
@@ -241,7 +263,7 @@ internal static class Parser
         CancellationToken ct)
     {
         var nestedIterations =
-            new Stack<(IExpression[] iteratorExpressions, List<ITemplateNode> nodes)>();
+            new Stack<(IExpression[] iteratorParameters, List<ITemplateNode> nodes)>();
 
         var originalText = new StringBuilder();
         var nodes = new List<ITemplateNode>();
@@ -311,46 +333,38 @@ internal static class Parser
                 var expressionString = line.Substring(
                     openIndex + 1, closeIndex - openIndex - 1);
 
-                var expressions = ParseExpression(expressionString, ListTypes.List);
-                var expression0 = expressions.FirstOrDefault();
+                var expression = ParseExpression(expressionString, ListTypes.List);
 
                 // Special case: iterator begin
-                if (expression0 is VariableExpression("foreach"))
+                if (expression is ApplyExpression(VariableExpression("foreach"), var iteratorParameters))
                 {
-                    if (expressions.Length <= 1)
+                    if (iteratorParameters.Length <= 0)
                     {
                         throw new FormatException(
                             $"`foreach` parameter required. Template={templateName}");
                     }
 
-                    nestedIterations.Push((expressions, nodes));
+                    nestedIterations.Push((iteratorParameters, nodes));
                     nodes = new();
                 }
                 // Special case: iterator end
-                else if (expression0 is ValueExpression("/"))
+                else if (expression is VariableExpression("end"))
                 {
-                    if (expressions.Length >= 2)
-                    {
-                        throw new FormatException(
-                            $"Invalid iterator-end parameter. Template={templateName}");
-                    }
-                    else if (nestedIterations.Count <= 0)
+                    if (nestedIterations.Count <= 0)
                     {
                         throw new FormatException(
                             $"Could not find iterator-begin. Template={templateName}");
                     }
 
                     var childNodes = nodes.ToArray();
-                    var (iteratorExpressions, lastNodes) = nestedIterations.Pop();
+                    var (parameters, lastNodes) = nestedIterations.Pop();
 
                     nodes = lastNodes;
-                    nodes.Add(new ForEachNode(
-                        iteratorExpressions.Skip(1).ToArray(),
-                        childNodes));
+                    nodes.Add(new ForEachNode(parameters, childNodes));
                 }
                 else
                 {
-                    nodes.Add(new ExpressionNode(expressions));
+                    nodes.Add(new ExpressionNode(expression));
                 }
             }
         }
@@ -368,6 +382,7 @@ internal static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
+#if true
     // TODO: rewrite with LL.
     private enum ParseTypes
     {
@@ -497,8 +512,9 @@ internal static class Parser
 
         return unquoted ?? text;
     }
+#endif
 
-    public static async ValueTask<Dictionary<string, object?>> ParseMarkdownHeaderAsync(
+    public static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
@@ -524,7 +540,7 @@ internal static class Parser
             }
         }
 
-        var markdownMetadata = new Dictionary<string, object?>();
+        var markdownMetadata = new Dictionary<string, IExpression>();
 
         // `title: Hello world`
         while (true)
@@ -547,6 +563,19 @@ internal static class Parser
                     var valueText = line.Substring(keyIndex + 1).Trim();
                     var value = key switch
                     {
+#if false
+                        "title" => ParseExpression(valueText, ListTypes.Value),
+                        "author" => ParseExpression(valueText, ListTypes.ValueOrArray),
+                        "template" => ParseExpression(valueText, ListTypes.Value),
+                        "category" => new ValueExpression(
+                            ParseExpression(valueText, ListTypes.Array).
+                            Aggregate(
+                                new PartialCategoryEntry(),
+                                (agg, v) => new PartialCategoryEntry(v.ImplicitValue, agg))),
+                        "tags" => ParseExpression(valueText, ListTypes.ValueOrArray),
+                        "date" => ParseExpression(valueText, ListTypes.Value),
+                        _ => ParseExpression(valueText, ListTypes.ValueOrArray),
+#else
                         "title" => ParseYamlLikeString(
                             valueText,
                             null,
@@ -593,11 +622,12 @@ internal static class Parser
                             ParseTypes.AutoDetect,
                             __ListTypes.Accept,
                             default(object)),
+#endif
                     };
 
                     if (value != null)
                     {
-                        markdownMetadata[key] = value;
+                        markdownMetadata[key] = new ValueExpression(value);
                     }
                 }
                 else
@@ -619,7 +649,7 @@ internal static class Parser
         return markdownMetadata;
     }
 
-    public static async ValueTask<(Dictionary<string, object?> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
+    public static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)

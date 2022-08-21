@@ -8,24 +8,30 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
-using MarkTheRipper.Template;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
 internal static class EntryAggregator
 {
-    public static Dictionary<string, TagEntry> AggregateTags(
+    public static async ValueTask<Dictionary<string, TagEntry>> AggregateTagsAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
-        MetadataContext context) =>
-        markdownEntries.SelectMany(markdownEntry =>
-             markdownEntry.GetProperty("tags", context) is { } tagsValue ?
-                Reducer.EnumerateValue(tagsValue, context).
-                OfType<PartialTagEntry>().
-                Select(tag => (tag, markdownEntry)).
-                Where(entry => !string.IsNullOrWhiteSpace(entry.tag.Name)) :
-                Utilities.Empty<(PartialTagEntry, MarkdownEntry)>()).
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        (await Task.WhenAll(markdownEntries.Select(async markdownEntry =>
+            await markdownEntry.GetPropertyValueAsync("tags", metadata, ct).
+                ConfigureAwait(false) is { } tagsValue ?
+                Reducer.EnumerateValue(tagsValue, metadata).
+                    OfType<PartialTagEntry>().
+                    Select(tag => (tag, markdownEntry)).
+                    Where(entry => !string.IsNullOrWhiteSpace(entry.tag.Name)).
+                    ToArray() :
+                Utilities.Empty<(PartialTagEntry tag, MarkdownEntry markdownEntry)>())).
+            ConfigureAwait(false)).
+            SelectMany(entries => entries).
             GroupBy(entry => entry.tag.Name).
             ToDictionary(
                 g => g.Key,
@@ -35,31 +41,37 @@ internal static class EntryAggregator
                     OrderBy(markdownEntry => markdownEntry, MarkdownHeaderDateComparer.Instance).
                     ToArray()));
 
-    private static CategoryEntry AggregateCategory(
+    private static async ValueTask<CategoryEntry> AggregateCategoryAsync(
         string categoryName,
         IEnumerable<MarkdownEntry> markdownEntries,
         int levelIndex,
-        MetadataContext context)
+        MetadataContext metadata, 
+        CancellationToken ct)
     {
-        var categoryLists = markdownEntries.
-            Select(markdownEntry =>
+        var categoryLists = await Task.WhenAll(markdownEntries.
+            Select(async markdownEntry =>
                 (markdownEntry,
                  categoryList:
-                    markdownEntry.GetProperty("category", context) is PartialCategoryEntry entry ?
+                    await markdownEntry.GetPropertyValueAsync("category", metadata, ct).
+                        ConfigureAwait(false) is PartialCategoryEntry entry ?
                     entry.Unfold(e => e.Parent).Reverse().Skip(1).ToArray() :
-                    Utilities.Empty<PartialCategoryEntry>())).
-            ToArray();
+                    Utilities.Empty<PartialCategoryEntry>()))).
+            ConfigureAwait(false);
 
-        var childCategoryEntries = categoryLists.
+        var childCategoryEntries = (await Task.WhenAll(categoryLists.
             Where(entry => entry.categoryList.Length > levelIndex).
             GroupBy(entry => entry.categoryList[levelIndex].Name).
-            ToDictionary(
-                g => g.Key,
-                g => AggregateCategory(
+            Select(async g => (key: g.Key, values: await AggregateCategoryAsync(
                     g.Key,
                     g.Select(entry => entry.markdownEntry),
                     levelIndex + 1,
-                    context));
+                    metadata,
+                    ct).
+                    ConfigureAwait(false)))).
+            ConfigureAwait(false)).
+            ToDictionary(
+                g => g.key,
+                g => g.values);
 
         var childEntries = categoryLists.
             Where(entry => entry.categoryList.Length <= levelIndex).
@@ -69,8 +81,9 @@ internal static class EntryAggregator
         return new(categoryName, childCategoryEntries, childEntries);
     }
 
-    public static CategoryEntry AggregateCategories(
+    public static ValueTask<CategoryEntry> AggregateCategoriesAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
-        MetadataContext context) =>
-        AggregateCategory("(root)", markdownEntries, 0, context);
+        MetadataContext context,
+        CancellationToken ct) =>
+        AggregateCategoryAsync("(root)", markdownEntries, 0, context, ct);
 }

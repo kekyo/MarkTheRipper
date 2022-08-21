@@ -35,12 +35,12 @@ public sealed class RipperTests
         {
             { templateName, template }
         };
-        metadata.Set("template", new PartialTemplateEntry(templateName));
-        metadata.Set("templateList", templateList);
+        metadata.SetValue("template", new PartialTemplateEntry(templateName));
+        metadata.SetValue("templateList", templateList);
 
         foreach (var entry in baseMetadata)
         {
-            metadata.Set(entry.keyName, entry.value);
+            metadata.SetValue(entry.keyName, entry.value);
         }
 
         var ripper = new Ripper();
@@ -141,7 +141,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <p>Date: {date 'yyyy/MM/dd HH:mm:ss.fff zzz'}</p>
+    <p>Date: {format date 'yyyy/MM/dd HH:mm:ss.fff zzz'}</p>
 {contentBody}</body>
 </html>
 ",
@@ -176,7 +176,7 @@ This is test contents.
     <ul>
 {foreach tags}
         <li>{item}</li>
-{/}
+{end}
     </ul>
 {contentBody}</body>
 </html>
@@ -210,7 +210,7 @@ This is test contents.
     <ul>
 {foreach tags}
         <li>{item.index}</li>
-{/}
+{end}
     </ul>
 {contentBody}</body>
 </html>
@@ -248,9 +248,9 @@ This is test contents.
     <ul>
 {foreach tags item2}
         <li>{item1}: {item2} [{item1.index}-{item2.index}]</li>
-{/}
+{end}
     </ul>
-{/}
+{end}
 
 {contentBody}</body>
 </html>
@@ -319,7 +319,7 @@ This is test contents.
   <body>
 {foreach category.breadcrumbs}
       <h1>Category: {item.name}</h1>
-{/}
+{end}
     {contentBody}
   </body>
 </html>
@@ -409,7 +409,7 @@ This is test contents.
   <body>
 {foreach tags}
     <p>tag: {item}</p>
-{/}
+{end}
 {contentBody}</body>
 </html>
 ");
@@ -440,8 +440,8 @@ This is test contents.
     <h1>{item.name}</h1>
 {foreach item.breadcrumbs}
     <h2>{item.name}</h2>
-{/}
-{/}
+{end}
+{end}
 {contentBody}</body>
 </html>
 ");

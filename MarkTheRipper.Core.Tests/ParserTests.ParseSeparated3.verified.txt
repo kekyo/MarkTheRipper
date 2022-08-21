@@ -1,9 +1,11 @@
-﻿[
-  {
-    Name: abc.def
-  },
-  {
-    Value: 123,
-    Type: Int64
-  }
-]
+﻿{
+  Elements: [
+    {
+      Name: abc.def
+    },
+    {
+      Value: 123,
+      Type: Int64
+    }
+  ]
+}

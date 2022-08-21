@@ -1,5 +1,3 @@
-﻿[
-  {
-    Name: abc.def
-  }
-]
+﻿{
+  Name: abc.def
+}

@@ -1,10 +1,12 @@
-﻿[
-  {
-    Value: 123,
-    Type: Int64
-  },
-  {
-    Value: 456,
-    Type: Int64
-  }
-]
+﻿{
+  Elements: [
+    {
+      Value: 123,
+      Type: Int64
+    },
+    {
+      Value: 456,
+      Type: Int64
+    }
+  ]
+}

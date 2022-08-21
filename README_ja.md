@@ -84,8 +84,8 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach category.breadcrumb} {item.name}{/}</p>
-        <p>Tags:{foreach tags} {item.name}{/}</p>
+        <p>Category:{foreach category.breadcrumb} {item.name}{end}</p>
+        <p>Tags:{foreach tags} {item.name}{end}</p>
     </header>
     <hr />
     <article>
@@ -349,12 +349,12 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 例によって、小さい例から始めましょう。これはminimumに含まれているテンプレートです:
 
 ```html
-<p>Tags:{foreach tags} '{item}'{/}</p>
+<p>Tags:{foreach tags} '{item}'{end}</p>
 ```
 
 * `tags`キーワードは、タグのリストを示します（後述）
 
-これは、`{foreach tags}`と`{/}`の間にある文書が、`tags`の個数だけ繰り返し出力されるというものです。
+これは、`{foreach tags}`と`{end}`の間にある文書が、`tags`の個数だけ繰り返し出力されるというものです。
 「間にある文書」とは、ここでは ` '{item}'` の事です。スペースが含まれてることに注意してください。
 同様に、改行やHTMLのタグなど、この間には何を含んでいても構いません。
 
@@ -372,13 +372,13 @@ tags: [foo,bar]
 すると、`<p>Tags: 'foo' 'bar'</p>` と出力されます。
 `tags`の`foo,bar`が、スペースで区切られて展開されて、クオートされて出力されました。
 
-`{foreach tags}`と`{/}`の間にある文書が繰り返し出力されるので、以下のように使う事も出来ます:
+`{foreach tags}`と`{end}`の間にある文書が繰り返し出力されるので、以下のように使う事も出来ます:
 
 ```html
 <ul>
   {foreach tags}
   <li>{item.index} {item}</li>
-  {/}
+  {end}
 </ul>
 ```
 
@@ -401,8 +401,8 @@ tags: [foo,bar]
   {foreach tags}
   {foreach tags}
   <li>{item.index} {item}</li>
-  {/}
-  {/}
+  {end}
+  {end}
 </ul>
 ```
 
@@ -426,8 +426,8 @@ tags: [foo,bar]
   {foreach tags tag1}
   {foreach tags tag2}
   <li>{tag1.index}-{tag2.index} {tag1}/{tag2}</li>
-  {/}
-  {/}
+  {end}
+  {end}
 </ul>
 ```
 
@@ -464,7 +464,7 @@ MarkTheRipperは、コンテンツのすべてのタグとカテゴリの分類�
 <ul>
   {foreach tagList tag}
   <li>{tag}</li>
-  {/}
+  {end}
 </ul>
 ```
 
@@ -491,8 +491,8 @@ MarkTheRipperは、コンテンツのすべてのタグとカテゴリの分類�
 <h1>{tag}</h1>
 {foreach tag.entries entry}
 <h2><a href="{entry.path}">{entry.title}</a></h2>
-{/}
-{/}
+{end}
+{end}
 ```
 
 束縛名を指定して、何を列挙しようとしているのか分かりやすくしていることに注意してください。
@@ -571,7 +571,7 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 <ul>
   {foreach rootCategory.entries entry}
   <li>{entry.path}</li>
-  {/}
+  {end}
 </ul>
 ```
 
@@ -599,8 +599,8 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 <h2>{child1.name}</h2>
 {foreach child1.children child2}
 <h3>{child2.name}</h3>
-{/}
-{/}
+{end}
+{end}
 ```
 
 列挙のネストを増やしていけば、深いカテゴリ構造を全て列挙することが出来ます。
@@ -614,7 +614,7 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 <ul>
   {foreach category.breadcrumb}
   <li>{item.name}</li>
-  {/}
+  {end}
 </ul>
 ```
 

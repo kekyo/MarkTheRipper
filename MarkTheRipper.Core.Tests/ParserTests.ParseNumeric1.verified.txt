@@ -1,6 +1,4 @@
-﻿[
-  {
-    Value: 123,
-    Type: Int64
-  }
-]
+﻿{
+  Value: 123,
+  Type: Int64
+}

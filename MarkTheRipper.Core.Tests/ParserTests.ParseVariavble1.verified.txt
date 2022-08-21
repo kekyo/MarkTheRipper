@@ -1,5 +1,3 @@
-﻿[
-  {
-    Name: abc
-  }
-]
+﻿{
+  Name: abc
+}

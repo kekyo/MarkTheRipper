@@ -45,7 +45,7 @@
                         <a class="nav-link active" aria-current="page"
                            href="{relative entry.path}">{entry.title}</a>
                     </li>
-                    {/}
+                    {end}
                     <!-- 2nd category -->
                     {foreach rootCategory.children cat2}
                     <li class="nav-item dropdown">
@@ -57,10 +57,10 @@
                             <!-- Enumerate 2nd category entries -->
                             {foreach cat2.entries entry}
                             <li><a class="dropdown-item" href="{relative entry.path}">{entry.title}</a></li>
-                            {/}
+                            {end}
                         </ul>
                     </li>
-                    {/}
+                    {end}
                 </ul>
             </div>
         </div>
@@ -76,12 +76,12 @@
                     <li style="padding-right: 0.5em;">Category:</li>
                     {foreach category.breadcrumb}
                     <li class="breadcrumb-item"><span aria-label="category" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span></li>
-                    {/}
+                    {end}
                 </ol>
             </nav>
             <!-- Tags use Bootstrap badge -->
             <nav aria-label="tags">
-                Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span>{/}
+                Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span>{end}
             </nav>
         </header>
         <hr />

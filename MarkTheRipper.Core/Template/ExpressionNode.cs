@@ -18,34 +18,31 @@ namespace MarkTheRipper.Template;
 
 internal sealed class ExpressionNode : ITemplateNode
 {
-    private readonly IExpression[] expressions;
+    private readonly IExpression expression;
 
-    public ExpressionNode(IExpression[] expressions) =>
-        this.expressions = expressions;
+    public ExpressionNode(IExpression expression) =>
+        this.expression = expression;
 
     public async ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (this.expressions.FirstOrDefault() is { } expression0)
+        if (await Reducer.ReduceExpressionAsync(expression, metadata, ct).
+                ConfigureAwait(false) is { } rawValue &&
+            await Reducer.FormatValueAsync(rawValue, metadata, ct).
+                ConfigureAwait(false) is { } value)
         {
-            if (Reducer.ReduceExpression(expression0, metadata) is { } rawValue &&
-                await Reducer.FormatValueAsync(
-                    rawValue, this.expressions.Skip(1).ToArray(), metadata, ct).
-                    ConfigureAwait(false) is { } value)
-            {
-                await writer(value, ct).
-                    ConfigureAwait(false);
-            }
-            else
-            {
-                await writer(expression0.ToString()!, ct).
-                    ConfigureAwait(false);
-            }
+            await writer(value, ct).
+                ConfigureAwait(false);
+        }
+        else
+        {
+            await writer(expression.PrettyPrint, ct).
+                ConfigureAwait(false);
         }
     }
 
     public override string ToString() =>
-        $"Replacer={{{string.Join(" ", (object[])this.expressions)}}}";
+        $"Replacer={{{this.expression}}}";
 }

@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,16 +25,20 @@ internal sealed class IteratorEntry :
         this.Value = value;
     }
 
-    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
-        new ValueTask<object?>(this.Value);
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(this.Value);
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
-        (this.Value as IMetadataEntry)?.GetProperty(keyName, context) ??
-        keyName switch
-        {
-            "index" => this.Index,
-            _ => null,
-        };
+    public async ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext context, CancellationToken ct) =>
+        this.Value is IMetadataEntry entry &&
+        await entry.GetPropertyValueAsync(keyName, context, ct).
+            ConfigureAwait(false) is { } value ?
+            value :
+            keyName switch
+            {
+                "index" => new(this.Index),
+                _ => Utilities.NullAsync,
+            };
 
     public override string ToString() =>
         $"Iterator={this.Index}";

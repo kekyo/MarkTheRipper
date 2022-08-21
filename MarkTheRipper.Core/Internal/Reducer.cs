@@ -12,26 +12,24 @@ using MarkTheRipper.Template;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
-public delegate ValueTask<object?> AsyncFunctionDelegate(
+public delegate ValueTask<IExpression> AsyncFunctionDelegate(
     IExpression[] parameters,
     MetadataContext context,
     CancellationToken ct);
 
-internal static class Reducer
+public static class Reducer
 {
     private static readonly object?[] empty = new object?[0];
     private static readonly char[] dotOperator = new[] { '.' };
 
-    public static string UnsafeFormatValue(
+    internal static string UnsafeFormatValue(
         object? value,
-        IExpression[] parameters,
         MetadataContext metadata) =>
         value switch
         {
@@ -40,34 +38,19 @@ internal static class Reducer
             IMetadataEntry entry =>
                 UnsafeFormatValue(
                     entry.GetImplicitValueAsync(default).Result,
-                    parameters,
                     metadata),
-            AsyncFunctionDelegate func =>
-                UnsafeFormatValue(
-                    func(parameters, metadata, default).Result,
-                    Utilities.Empty<IExpression>(),  // TODO: nested argument list
-                    metadata),
-            IFormattable formattable
-                when parameters.FirstOrDefault() is ValueExpression(string format) =>
-                formattable.ToString(format, metadata.Lookup("lang") switch
-                {
-                    IFormatProvider fp => fp,
-                    string lang => new CultureInfo(lang),
-                    _ => CultureInfo.CurrentCulture,
-                }),
             string str =>
                 str,
             IEnumerable enumerable =>
                 string.Join(",",
                     enumerable.Cast<object?>().
-                    Select(v => UnsafeFormatValue(v, parameters, metadata))),
+                    Select(v => UnsafeFormatValue(v, metadata))),
             _ =>
                 value.ToString() ?? string.Empty,
         };
 
     public static async ValueTask<string> FormatValueAsync(
         object? value,
-        IExpression[] parameters,
         MetadataContext metadata,
         CancellationToken ct) =>
         value switch
@@ -77,32 +60,16 @@ internal static class Reducer
             IMetadataEntry entry =>
                 await FormatValueAsync(
                     await entry.GetImplicitValueAsync(ct).ConfigureAwait(false),
-                    parameters,
                     metadata,
                     ct).
                     ConfigureAwait(false),
-            AsyncFunctionDelegate func =>
-                await FormatValueAsync(
-                    await func(parameters, metadata, ct).ConfigureAwait(false),
-                    Utilities.Empty<IExpression>(),  // TODO: nested argument list
-                    metadata,
-                    ct).
-                    ConfigureAwait(false),
-            IFormattable formattable
-                when parameters.FirstOrDefault() is ValueExpression(string format) =>
-                formattable.ToString(format, metadata.Lookup("lang") switch
-                {
-                    IFormatProvider fp => fp,
-                    string lang => new CultureInfo(lang),
-                    _ => CultureInfo.CurrentCulture,
-                }),
             string str =>
                 str,
             IEnumerable enumerable =>
                 string.Join(",",
                     await Task.WhenAll(
                         enumerable.Cast<object?>().
-                        Select(v => FormatValueAsync(v, parameters, metadata, ct).AsTask())).
+                        Select(v => FormatValueAsync(v, metadata, ct).AsTask())).
                         ConfigureAwait(false)),
             _ =>
                 value.ToString() ?? string.Empty,
@@ -120,35 +87,102 @@ internal static class Reducer
 
     ////////////////////////////////////////////////////////////////////
 
-    private static object? ReduceProperty(
+    private static async ValueTask<object?> ReducePropertyAsync(
         string[] elements,
         int index,
-        object? currentValue,
-        MetadataContext metadata) =>
-        index < elements.Length &&
-        currentValue is IMetadataEntry entry &&
-        entry.GetProperty(elements[index++], metadata) is { } value ?
-            ReduceProperty(elements, index, value, metadata) :
-            currentValue;
+        IExpression currentExpression,
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        currentExpression is ValueExpression(var currentValue) ?
+            index < elements.Length &&
+            currentValue is IMetadataEntry entry &&
+            await entry.GetPropertyValueAsync(elements[index++], metadata, ct).
+                ConfigureAwait(false) is { } value ?
+                value :
+                currentValue :
+            currentExpression.ImplicitValue;
 
-    private static object? ReduceExpressionElements(
+    private static ValueTask<object?> ReducePropertiesAsync(
         string[] elements,
-        int index,
-        MetadataContext metadata) =>
-        index < elements.Length &&
-        metadata.Lookup(elements[index++]) is { } value ?
-            ReduceProperty(elements, index, value, metadata) :
-            null;
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        0 < elements.Length &&
+        metadata.Lookup(elements[0]) is { } expression ?
+            ReducePropertyAsync(elements, 1, expression, metadata, ct) :
+            new ValueTask<object?>(elements[0]);
 
-    public static object? ReduceExpression(
+#if DEBUG
+    private static async ValueTask<object?[]> ReduceExpressionsAsync(
+        IExpression[] expressions,
+        MetadataContext metadata,
+        CancellationToken ct)
+    {
+        var results = new List<object?>();
+        foreach (var expression in expressions)
+        {
+            var result = await ReduceExpressionAsync(expression, metadata, ct).
+                ConfigureAwait(false);
+            results.Add(result);
+        }
+        return results.ToArray();
+    }
+#else
+    private static ValueTask<object?[]> ReduceExpressionsAsync(
+        IExpression[] expressions,
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        new ValueTask<object?[]>(
+            Task.WhenAll(expressions.Select(expression =>
+                ReduceExpressionAsync(expression, metadata, ct).AsTask())));
+#endif
+
+    private static async ValueTask<object?> ReduceArrayAsync(
+        IExpression[] elements,
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        await ReduceExpressionsAsync(elements, metadata, ct).
+            ConfigureAwait(false);
+
+    private static async ValueTask<object?> ReduceApplyAsync(
+        IExpression function,
+        IExpression[] parameters,
+        MetadataContext metadata,
+        CancellationToken ct)
+    {
+        var f = await ReduceExpressionAsync(function, metadata, ct).
+            ConfigureAwait(false);
+        return f switch
+        {
+            AsyncFunctionDelegate func => await ReduceExpressionAsync(
+                await func(parameters, metadata, ct).ConfigureAwait(false),
+                metadata, ct).
+                ConfigureAwait(false),
+            _ => throw new InvalidOperationException("Could not apply non-function object."),
+        };
+    }
+
+    public static ValueTask<object?> ReduceExpressionAsync(
         IExpression expression,
-        MetadataContext metadata) =>
+        MetadataContext metadata,
+        CancellationToken ct) =>
         expression switch
         {
-            VariableExpression v => ReduceExpressionElements(
-                v.Name.Split(dotOperator, StringSplitOptions.RemoveEmptyEntries),
-                0, metadata),
-            ValueExpression v => v.Value,
+            VariableExpression(var name) =>
+                ReducePropertiesAsync(
+                    name.Split(dotOperator, StringSplitOptions.RemoveEmptyEntries),
+                    metadata, ct),
+            ValueExpression(var value) =>
+                new ValueTask<object?>(value),
+            ArrayExpression(var elements) =>
+                ReduceArrayAsync(elements, metadata, ct),
+            ApplyExpression(var function, var parameters) =>
+                ReduceApplyAsync(function, parameters, metadata, ct),
             _ => throw new InvalidOperationException(),
         };
+
+    internal static object? UnsafeReduceExpression(
+        IExpression expression,
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        ReduceExpressionAsync(expression, metadata, ct).Result;
 }

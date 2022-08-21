@@ -1,6 +1,4 @@
-﻿[
-  {
-    Value: 123.456,
-    Type: Double
-  }
-]
+﻿{
+  Value: 123.456,
+  Type: Double
+}

@@ -169,7 +169,7 @@ public sealed class ParserTests
     {
         var actual = Parser.ParseExpression("2022/08/20 12:34:56", ListTypes.Array);
 
-        return Verifier.Verify(actual.SingleOrDefault()?.ImplicitValue);
+        return Verifier.Verify(actual.PrettyPrint);
     }
 
     //////////////////////////////////////////////////////
@@ -331,7 +331,7 @@ public sealed class ParserTests
     [Test]
     public Task ParseComplex1()
     {
-        var actual = Parser.ParseExpression("abc (def 123) ghi", ListTypes.List);
+        var actual = Parser.ParseExpression("abc (def 123) ghi");
 
         return Verifier.Verify(actual);
     }
@@ -339,7 +339,7 @@ public sealed class ParserTests
     [Test]
     public Task ParseComplex2()
     {
-        var actual = Parser.ParseExpression("abc ('def' [123, 456]) \"ghi\"", ListTypes.List);
+        var actual = Parser.ParseExpression("abc ('def' [123, 456]) \"ghi\"");
 
         return Verifier.Verify(actual);
     }

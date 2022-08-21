@@ -11,7 +11,6 @@ using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,8 +18,10 @@ namespace MarkTheRipper.Functions;
 
 internal static class Lookup
 {
-    private static async ValueTask<object?> LookupAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct)
+    private static async ValueTask<IExpression> LookupAsync(
+        IExpression[] parameters,
+        MetadataContext metadata,
+        CancellationToken ct)
     {
         if (parameters.Length != 1)
         {
@@ -28,17 +29,13 @@ internal static class Lookup
                 $"Invalid lookup function arguments: Count={parameters.Length}");
         }
 
-        var parameter = parameters[0];
-        if (Reducer.ReduceExpression(parameter, metadata) is { } rawValue &&
-            await Reducer.FormatValueAsync(
-                rawValue, parameters.Skip(1).ToArray(), metadata, ct).
-                ConfigureAwait(false) is { } name &&
-                metadata.Lookup(name) is { } value)
-        {
-            return value;
-        }
+        var name = await Reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
+            ConfigureAwait(false);
+        var nameString = await Reducer.FormatValueAsync(name, metadata, ct).
+            ConfigureAwait(false);
 
-        return parameter;
+        return metadata.Lookup(nameString) is { } resolvedExpression ?
+            resolvedExpression : new ValueExpression(name);
     }
 
     public static readonly AsyncFunctionDelegate Function =

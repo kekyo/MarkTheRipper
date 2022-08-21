@@ -1,6 +1,4 @@
-﻿[
-  {
-    Value: https://example.com/,
-    Type: String
-  }
-]
+﻿{
+  Value: https://example.com/,
+  Type: String
+}

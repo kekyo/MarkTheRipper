@@ -31,15 +31,16 @@ public sealed class TagEntry :
         this.Entries = markdownEntries;
     }
 
-    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
-        new ValueTask<object?>(this.Name);
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(this.Name);
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
+    public ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
         keyName switch
         {
-            "name" => this.Name,
-            "entries" => this.Entries,
-            _ => null,
+            "name" => new(this.Name),
+            "entries" => new(this.Entries),
+            _ => Utilities.NullAsync,
         };
 
     public override string ToString() =>

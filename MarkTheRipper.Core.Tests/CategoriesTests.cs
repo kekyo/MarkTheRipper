@@ -23,7 +23,7 @@ public sealed class CategoriesTests
     private static readonly MetadataContext empty = new();
 
     [Test]
-    public Task AggregateCategories1()
+    public async Task AggregateCategories1()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -36,16 +36,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories2()
+    public async Task AggregateCategories2()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -59,16 +59,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories3()
+    public async Task AggregateCategories3()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -91,16 +91,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1, mh2,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories4()
+    public async Task AggregateCategories4()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -124,16 +124,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1, mh2,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories5()
+    public async Task AggregateCategories5()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -167,16 +167,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1, mh2, mh3,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories6()
+    public async Task AggregateCategories6()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>
@@ -185,16 +185,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories7()
+    public async Task AggregateCategories7()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -229,16 +229,16 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1, mh2, mh3,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateCategories8()
+    public async Task AggregateCategories8()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -263,11 +263,11 @@ public sealed class CategoriesTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateCategories(new[]
+        var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
             mh1, mh2,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 }

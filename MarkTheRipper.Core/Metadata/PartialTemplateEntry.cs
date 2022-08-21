@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using MarkTheRipper.Template;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,13 +23,24 @@ internal sealed class PartialTemplateEntry :
     public PartialTemplateEntry(string name) =>
         this.Name = name;
 
-    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
-        new ValueTask<object?>(this.Name);
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(this.Name);
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
-        context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> templateList &&
-        templateList.TryGetValue(keyName, out var template) ?
-            template :
+    private async ValueTask<RootTemplateNode?> GetRealTemplateNodeAsync(
+        MetadataContext metadata, CancellationToken ct) =>
+        metadata.Lookup("templateList") is { } templateListExpression &&
+        await Reducer.ReduceExpressionAsync(templateListExpression, metadata, ct).
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTemplateNode> templateList &&
+        templateList.TryGetValue(this.Name, out var template) ?
+            template : null;
+
+    public async ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        await this.GetRealTemplateNodeAsync(metadata, ct).
+            ConfigureAwait(false) is { } template &&
+        await template.GetPropertyValueAsync(keyName, metadata, ct).
+            ConfigureAwait(false) is { } value ?
+            value :
             keyName switch
             {
                 "name" => this.Name,

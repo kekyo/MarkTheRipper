@@ -1,6 +1,4 @@
-﻿[
-  {
-    Value: abc,def,
-    Type: String
-  }
-]
+﻿{
+  Value: abc,def,
+  Type: String
+}

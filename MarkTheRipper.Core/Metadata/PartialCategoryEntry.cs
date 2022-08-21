@@ -46,24 +46,31 @@ internal sealed class PartialCategoryEntry :
         }
     }
 
-    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
-        new ValueTask<object?>(string.Join("/", this.Breadcrumbs.Select(pc => pc.Name)));
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(string.Join("/", this.Breadcrumbs.Select(pc => pc.Name)));
 
-    private CategoryEntry? GetRealCategoryEntry(MetadataContext context) =>
-        this.Breadcrumbs.
-        Aggregate(
-            context.Lookup("rootCategory") as CategoryEntry,
+    private async ValueTask<CategoryEntry?> GetRealCategoryEntryAsync(
+        MetadataContext metadata, CancellationToken ct) =>
+        this.Breadcrumbs.Aggregate(
+            metadata.Lookup("rootCategory") is { } rootCategoryExpression &&
+            await Reducer.ReduceExpressionAsync(rootCategoryExpression, metadata, ct) is CategoryEntry entry ?
+                entry : null,
             (agg, pc) => (agg != null && agg.Children.TryGetValue(pc.Name, out var child)) ? child : null!);
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
-        this.GetRealCategoryEntry(context)?.GetProperty(keyName, context) ??
-        keyName switch
-        {
-            "name" => this.Name,
-            "parent" => this.Parent,
-            "breadcrumbs" => this.Breadcrumbs,
-            _ => null,
-        };
+    public async ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        await this.GetRealCategoryEntryAsync(metadata, ct).
+            ConfigureAwait(false) is { } entry &&
+        await entry.GetPropertyValueAsync(keyName, metadata, ct).
+            ConfigureAwait(false) is { } value ?
+            value :
+            keyName switch
+            {
+                "name" => this.Name,
+                "parent" => this.Parent,
+                "breadcrumbs" => this.Breadcrumbs,
+                _ => null,
+            };
 
     public override string ToString() =>
         $"PartialCategory={string.Join("/", this.Breadcrumbs.Select(pc => pc.Name))}";

@@ -1,14 +1,12 @@
-﻿[
-  {
-    Values: [
-      {
-        Value: 123,
-        Type: Int64
-      },
-      {
-        Value: 456,
-        Type: Int64
-      }
-    ]
-  }
-]
+﻿{
+  Function: {
+    Value: 123,
+    Type: Int64
+  },
+  Parameters: [
+    {
+      Value: 456,
+      Type: Int64
+    }
+  ]
+}

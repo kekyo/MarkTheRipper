@@ -111,6 +111,11 @@ internal static class Utilities
 
     ///////////////////////////////////////////////////////////////////////////////////
 
+    public static readonly ValueTask<object?> NullAsync =
+        new(default(object?));
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static ValueTask WithCancellation(
         this Task task, CancellationToken ct)
     {

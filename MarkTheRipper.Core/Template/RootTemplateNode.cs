@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
 using System.Threading;
@@ -14,19 +15,33 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper.Template;
 
-public sealed class RootTemplateNode : ITemplateNode
+public sealed class RootTemplateNode :
+    ITemplateNode, IMetadataEntry
 {
     public readonly string Name;
     public readonly string OriginalText;
 
     private readonly ITemplateNode[] nodes;
 
-    public RootTemplateNode(string name, string originalText, ITemplateNode[] nodes)
+    public RootTemplateNode(
+        string name, string originalText, ITemplateNode[] nodes)
     {
         Name = name;
         OriginalText = originalText;
         this.nodes = nodes;
     }
+
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(this.Name);
+
+    public ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext context, CancellationToken ct) =>
+        keyName switch
+        {
+            "name" => new(this.Name),
+            "text" => new(this.OriginalText),
+            _ => Utilities.NullAsync,
+        };
 
     public async ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,

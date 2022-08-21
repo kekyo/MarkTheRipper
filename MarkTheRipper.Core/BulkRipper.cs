@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Metadata;
+using MarkTheRipper.Template;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -197,12 +198,14 @@ public sealed class BulkRipper
         var entriesByCandidate = markdownEntries.ToDictionary(
             markdownEntry => (markdownEntry.contentBasePath, markdownEntry.MarkdownPath));
 
-        var tagList = EntryAggregator.AggregateTags(markdownEntries, metadata);
-        var rootCategory = EntryAggregator.AggregateCategories(markdownEntries, metadata);
+        var tagList = await EntryAggregator.AggregateTagsAsync(
+            markdownEntries, metadata, ct);
+        var rootCategory = await EntryAggregator.AggregateCategoriesAsync(
+            markdownEntries, metadata, ct);
 
         var mc = metadata.Spawn();
-        mc.Set("tagList", tagList.Values.ToArray());
-        mc.Set("rootCategory", rootCategory);
+        mc.SetValue("tagList", tagList.Values.ToArray());
+        mc.SetValue("rootCategory", rootCategory);
 
         async ValueTask RunOnceAsync(
             string contentBasePath, PathEntry relativeContentPath)

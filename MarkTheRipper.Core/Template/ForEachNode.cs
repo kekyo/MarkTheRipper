@@ -18,14 +18,14 @@ namespace MarkTheRipper.Template;
 
 internal sealed class ForEachNode : ITemplateNode
 {
-    private readonly IExpression[] expressions;
+    private readonly IExpression[] parameters;
     private readonly ITemplateNode[] childNodes;
 
     public ForEachNode(
-        IExpression[] expressions,
+        IExpression[] parameters,
         ITemplateNode[] childNodes)
     {
-        this.expressions = expressions;
+        this.parameters = parameters;
         this.childNodes = childNodes;
     }
 
@@ -34,20 +34,21 @@ internal sealed class ForEachNode : ITemplateNode
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (this.expressions.FirstOrDefault() is { } expression0 &&
-            Reducer.ReduceExpression(expression0, metadata) is { } rawValue &&
+        if (this.parameters.FirstOrDefault() is { } expression0 &&
+            await Reducer.ReduceExpressionAsync(expression0, metadata, ct).
+                ConfigureAwait(false) is { } rawValue &&
             Reducer.EnumerateValue(rawValue, metadata) is { } enumerable)
         {
             var iterationMetadata = metadata.Spawn();
 
             var boundName =
-                this.expressions.ElementAtOrDefault(1)?.ImplicitValue ??
+                this.parameters.ElementAtOrDefault(1)?.PrettyPrint ??
                 "item";
 
             var index = 0;
             foreach (var iterationValue in enumerable)
             {
-                iterationMetadata.Set(
+                iterationMetadata.SetValue(
                     boundName,
                     new IteratorEntry(index, iterationValue));
 
@@ -63,5 +64,5 @@ internal sealed class ForEachNode : ITemplateNode
     }
 
     public override string ToString() =>
-        $"ForEach: {{{string.Join(" ", (object[])this.expressions)}}}";
+        $"ForEach: {{{string.Join(" ", (object[])this.parameters)}}}";
 }

@@ -88,8 +88,8 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach category.breadcrumb} {item.name}{/}</p>
-        <p>Tags:{foreach tags} {item.name}{/}</p>
+        <p>Category:{foreach category.breadcrumb} {item.name}{end}</p>
+        <p>Tags:{foreach tags} {item.name}{end}</p>
     </header>
     <hr />
     <article>
@@ -391,12 +391,12 @@ As usual, let's start with a small example.
 This is the template included in minimum:
 
 ```html
-<p>Tags:{foreach tags} '{item}'{/}</p>
+<p>Tags:{foreach tags} '{item}'{end}</p>
 ```
 
 * The `tags` keyword indicates a list of tags (see below)
 
-This means that documents between `{foreach tags}` and `{/}` will be repeated as many times as the number of `tags`.
+This means that documents between `{foreach tags}` and `{end}` will be repeated as many times as the number of `tags`.
 "Documents between" are, in this case: ` '{item}'`.
 Note the inclusion of spaces.
 Likewise, it can contain line breaks, HTML tags, or anything else in between.
@@ -415,13 +415,13 @@ tags: [foo,bar]
 Then the output will be `<p>Tags: 'foo' 'bar'</p>`.
 The `foo,bar` in `tags` have been expanded and quoted in the output, each separated by space.
 
-Again, documents between `{foreach tags}` and `{/}` are output repeatedly, so you can use the following:
+Again, documents between `{foreach tags}` and `{end}` are output repeatedly, so you can use the following:
 
 ```html
 <ul>
   {foreach tags}
   <li>{item.index} {item}</li>
-  {/}
+  {end}
 </ul>
 ```
 
@@ -448,8 +448,8 @@ The following example repeats the tag twice:
   {foreach tags}
   {foreach tags}
   <li>{item.index} {item}</li>
-  {/}
-  {/}
+  {end}
+  {end}
 </ul>
 ```
 
@@ -473,8 +473,8 @@ In that situation, you can specify a "bound name" for the `foreach`:
   {foreach tags tag1}
   {foreach tags tag2}
   <li>{tag1.index}-{tag2.index} {tag1}/{tag2}</li>
-  {/}
-  {/}
+  {end}
+  {end}
 </ul>
 ```
 
@@ -511,7 +511,7 @@ First, let's make a list of tags:
 <ul>
   {foreach tagList}
   <li>{item}</li>
-  {/}
+  {end}
 </ul>
 ```
 
@@ -539,8 +539,8 @@ but in fact tags can be enumerated using `foreach`:
 <h1>{tag}</h1>
 {foreach tag.entries entry}
 <h2><a href="{relative entry.path}">{entry.title}</a></h2>
-{/}
-{/}
+{end}
+{end}
 ```
 
 Note that we specify the bound name to make it easier to understand what we are trying to enumerate.
@@ -626,7 +626,7 @@ First, enumerate the root category:
 <ul>
   {foreach rootCategory.entries entry entry}
   <li>{entry.path}</li>
-  {/}
+  {end}
 </ul>
 ```
 
@@ -660,8 +660,8 @@ To enumerate categories, use the `children` property:
 <h2>{child1.name}</h2>
 {foreach child1.children child2}
 <h3>{child2.name}</h3>
-{/}
-{/}
+{end}
+{end}
 ```
 
 If we nest the enumerations repeately, we can enumerate all deep category structures.
@@ -677,7 +677,7 @@ It is very simple:
 <ul>
   {foreach category.breadcrumb}
   <li>{item.name}</li>
-  {/}
+  {end}
 </ul>
 ```
 

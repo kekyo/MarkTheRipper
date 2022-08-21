@@ -192,15 +192,15 @@ public static class Driver
 
         var rootMetadata = new MetadataContext();
 
-        rootMetadata.Set("generated", DateTimeOffset.Now);
-        rootMetadata.Set("lang", CultureInfo.CurrentCulture);
-        rootMetadata.Set("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
-        rootMetadata.Set("templateList", templateList);
-        rootMetadata.Set("template", "page");
+        rootMetadata.SetValue("generated", DateTimeOffset.Now);
+        rootMetadata.SetValue("lang", CultureInfo.CurrentCulture);
+        rootMetadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
+        rootMetadata.SetValue("templateList", templateList);
+        rootMetadata.SetValue("template", "page");
 
         foreach (var kv in metadataList)
         {
-            rootMetadata.Set(kv.Key, kv.Value);
+            rootMetadata.SetValue(kv.Key, kv.Value);
         }
 
         var generator = new BulkRipper(storeToBasePath);

@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Internal;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,21 +22,28 @@ internal sealed class PartialTagEntry :
     public PartialTagEntry(string name) =>
         this.Name = name;
 
-    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
-        new ValueTask<object?>(this.Name);
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(this.Name);
 
-    private TagEntry? GetRealTagEntry(MetadataContext context) =>
-        context.Lookup("tagList") is IReadOnlyDictionary<string, TagEntry> tagList &&
+    private async ValueTask<TagEntry?> GetRealTagEntryAsync(
+        MetadataContext metadata, CancellationToken ct) =>
+        metadata.Lookup("tagList") is { } tagListExpression &&
+        await Reducer.ReduceExpressionAsync(tagListExpression, metadata, ct).
+            ConfigureAwait(false) is IReadOnlyDictionary<string, TagEntry> tagList &&
         tagList.TryGetValue(this.Name, out var tag) ?
             tag : null;
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
-        this.GetRealTagEntry(context)?.GetProperty(keyName, context) ??
-        keyName switch
-        {
-            "name" => this.Name,
-            _ => null,
-        };
+    public async ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        await this.GetRealTagEntryAsync(metadata, ct).
+            ConfigureAwait(false) is { } tag &&
+        await tag.GetPropertyValueAsync(keyName, metadata, ct).
+            ConfigureAwait(false) is { } value ?
+            value : keyName switch
+            {
+                "name" => this.Name,
+                _ => null,
+            };
 
     public override string ToString() =>
         $"PartialTag={this.Name}";

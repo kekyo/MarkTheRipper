@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Functions;
+using MarkTheRipper.Internal;
 using System;
 using System.Linq;
 using System.Threading;
@@ -38,11 +38,12 @@ public sealed class PathEntry :
     internal string PhysicalPath =>
         System.IO.Path.Combine(this.PathElements);
 
-    ValueTask<object?> IMetadataEntry.GetImplicitValueAsync(CancellationToken ct) =>
-        new ValueTask<object?>(this.Path);
+    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+        new(this.Path);
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
-        null;
+    public ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        Utilities.NullAsync;
 
     public bool Equals(PathEntry? other) =>
         other is { } rhs &&
