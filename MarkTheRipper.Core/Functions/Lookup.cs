@@ -29,7 +29,7 @@ internal static class Lookup
                 $"Invalid lookup function arguments: Count={parameters.Length}");
         }
 
-        var name = await Reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
+        var name = await Reducer.ReduceExpressionAndFormatAsync(parameters[0], metadata, ct).
             ConfigureAwait(false);
         var nameString = await Reducer.FormatValueAsync(name, metadata, ct).
             ConfigureAwait(false);

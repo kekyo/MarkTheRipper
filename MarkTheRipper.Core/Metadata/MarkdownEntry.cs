@@ -61,9 +61,8 @@ public sealed class MarkdownEntry :
 
     internal string Title =>
         this.metadata.TryGetValue("title", out var titleExpression) &&
-        Reducer.UnsafeReduceExpression(titleExpression, MetadataContext.Empty, default) is { } value &&
-        Reducer.UnsafeFormatValue(value, MetadataContext.Empty) is { } title ? 
-            title : null ?? "(Untitled)";
+        Reducer.UnsafeReduceExpressionAndFormat(titleExpression, MetadataContext.Empty, default) is { } title ? 
+            title : "(Untitled)";
 
     internal DateTimeOffset? Date =>
         this.metadata.TryGetValue("date", out var dateExpression) &&
@@ -72,7 +71,7 @@ public sealed class MarkdownEntry :
 
     public async ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
         this.metadata.TryGetValue("title", out var value) &&
-            await Reducer.FormatValueAsync(
+            await Reducer.ReduceExpressionAndFormatAsync(
                 value, MetadataContext.Empty, ct).
                 ConfigureAwait(false) is { } title ?
             title : null ?? "(Untitled)";

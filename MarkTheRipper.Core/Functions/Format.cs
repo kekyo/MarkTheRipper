@@ -32,9 +32,7 @@ internal static class Format
 
         var value = await Reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
             ConfigureAwait(false);
-        var formatValue = await Reducer.ReduceExpressionAsync(parameters[1], metadata, ct).
-            ConfigureAwait(false);
-        var format = await Reducer.FormatValueAsync(formatValue, metadata, ct).
+        var format = await Reducer.ReduceExpressionAndFormatAsync(parameters[1], metadata, ct).
             ConfigureAwait(false);
         var lang = metadata.Lookup("lang") is { } langExpression &&
             await Reducer.ReduceExpressionAsync(langExpression, metadata, ct) is { } langValue ?

@@ -382,138 +382,6 @@ internal static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-#if true
-    // TODO: rewrite with LL.
-    private enum ParseTypes
-    {
-        AutoDetect,
-        StringOnly,
-        DateOnly,
-    }
-    private enum __ListTypes
-    {
-        Ignore,
-        AcceptOnce,
-        Accept,
-    }
-    private static readonly char[] separators = new[] { ',' };
-    private static object? ParseYamlLikeString<TResult>(
-        string text,
-        Func<string, TResult?, TResult?>? parserOverride,
-        ParseTypes parseType,
-        __ListTypes listType,
-        TResult? previousValue)
-    {
-        // `title: [Hello world]`
-        // * Assume yaml array-like: `tags: [aaa, bbb]` --> `tags: aaa, bbb`
-        if (
-            listType != __ListTypes.Ignore &&
-            text.StartsWith("[") &&
-            text.EndsWith("]"))
-        {
-            return text.Substring(1, text.Length - 2).
-                Split(separators).
-                Aggregate(
-                    (results: new List<TResult?>(), last: previousValue),
-                    (agg, v) =>
-                    {
-                        var result = (TResult?)ParseYamlLikeString(
-                            v.Trim(),
-                            parserOverride,
-                            parseType,
-                            listType == __ListTypes.AcceptOnce ?
-                                __ListTypes.Ignore : __ListTypes.Accept,
-                            agg.last);
-                        agg.results.Add(result);
-                        return (agg.results, result);
-                    }).
-                    results.ToArray();
-        }
-
-        // `title: "Hello world"`
-        string? unquoted = null;
-        if (text.StartsWith("\"") || text.EndsWith("\""))
-        {
-            // string
-            unquoted = text.Substring(1, text.Length - 2);
-        }
-        // `title: 'Hello world'`
-        else if (text.StartsWith("'") || text.EndsWith("'"))
-        {
-            // string
-            unquoted = text.Substring(1, text.Length - 2);
-        }
-
-        // Invoke parser override function.
-        if (parserOverride != null &&
-            parserOverride.Invoke(unquoted ?? text, previousValue) is { } pov)
-        {
-            return pov;
-        }
-
-        // Quoted: Result is string.
-        if (unquoted != null)
-        {
-            return unquoted;
-        }
-
-        // Automatic detection: long, double, bool, DateTimeOffset and Uri.
-        if (parseType != ParseTypes.StringOnly)
-        {
-            if (parseType == ParseTypes.AutoDetect)
-            {
-                if (long.TryParse(
-                    text,
-                    NumberStyles.Any,
-                    CultureInfo.InvariantCulture,
-                    out var lv))
-                {
-                    // long
-                    return lv;
-                }
-                else if (double.TryParse(
-                    text,
-                    NumberStyles.Any,
-                    CultureInfo.InvariantCulture,
-                    out var dv))
-                {
-                    // double
-                    return dv;
-                }
-                else if (bool.TryParse(text, out var bv))
-                {
-                    // bool
-                    return bv;
-                }
-            }
-            
-            if (DateTimeOffset.TryParse(
-                text,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AllowWhiteSpaces,
-                out var dtv))
-            {
-                // DateTimeOffset
-                return dtv;
-            }
-            
-            if (parseType == ParseTypes.AutoDetect)
-            {
-                if (Uri.TryCreate(
-                    text,
-                    UriKind.RelativeOrAbsolute,
-                    out var uv))
-                {
-                    // Uri
-                    return uv;
-                }
-            }
-        }
-
-        return unquoted ?? text;
-    }
-#endif
-
     public static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
@@ -561,73 +429,35 @@ internal static class Parser
                 {
                     var key = line.Substring(0, keyIndex).Trim();
                     var valueText = line.Substring(keyIndex + 1).Trim();
-                    var value = key switch
+                    var valueExpression = key switch
                     {
-#if false
                         "title" => ParseExpression(valueText, ListTypes.Value),
-                        "author" => ParseExpression(valueText, ListTypes.ValueOrArray),
+                        "author" => ParseExpression(valueText, ListTypes.Array),
                         "template" => ParseExpression(valueText, ListTypes.Value),
                         "category" => new ValueExpression(
-                            ParseExpression(valueText, ListTypes.Array).
-                            Aggregate(
-                                new PartialCategoryEntry(),
-                                (agg, v) => new PartialCategoryEntry(v.ImplicitValue, agg))),
-                        "tags" => ParseExpression(valueText, ListTypes.ValueOrArray),
+                            ParseExpression(valueText, ListTypes.StrictArray) is ArrayExpression(var elements) ?
+                                (await Task.WhenAll(elements.Select(element =>
+                                    Reducer.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).AsTask())).
+                                    ConfigureAwait(false)).
+                                Aggregate(
+                                    new PartialCategoryEntry(),
+                                    (agg, categoryName) => new PartialCategoryEntry(categoryName, agg)) :
+                                new PartialCategoryEntry()),
+                        "tags" => new ValueExpression(
+                            ParseExpression(valueText, ListTypes.StrictArray) is ArrayExpression(var elements) ?
+                                (await Task.WhenAll(elements.Select(async element =>
+                                    new PartialTagEntry(
+                                        await Reducer.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).
+                                            ConfigureAwait(false)))).
+                                    ConfigureAwait(false)) :
+                                Utilities.Empty<PartialTagEntry>()),
                         "date" => ParseExpression(valueText, ListTypes.Value),
-                        _ => ParseExpression(valueText, ListTypes.ValueOrArray),
-#else
-                        "title" => ParseYamlLikeString(
-                            valueText,
-                            null,
-                            ParseTypes.StringOnly,
-                            __ListTypes.Ignore,
-                            default(string)),
-                        "author" => ParseYamlLikeString(
-                            valueText,
-                            null,
-                            ParseTypes.StringOnly,
-                            __ListTypes.AcceptOnce,
-                            default(object)),
-                        "template" => ParseYamlLikeString(
-                            valueText,
-                            (text, _) => new PartialTemplateEntry(text),
-                            ParseTypes.StringOnly,
-                            __ListTypes.Ignore,
-                            default(PartialTemplateEntry)),
-                        "category" => ParseYamlLikeString(
-                            valueText,
-                            (text, previous) => new PartialCategoryEntry(text, previous),
-                            ParseTypes.StringOnly,
-                            __ListTypes.AcceptOnce,
-                            new PartialCategoryEntry()) switch
-                            {
-                                PartialCategoryEntry[] entries => entries.LastOrDefault(),
-                                var r => r,
-                            },
-                        "tags" => ParseYamlLikeString(
-                            valueText,
-                            (text, _) => new PartialTagEntry(text),
-                            ParseTypes.StringOnly,
-                            __ListTypes.AcceptOnce,
-                            default(PartialTagEntry)),
-                        "date" => ParseYamlLikeString(
-                            valueText,
-                            null,
-                            ParseTypes.DateOnly,
-                            __ListTypes.Ignore,
-                            default(object)),
-                        _ => ParseYamlLikeString(
-                            valueText,
-                            null,
-                            ParseTypes.AutoDetect,
-                            __ListTypes.Accept,
-                            default(object)),
-#endif
+                        _ => ParseExpression(valueText, ListTypes.Array),
                     };
 
-                    if (value != null)
+                    if (valueExpression != null)
                     {
-                        markdownMetadata[key] = new ValueExpression(value);
+                        markdownMetadata[key] = valueExpression;
                     }
                 }
                 else

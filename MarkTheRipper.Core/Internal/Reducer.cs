@@ -185,4 +185,21 @@ public static class Reducer
         MetadataContext metadata,
         CancellationToken ct) =>
         ReduceExpressionAsync(expression, metadata, ct).Result;
+
+    public static async ValueTask<string> ReduceExpressionAndFormatAsync(
+        IExpression expression,
+        MetadataContext metadata,
+        CancellationToken ct)
+    {
+        var reduced = await ReduceExpressionAsync(expression, metadata, ct).
+            ConfigureAwait(false);
+        return await FormatValueAsync(reduced, metadata, ct).
+            ConfigureAwait(false);
+    }
+
+    internal static string UnsafeReduceExpressionAndFormat(
+        IExpression expression,
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        ReduceExpressionAndFormatAsync(expression, metadata, ct).Result;
 }
