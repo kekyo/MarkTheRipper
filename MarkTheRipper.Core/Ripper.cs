@@ -9,6 +9,7 @@
 
 using Markdig.Parsers;
 using Markdig.Renderers;
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;

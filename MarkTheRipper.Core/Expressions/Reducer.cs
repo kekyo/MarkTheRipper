@@ -16,12 +16,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Internal;
-
-public delegate ValueTask<IExpression> AsyncFunctionDelegate(
-    IExpression[] parameters,
-    MetadataContext context,
-    CancellationToken ct);
+namespace MarkTheRipper.Expressions;
 
 public static class Reducer
 {
