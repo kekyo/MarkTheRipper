@@ -35,7 +35,7 @@ internal sealed class ForEachNode : ITemplateNode
         CancellationToken ct)
     {
         if (this.parameters.FirstOrDefault() is { } expression0 &&
-            await Reducer.ReduceExpressionAsync(expression0, metadata, ct).
+            await expression0.ReduceExpressionAsync(metadata, ct).
                 ConfigureAwait(false) is { } rawValue &&
             Reducer.EnumerateValue(rawValue, metadata) is { } enumerable)
         {

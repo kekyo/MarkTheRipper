@@ -29,7 +29,7 @@ internal sealed class PartialTemplateEntry :
     private async ValueTask<RootTemplateNode?> GetRealTemplateNodeAsync(
         MetadataContext metadata, CancellationToken ct) =>
         metadata.Lookup("templateList") is { } templateListExpression &&
-        await Reducer.ReduceExpressionAsync(templateListExpression, metadata, ct).
+        await templateListExpression.ReduceExpressionAsync(metadata, ct).
             ConfigureAwait(false) is IReadOnlyDictionary<string, RootTemplateNode> templateList &&
         templateList.TryGetValue(this.Name, out var template) ?
             template : null;

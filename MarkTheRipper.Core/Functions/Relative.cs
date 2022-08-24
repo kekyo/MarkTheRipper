@@ -53,9 +53,9 @@ internal static class Relative
 
         if (metadata.Lookup("path") is { } currentPathExpression)
         {
-            if (await Reducer.ReduceExpressionAsync(currentPathExpression, metadata, ct).
+            if (await currentPathExpression.ReduceExpressionAsync(metadata, ct).
                 ConfigureAwait(false) is { } currentPathValue &&
-                await Reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
+                await parameters[0].ReduceExpressionAsync(metadata, ct).
                 ConfigureAwait(false) is { } targetPathValue)
             {
                 var relativePath = (currentPathValue, targetPathValue) switch

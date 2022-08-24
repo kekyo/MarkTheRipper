@@ -28,7 +28,7 @@ internal sealed class PartialTagEntry :
     private async ValueTask<TagEntry?> GetRealTagEntryAsync(
         MetadataContext metadata, CancellationToken ct) =>
         metadata.Lookup("tagList") is { } tagListExpression &&
-        await Reducer.ReduceExpressionAsync(tagListExpression, metadata, ct).
+        await tagListExpression.ReduceExpressionAsync(metadata, ct).
             ConfigureAwait(false) is IReadOnlyDictionary<string, TagEntry> tagList &&
         tagList.TryGetValue(this.Name, out var tag) ?
             tag : null;

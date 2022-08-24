@@ -54,7 +54,7 @@ internal sealed class PartialCategoryEntry :
         MetadataContext metadata, CancellationToken ct) =>
         this.Breadcrumbs.Aggregate(
             metadata.Lookup("rootCategory") is { } rootCategoryExpression &&
-            await Reducer.ReduceExpressionAsync(rootCategoryExpression, metadata, ct) is CategoryEntry entry ?
+            await rootCategoryExpression.ReduceExpressionAsync(metadata, ct) is CategoryEntry entry ?
                 entry : null,
             (agg, pc) => (agg != null && agg.Children.TryGetValue(pc.Name, out var child)) ? child : null!);
 

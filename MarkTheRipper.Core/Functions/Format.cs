@@ -30,12 +30,12 @@ internal static class Format
                 $"Invalid format function arguments: Count={parameters.Length}");
         }
 
-        var value = await Reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
+        var value = await parameters[0].ReduceExpressionAsync(metadata, ct).
             ConfigureAwait(false);
-        var format = await Reducer.ReduceExpressionAndFormatAsync(parameters[1], metadata, ct).
+        var format = await parameters[1].ReduceExpressionAndFormatAsync(metadata, ct).
             ConfigureAwait(false);
         var lang = metadata.Lookup("lang") is { } langExpression &&
-            await Reducer.ReduceExpressionAsync(langExpression, metadata, ct) is { } langValue ?
+            await langExpression.ReduceExpressionAsync(metadata, ct) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
                     new CultureInfo(await Reducer.FormatValueAsync(langValue, metadata, ct).

@@ -8,7 +8,6 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -157,7 +156,7 @@ public static class Reducer
     }
 
     public static ValueTask<object?> ReduceExpressionAsync(
-        IExpression expression,
+        this IExpression expression,
         MetadataContext metadata,
         CancellationToken ct) =>
         expression switch
@@ -182,7 +181,7 @@ public static class Reducer
         ReduceExpressionAsync(expression, metadata, ct).Result;
 
     public static async ValueTask<string> ReduceExpressionAndFormatAsync(
-        IExpression expression,
+        this IExpression expression,
         MetadataContext metadata,
         CancellationToken ct)
     {
