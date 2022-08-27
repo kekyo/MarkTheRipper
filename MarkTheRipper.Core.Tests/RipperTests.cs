@@ -159,7 +159,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-lang: en-us
+lang: ja-jp
 tags: [foo,bar]
 ---
 
@@ -174,7 +174,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <p>Date: {format date 'yyyy-MM-dd HH:mm:ss.fff'}</p>
+    <p>Date: {date}</p>
 {contentBody}</body>
 </html>
 ",
