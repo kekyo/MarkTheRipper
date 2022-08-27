@@ -705,47 +705,49 @@ Here is a list of built-in functions, including the functions that have appeared
 Formatting an argument into a string has always been possible without using `format` without any particular problem.
 Where this function is particularly useful is when dealing with dates and times.
 
-In HTML like this :
+First, we show how the formatting is determined.
+When using the `date` or `generated` keyword in such HTML:
 
 ```html
 <p>Date: {date}</p>
 ```
 
-If you use the `date` keyword or the `generated` keyword,
-the date and time will be output in the following format:
+The date and time are output in the following format:
 
 ```markdown
 ---
 date: 2022/1/23 12:34:56
-lang: en-jp
+lang: en-us
 ---
 
 (... Body text ...)
 ```
 
 ```html
-<p>Date: 2022/01/02 12:34:56 +09:00</p>
-```
-
-This format varies depending on the language indicated by `lang`. In the case of `en-us`:
-
-```html
 <p>Date: 1/2/2022 12:34:56 PM +09:00</p>
 ```
 
-and follow the standard format of the language.
-If you want to fix the format, use the `format` function as follows:
+This format varies depending on the language indicated by `lang`.
+If `ja-jp` instead of `en-us`, then:
 
 ```html
-<p>Date: {format date 'yyyy-MM-dd HH:mm:ss.fff'}</p>
+<p>Date: 2022/01/02 12:34:56 +09:00</p>
+```
+
+Follow the standard format of the language.
+And if you want to fix the format, use the `format` function as follows:
+
+```html
+<p>Date: {format date 'yyyy-MM-dd HH.mm.ss'}</p>
 ```
 
 ```html
-<p>Date: 2022-01-02 12:34:56.789</p>
+<p>Date: 2022-01-02 12.34.56</p>
 ```
 
-The first argument of the `format` function is an expression
-indicating the value to be formatted, and the second argument is a format string.
+The first argument of the `format` function is an expression indicating the value to be formatted,
+and the second argument is a format string.
+The format specification string is enclosed in single or double quotes.
 
 As previously mentioned,
 "MarkTheRipper is written in .NET, but the user does not need to know about .NET",
@@ -765,6 +767,8 @@ The number can be set to fixed three digits.
 ```html
 <p>007</p>
 ```
+
+The various format strings are also detailed around the .NET documentation listed above.
 
 #### relative
 
