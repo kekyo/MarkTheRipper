@@ -10,6 +10,7 @@
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,7 +23,7 @@ internal static class Format
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (parameters.Length != 2)
+        if (parameters.Length == 0 || parameters.Length >= 3)
         {
             throw new ArgumentException(
                 $"Invalid format function arguments: Count={parameters.Length}");
@@ -30,8 +31,13 @@ internal static class Format
 
         var value = await parameters[0].ReduceExpressionAsync(metadata, ct).
             ConfigureAwait(false);
-        var format = await parameters[1].ReduceExpressionAndFormatAsync(metadata, ct).
-            ConfigureAwait(false);
+
+        var formatExpression = parameters.ElementAtOrDefault(1);
+        var format = formatExpression != null ?
+            await formatExpression.ReduceExpressionAndFormatAsync(metadata, ct).
+                ConfigureAwait(false) :
+            null;
+
         var fp = await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
             ConfigureAwait(false);
 

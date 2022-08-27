@@ -692,7 +692,83 @@ In the above example, the `name` property outputs the name of the category.
 
 ### Function keywords
 
-TODO:
+Here is a list of built-in functions, including the functions that have appeared so far:
+
+|function|content|
+|:----|:----|
+|`format`|Format arguments into strings. |
+|`relative`|Convert argument paths to relative paths. |
+|`lookup`|Draws a metadata dictionary based on the results given by the `argument`. |
+
+#### format
+
+Formatting an argument into a string has always been possible without using `format` without any particular problem.
+Where this function is particularly useful is when dealing with dates and times.
+
+In HTML like this :
+
+```html
+<p>Date: {date}</p>
+```
+
+If you use the `date` keyword or the `generated` keyword,
+the date and time will be output in the following format:
+
+```markdown
+---
+date: 2022/1/23 12:34:56
+lang: en-jp
+---
+
+(... Body text ...)
+```
+
+```html
+<p>Date: 2022/01/02 12:34:56 +09:00</p>
+```
+
+This format varies depending on the language indicated by `lang`. In the case of `en-us`:
+
+```html
+<p>Date: 1/2/2022 12:34:56 PM +09:00</p>
+```
+
+and follow the standard format of the language.
+If you want to fix the format, use the `format` function as follows:
+
+```html
+<p>Date: {format date 'yyyy-MM-dd HH:mm:ss.fff'}</p>
+```
+
+```html
+<p>Date: 2022-01-02 12:34:56.789</p>
+```
+
+The first argument of the `format` function is an expression
+indicating the value to be formatted, and the second argument is a format string.
+
+As previously mentioned,
+"MarkTheRipper is written in .NET, but the user does not need to know about .NET",
+only this format string follows the conventions of .NET.
+
+The exact format of the date/time format string is [see this document](https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings).
+
+In fact, any value, not just dates and times, can be formatted according to the format.
+For example, the `index` in the enumeration is a number, but can be formatted as:
+
+```html
+<p>{format item.index 'D3'}</p>
+```
+
+The number can be set to fixed three digits.
+
+```html
+<p>007</p>
+```
+
+#### relative
+
+As already explained, the `relative` function returns the current
 
 ----
 

@@ -77,8 +77,15 @@ public static class MetadataUtilities
                         enumerable.Cast<object?>().
                         Select(v => FormatValueAsync(v, metadata, ct).AsTask())).
                         ConfigureAwait(false)),
+            IFormattable formattable =>
+                formattable.ToString(
+                    null,
+                    await GetFormatProviderAsync(metadata, ct).
+                        ConfigureAwait(false)) ??
+                string.Empty,
             _ =>
-                value.ToString() ?? string.Empty,
+                value.ToString() ??
+                string.Empty,
         };
 
     public static IEnumerable<object?> EnumerateValue(

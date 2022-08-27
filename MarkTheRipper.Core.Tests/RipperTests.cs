@@ -151,6 +151,38 @@ This is test contents.
         await Verifier.Verify(actual);
     }
 
+    [Test]
+    public async Task RipOffDateFormatting2()
+    {
+        var date = new DateTimeOffset(2022, 1, 2, 12, 34, 56, 789, TimeSpan.FromHours(9));
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+lang: en-us
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <p>Date: {format date 'yyyy-MM-dd HH:mm:ss.fff'}</p>
+{contentBody}</body>
+</html>
+",
+("date", date));
+
+        await Verifier.Verify(actual);
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////
 
     [Test]
