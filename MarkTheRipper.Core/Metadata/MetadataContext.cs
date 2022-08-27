@@ -8,8 +8,11 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using MarkTheRipper.Template;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -41,4 +44,15 @@ public sealed class MetadataContext
 
     public static readonly MetadataContext Empty =
         new MetadataContext();
+
+    public static async ValueTask<IFormatProvider> GetFormatProviderAsync(
+        MetadataContext metadata,
+        CancellationToken ct) =>
+        metadata.Lookup("lang") is { } langExpression &&
+            await langExpression.ReduceExpressionAsync(metadata, ct) is { } langValue ?
+                langValue is IFormatProvider fp ?
+                    fp :
+                    new CultureInfo(await MetadataUtilities.FormatValueAsync(langValue, metadata, ct).
+                        ConfigureAwait(false)) :
+                CultureInfo.InvariantCulture;
 }

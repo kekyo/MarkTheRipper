@@ -185,9 +185,9 @@ public sealed class Ripper
     {
         var mc = parentMetadata.Spawn();
 
-        mc.SetValue("relative", Relative.Function);
-        mc.SetValue("lookup", Lookup.Function);
-        mc.SetValue("format", Format.Function);
+        mc.SetValue("relative", FunctionFactory.CreateAsyncFunction(Relative.RelativeAsync));
+        mc.SetValue("lookup", FunctionFactory.CreateAsyncFunction(Lookup.LookupAsync));
+        mc.SetValue("format", FunctionFactory.CreateAsyncFunction(Format.FormatAsync));
 
         InjectAdditionalMetadata(
             markdownMetadata,

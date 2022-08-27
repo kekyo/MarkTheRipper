@@ -29,8 +29,6 @@ internal sealed class ExpressionNode : ITemplateNode
         CancellationToken ct)
     {
         if (await Reducer.ReduceExpressionAndFormatAsync(this.expression, metadata, ct).
-                ConfigureAwait(false) is { } rawValue &&
-            await Reducer.FormatValueAsync(rawValue, metadata, ct).
                 ConfigureAwait(false) is { } value)
         {
             await writer(value, ct).

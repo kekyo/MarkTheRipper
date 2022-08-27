@@ -16,8 +16,22 @@ namespace MarkTheRipper.Expressions;
 
 public delegate ValueTask<IExpression> AsyncFunctionDelegate(
     IExpression[] parameters,
-    MetadataContext context,
+    MetadataContext metadata,
     CancellationToken ct);
+
+public static class FunctionFactory
+{
+    public static AsyncFunctionDelegate
+        CreateAsyncFunction(AsyncFunctionDelegate func) =>
+        func;
+
+    public static Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>>
+        CreateAsyncFunction(
+            Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>> func) =>
+            func;
+}
+
+////////////////////////////////////////////////////////////////
 
 public interface IExpression : IEquatable<IExpression>
 {

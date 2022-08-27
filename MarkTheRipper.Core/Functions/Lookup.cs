@@ -18,7 +18,7 @@ namespace MarkTheRipper.Functions;
 
 internal static class Lookup
 {
-    private static async ValueTask<IExpression> LookupAsync(
+    public static async ValueTask<IExpression> LookupAsync(
         IExpression[] parameters,
         MetadataContext metadata,
         CancellationToken ct)
@@ -31,13 +31,10 @@ internal static class Lookup
 
         var name = await parameters[0].ReduceExpressionAndFormatAsync(metadata, ct).
             ConfigureAwait(false);
-        var nameString = await Reducer.FormatValueAsync(name, metadata, ct).
+        var nameString = await MetadataUtilities.FormatValueAsync(name, metadata, ct).
             ConfigureAwait(false);
 
         return metadata.Lookup(nameString) is { } resolvedExpression ?
             resolvedExpression : new ValueExpression(name);
     }
-
-    public static readonly AsyncFunctionDelegate Function =
-        LookupAsync;
 }

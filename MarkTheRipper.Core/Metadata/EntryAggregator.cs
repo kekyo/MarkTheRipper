@@ -25,7 +25,7 @@ internal static class EntryAggregator
         (await Task.WhenAll(markdownEntries.Select(async markdownEntry =>
             await markdownEntry.GetPropertyValueAsync("tags", metadata, ct).
                 ConfigureAwait(false) is { } tagsValue ?
-                Reducer.EnumerateValue(tagsValue, metadata).
+                MetadataUtilities.EnumerateValue(tagsValue, metadata).
                     OfType<PartialTagEntry>().
                     Select(tag => (tag, markdownEntry)).
                     Where(entry => !string.IsNullOrWhiteSpace(entry.tag.Name)).

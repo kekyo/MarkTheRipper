@@ -9,9 +9,7 @@
 
 using MarkTheRipper.Metadata;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,67 +17,7 @@ namespace MarkTheRipper.Expressions;
 
 public static class Reducer
 {
-    private static readonly object?[] empty = new object?[0];
     private static readonly char[] dotOperator = new[] { '.' };
-
-    internal static string UnsafeFormatValue(
-        object? value,
-        MetadataContext metadata) =>
-        value switch
-        {
-            null =>
-                string.Empty,
-            IMetadataEntry entry =>
-                UnsafeFormatValue(
-                    entry.GetImplicitValueAsync(default).Result,
-                    metadata),
-            string str =>
-                str,
-            IEnumerable enumerable =>
-                string.Join(",",
-                    enumerable.Cast<object?>().
-                    Select(v => UnsafeFormatValue(v, metadata))),
-            _ =>
-                value.ToString() ?? string.Empty,
-        };
-
-    public static async ValueTask<string> FormatValueAsync(
-        object? value,
-        MetadataContext metadata,
-        CancellationToken ct) =>
-        value switch
-        {
-            null =>
-                string.Empty,
-            IMetadataEntry entry =>
-                await FormatValueAsync(
-                    await entry.GetImplicitValueAsync(ct).ConfigureAwait(false),
-                    metadata,
-                    ct).
-                    ConfigureAwait(false),
-            string str =>
-                str,
-            IEnumerable enumerable =>
-                string.Join(",",
-                    await Task.WhenAll(
-                        enumerable.Cast<object?>().
-                        Select(v => FormatValueAsync(v, metadata, ct).AsTask())).
-                        ConfigureAwait(false)),
-            _ =>
-                value.ToString() ?? string.Empty,
-        };
-
-    public static IEnumerable<object?> EnumerateValue(
-        object? value, MetadataContext context) =>
-        value switch
-        {
-            null => empty,
-            string str => new[] { str },
-            IEnumerable enumerable => enumerable.Cast<object?>(),
-            _ => new[] { value },
-        };
-
-    ////////////////////////////////////////////////////////////////////
 
     private static async ValueTask<object?> ReducePropertyAsync(
         string[] elements,
@@ -151,6 +89,16 @@ public static class Reducer
                 await func(parameters, metadata, ct).ConfigureAwait(false),
                 metadata, ct).
                 ConfigureAwait(false),
+            Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>> func =>
+                await func(
+                    await ReduceExpressionsAsync(parameters, metadata, ct).
+                        ConfigureAwait(false),
+                    keyName => metadata.Lookup(keyName) is { } valueExpression ?
+                        ReduceExpressionAsync(valueExpression, metadata, ct).AsTask() :
+                        Task.FromResult(default(object)),
+                    await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
+                        ConfigureAwait(false),
+                    ct),
             _ => throw new InvalidOperationException("Could not apply non-function object."),
         };
     }
@@ -187,7 +135,7 @@ public static class Reducer
     {
         var reduced = await ReduceExpressionAsync(expression, metadata, ct).
             ConfigureAwait(false);
-        return await FormatValueAsync(reduced, metadata, ct).
+        return await MetadataUtilities.FormatValueAsync(reduced, metadata, ct).
             ConfigureAwait(false);
     }
 

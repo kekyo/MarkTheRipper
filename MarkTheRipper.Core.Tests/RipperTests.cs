@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
 using NUnit.Framework;
@@ -445,6 +446,84 @@ This is test contents.
 {contentBody}</body>
 </html>
 ");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffFunction1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach tags}
+    <h1>Tag: {test item.name 123}</h1>
+    {end}
+    {contentBody}
+  </body>
+</html>
+",
+("test", FunctionFactory.CreateAsyncFunction(
+    async (parameters, metadata, ct) =>
+    {
+        var name = await parameters[0].ReduceExpressionAndFormatAsync(metadata, ct);
+        var arg1 = await parameters[1].ReduceExpressionAndFormatAsync(metadata, ct);
+        return new ValueExpression(name + arg1);
+    })));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffFunction2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach tags}
+    <h1>Tag: {test item.name 123}</h1>
+    {end}
+    {contentBody}
+  </body>
+</html>
+",
+("test", FunctionFactory.CreateAsyncFunction(
+    (parameters, metadata, fp, ct) =>
+    {
+        var name = parameters[0]?.ToString();
+        var arg1 = parameters[1]?.ToString();
+        return Task.FromResult((object?)(name + arg1));
+    })));
         await Verifier.Verify(actual);
     }
 }

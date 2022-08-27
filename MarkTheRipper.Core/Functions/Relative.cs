@@ -9,7 +9,6 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
 using System;
 using System.Linq;
 using System.Threading;
@@ -40,7 +39,7 @@ internal static class Relative
         return new(relativePathElements);
     }
 
-    private static async ValueTask<IExpression> CalculateAsync(
+    public static async ValueTask<IExpression> RelativeAsync(
         IExpression[] parameters,
         MetadataContext metadata,
         CancellationToken ct)
@@ -64,17 +63,17 @@ internal static class Relative
                         InternalCalculate(cpe, tpe),
                     (PathEntry cpe, { } tp) =>
                         InternalCalculate(cpe, new PathEntry(
-                            await Reducer.FormatValueAsync(tp, metadata, ct).
+                            await MetadataUtilities.FormatValueAsync(tp, metadata, ct).
                                 ConfigureAwait(false))),
                     (string cp, PathEntry tpe) =>
                         InternalCalculate(new PathEntry(
-                            await Reducer.FormatValueAsync(cp, metadata, ct).
+                            await MetadataUtilities.FormatValueAsync(cp, metadata, ct).
                                 ConfigureAwait(false)), tpe),
                     (string cp, string tp) =>
                         InternalCalculate(new PathEntry(
-                            await Reducer.FormatValueAsync(cp, metadata, ct).
+                            await MetadataUtilities.FormatValueAsync(cp, metadata, ct).
                                 ConfigureAwait(false)), new PathEntry(
-                            await Reducer.FormatValueAsync(tp, metadata, ct).
+                            await MetadataUtilities.FormatValueAsync(tp, metadata, ct).
                                 ConfigureAwait(false))),
                     _ => throw new InvalidOperationException(
                         "Could not calculate relative path"),
@@ -87,7 +86,4 @@ internal static class Relative
         // Could not find current path (calculation base path).
         return parameters[0];
     }
-
-    public static readonly AsyncFunctionDelegate Function =
-        CalculateAsync;
 }

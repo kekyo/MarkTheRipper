@@ -37,7 +37,7 @@ internal sealed class ForEachNode : ITemplateNode
         if (this.parameters.FirstOrDefault() is { } expression0 &&
             await expression0.ReduceExpressionAsync(metadata, ct).
                 ConfigureAwait(false) is { } rawValue &&
-            Reducer.EnumerateValue(rawValue, metadata) is { } enumerable)
+            MetadataUtilities.EnumerateValue(rawValue, metadata) is { } enumerable)
         {
             var iterationMetadata = metadata.Spawn();
 
