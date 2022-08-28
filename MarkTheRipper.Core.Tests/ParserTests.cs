@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
+using MarkTheRipper.Expressions;
 using NUnit.Framework;
 using System;
 using System.Linq;

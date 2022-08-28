@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Expressions;
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
 using System;
@@ -19,32 +19,37 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Internal;
+namespace MarkTheRipper.Expressions;
 
-internal enum ListTypes
+public enum ListTypes
 {
     List = 0,
     StrictArray,
-    Value,
     Array,
+    Value,
+    SingleValue,
 }
 
-internal static class Parser
+public static class Parser
 {
     private static readonly char[][] idleSeparators = new[]
     {
         new[] { ' ' },       // List
+        new[] { ',', ' ' },  // StrictArray
         new[] { ',', ' ' },  // Array
-        new[] { ' ' },       // Value
-        new[] { ',', ' ' },  // ValueOrArray
+        Utilities.Empty<char>(),  // Value
+        Utilities.Empty<char>(),  // SingleValue
     };
     private static readonly char[][] skipDetectionSeparators = new[]
     {
         new[] { '(', ')', '[', ']', '\'', '"', ' ' },  // List
+        new[] { '(', ')', '[', ']', '\'', '"', ',' },  // StrictArray
         new[] { '(', ')', '[', ']', '\'', '"', ',' },  // Array
-        new[] { '(', ')', '[', ']', '\'', '"', ' ' },  // Value
-        new[] { '(', ')', '[', ']', '\'', '"', ',' },  // ValueOrArray
+        new[] { '(', ')', '[', ']', '\'', '"' },  // Value
+        new[] { '\'', '"' },  // SingleValue
     };
+
+    ///////////////////////////////////////////////////////////////////////////////////
 
     private static bool IsValidVariableName(string text)
     {
@@ -122,7 +127,7 @@ internal static class Parser
 
                 index = endIndex + 1;
             }
-            else if (ch == '(')
+            else if (outerType != ListTypes.SingleValue && ch == '(')
             {
                 nested.Push((currentType, expressions));
                 expressions = new List<IExpression>();
@@ -130,7 +135,7 @@ internal static class Parser
                 currentType = ListTypes.List;
                 index = startIndex + 1;
             }
-            else if (ch == ')')
+            else if (outerType != ListTypes.SingleValue && ch == ')')
             {
                 if (nested.Count <= 0)
                 {
@@ -159,7 +164,7 @@ internal static class Parser
                 currentType = lastType;
                 index++;
             }
-            else if (ch == '[')
+            else if (outerType != ListTypes.SingleValue && ch == '[')
             {
                 nested.Push((currentType, expressions));
                 expressions = new List<IExpression>();
@@ -167,7 +172,7 @@ internal static class Parser
                 currentType = ListTypes.StrictArray;
                 index = startIndex + 1;
             }
-            else if (ch == ']')
+            else if (outerType != ListTypes.SingleValue && ch == ']')
             {
                 if (nested.Count <= 0)
                 {
@@ -251,10 +256,42 @@ internal static class Parser
             (_, 0) => throw new FormatException("Could not make empty at this point."),
             (ListTypes.List, 1) => expressions[0],  // unwrap
             (ListTypes.List, _) => new ApplyExpression(expressions[0], expressions.Skip(1).ToArray()),
+            (ListTypes.SingleValue, _) => expressions[0],
             (ListTypes.Value, 1) => expressions[0],
             _ => throw new FormatException("Could not make list/array at this point."),
         };
     }
+
+    public static async ValueTask<IExpression> ParseKeywordExpressionAsync(
+        string keyNameHint, string expressionString, CancellationToken ct) =>
+        keyNameHint switch
+        {
+            "title" => ParseExpression(expressionString, ListTypes.SingleValue),
+            "author" => ParseExpression(expressionString, ListTypes.Array),
+            "template" => new ValueExpression(new PartialTemplateEntry(
+                await ParseExpression(expressionString, ListTypes.SingleValue).
+                    ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
+                    ConfigureAwait(false))),
+            "category" => new ValueExpression(
+                ParseExpression(expressionString, ListTypes.StrictArray) is ArrayExpression(var elements) ?
+                    (await Task.WhenAll(elements.Select(element =>
+                        element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).AsTask())).
+                        ConfigureAwait(false)).
+                    Aggregate(
+                        new PartialCategoryEntry(),
+                        (agg, categoryName) => new PartialCategoryEntry(categoryName, agg)) :
+                    new PartialCategoryEntry()),
+            "tags" => new ValueExpression(
+                ParseExpression(expressionString, ListTypes.StrictArray) is ArrayExpression(var elements) ?
+                    await Task.WhenAll(elements.Select(async element =>
+                        new PartialTagEntry(
+                            await element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
+                                ConfigureAwait(false)))).
+                        ConfigureAwait(false) :
+                    Utilities.Empty<PartialTagEntry>()),
+            "date" => ParseExpression(expressionString, ListTypes.SingleValue),
+            _ => ParseExpression(expressionString, ListTypes.Array),
+        };
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -295,7 +332,7 @@ internal static class Parser
                         break;
                     }
 
-                    if ((closeIndex2 + 1) < line.Length &&
+                    if (closeIndex2 + 1 < line.Length &&
                         line[closeIndex2 + 1] == '}')
                     {
                         buffer.Append(line.Substring(startIndex, closeIndex2 - startIndex + 1));
@@ -307,7 +344,7 @@ internal static class Parser
                         $"Could not find open bracket. Template={templateName}");
                 }
 
-                if ((openIndex + 1) < line.Length &&
+                if (openIndex + 1 < line.Length &&
                     line[openIndex + 1] == '{')
                 {
                     buffer.Append(line.Substring(startIndex, openIndex - startIndex + 1));
@@ -428,37 +465,14 @@ internal static class Parser
                 var keyIndex = line.IndexOf(':');
                 if (keyIndex >= 1)
                 {
-                    var key = line.Substring(0, keyIndex).Trim();
+                    var keyName = line.Substring(0, keyIndex).Trim();
                     var valueText = line.Substring(keyIndex + 1).Trim();
-                    var valueExpression = key switch
-                    {
-                        "title" => ParseExpression(valueText, ListTypes.Value),
-                        "author" => ParseExpression(valueText, ListTypes.Array),
-                        "template" => ParseExpression(valueText, ListTypes.Value),
-                        "category" => new ValueExpression(
-                            ParseExpression(valueText, ListTypes.StrictArray) is ArrayExpression(var elements) ?
-                                (await Task.WhenAll(elements.Select(element =>
-                                    Reducer.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).AsTask())).
-                                    ConfigureAwait(false)).
-                                Aggregate(
-                                    new PartialCategoryEntry(),
-                                    (agg, categoryName) => new PartialCategoryEntry(categoryName, agg)) :
-                                new PartialCategoryEntry()),
-                        "tags" => new ValueExpression(
-                            ParseExpression(valueText, ListTypes.StrictArray) is ArrayExpression(var elements) ?
-                                (await Task.WhenAll(elements.Select(async element =>
-                                    new PartialTagEntry(
-                                        await Reducer.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).
-                                            ConfigureAwait(false)))).
-                                    ConfigureAwait(false)) :
-                                Utilities.Empty<PartialTagEntry>()),
-                        "date" => ParseExpression(valueText, ListTypes.Value),
-                        _ => ParseExpression(valueText, ListTypes.Array),
-                    };
-
+                    var valueExpression = await ParseKeywordExpressionAsync(
+                        keyName, valueText, ct).
+                        ConfigureAwait(false);
                     if (valueExpression != null)
                     {
-                        markdownMetadata[key] = valueExpression;
+                        markdownMetadata[keyName] = valueExpression;
                     }
                 }
                 else

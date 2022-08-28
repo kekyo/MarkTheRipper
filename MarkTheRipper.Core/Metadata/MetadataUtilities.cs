@@ -29,6 +29,12 @@ public static class MetadataUtilities
 
     /////////////////////////////////////////////////////////////////////
 
+    /// <summary>
+    /// Read metadata json from the path.
+    /// </summary>
+    /// <param name="path">JSON file path.</param>
+    /// <param name="ct">CancellationToken</param>
+    /// <returns>Metadata dictionary.</returns>
     public static async ValueTask<IReadOnlyDictionary<string, IExpression>> ReadMetadataAsync(
         string path, CancellationToken ct)
     {
@@ -49,22 +55,36 @@ public static class MetadataUtilities
 
         var jt = await JToken.LoadAsync(jr, ct);
 
-        static IExpression ToExpression(JToken? token) =>
+        static async ValueTask<IExpression> ToExpressionAsync(
+            string keyNameHint, JToken? token, CancellationToken ct) =>
             token switch
             {
                 JValue v when v.Value?.ToString() is var sv =>
                     sv != null ?
-                        Parser.ParseExpression(sv, ListTypes.Value) :
+                        await Parser.ParseKeywordExpressionAsync(keyNameHint, sv, ct).
+                            ConfigureAwait(false) :
                         new ValueExpression(null),
-                JArray a => new ArrayExpression(a.Select(ToExpression).ToArray()),
+                JArray a => new ArrayExpression(
+                    await Task.WhenAll(a.Select(e => ToExpressionAsync("", e, ct).AsTask())).
+                        ConfigureAwait(false)),
                 null => new ValueExpression(null),
-                _ => Parser.ParseExpression(token.ToString(), ListTypes.Value),
+                _ => token.Value<string>() is { } sv ?
+                    await Parser.ParseKeywordExpressionAsync(
+                        keyNameHint, sv, ct).
+                        ConfigureAwait(false) :
+                    new ValueExpression(null),
             };
 
-        return (jt.ToObject<Dictionary<string, JToken?>>(s) ?? new()).
+        return (await Task.WhenAll(
+            (jt.ToObject<Dictionary<string, JToken?>>(s) ?? new()).
+             Select(async entry =>
+                (entry.Key,
+                 Value: await ToExpressionAsync(entry.Key, entry.Value, ct).
+                    ConfigureAwait(false)))).
+             ConfigureAwait(false)).
             ToDictionary(
                 entry => entry.Key,
-                entry => ToExpression(entry.Value));
+                entry => entry.Value);
     }
 
     /////////////////////////////////////////////////////////////////////
