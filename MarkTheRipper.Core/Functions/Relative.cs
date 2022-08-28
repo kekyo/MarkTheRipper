@@ -40,9 +40,7 @@ internal static class Relative
     }
 
     public static async ValueTask<IExpression> RelativeAsync(
-        IExpression[] parameters,
-        MetadataContext metadata,
-        CancellationToken ct)
+        IExpression[] parameters, MetadataContext metadata, CancellationToken ct)
     {
         if (parameters.Length != 1)
         {

@@ -22,7 +22,8 @@ internal sealed class PartialTagEntry :
     public PartialTagEntry(string name) =>
         this.Name = name;
 
-    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         new(this.Name);
 
     private async ValueTask<TagEntry?> GetRealTagEntryAsync(

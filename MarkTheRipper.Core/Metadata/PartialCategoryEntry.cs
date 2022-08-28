@@ -47,7 +47,8 @@ internal sealed class PartialCategoryEntry :
         }
     }
 
-    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         new(string.Join("/", this.Breadcrumbs.Select(pc => pc.Name)));
 
     private async ValueTask<CategoryEntry?> GetRealCategoryEntryAsync(

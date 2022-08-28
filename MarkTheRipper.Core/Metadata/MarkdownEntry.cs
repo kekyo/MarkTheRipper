@@ -9,7 +9,6 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
-using MarkTheRipper.Template;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,33 +50,34 @@ public sealed class MarkdownEntry :
     internal PathEntry MarkdownPath =>
         this.metadata.TryGetValue("markdownPath", out var markdownPathExpression) &&
         Reducer.UnsafeReduceExpression(
-            markdownPathExpression, MetadataContext.Empty, default) is { } value &&
+            markdownPathExpression, MetadataContext.Empty) is { } value &&
             value is PathEntry markdownPath ?
             markdownPath : PathEntry.Unknown;
 
     internal PathEntry StoreToPath =>
         this.metadata.TryGetValue("path", out var pathExpression) &&
         Reducer.UnsafeReduceExpression(
-            pathExpression, MetadataContext.Empty, default) is { } value &&
+            pathExpression, MetadataContext.Empty) is { } value &&
             value is PathEntry path ?
             path : PathEntry.Unknown;
 
     internal string Title =>
         this.metadata.TryGetValue("title", out var titleExpression) &&
         Reducer.UnsafeReduceExpressionAndFormat(
-            titleExpression, MetadataContext.Empty, default) is { } title ? 
+            titleExpression, MetadataContext.Empty) is { } title ? 
             title : "(Untitled)";
 
     internal DateTimeOffset? Date =>
         this.metadata.TryGetValue("date", out var dateExpression) &&
         Reducer.UnsafeReduceExpression(
-            dateExpression, MetadataContext.Empty, default) is DateTimeOffset date ?
+            dateExpression, MetadataContext.Empty) is DateTimeOffset date ?
             date : null;
 
-    public async ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public async ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         this.metadata.TryGetValue("title", out var valueExpression) &&
             await valueExpression.ReduceExpressionAndFormatAsync(
-                MetadataContext.Empty, ct).
+                metadata, ct).
                 ConfigureAwait(false) is { } title ?
             title : null ?? "(Untitled)";
 

@@ -9,7 +9,6 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

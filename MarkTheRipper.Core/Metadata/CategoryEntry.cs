@@ -55,7 +55,8 @@ public sealed class CategoryEntry :
         }
     }
 
-    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         new(string.Join("/", this.Breadcrumbs.Select(c => c.Name)));
 
     public ValueTask<object?> GetPropertyValueAsync(

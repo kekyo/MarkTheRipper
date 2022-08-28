@@ -14,8 +14,6 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper.Template;
 
-///////////////////////////////////////////////////////////////////////////////////
-
 internal sealed class TextNode : ITemplateNode
 {
     private readonly string text;

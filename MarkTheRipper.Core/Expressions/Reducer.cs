@@ -125,9 +125,8 @@ public static class Reducer
 
     internal static object? UnsafeReduceExpression(
         IExpression expression,
-        MetadataContext metadata,
-        CancellationToken ct) =>
-        ReduceExpressionAsync(expression, metadata, ct).Result;
+        MetadataContext metadata) =>
+        ReduceExpressionAsync(expression, metadata, default).Result;
 
     public static async ValueTask<string> ReduceExpressionAndFormatAsync(
         this IExpression expression,
@@ -142,7 +141,6 @@ public static class Reducer
 
     internal static string UnsafeReduceExpressionAndFormat(
         IExpression expression,
-        MetadataContext metadata,
-        CancellationToken ct) =>
-        ReduceExpressionAndFormatAsync(expression, metadata, ct).Result;
+        MetadataContext metadata) =>
+        ReduceExpressionAndFormatAsync(expression, metadata, default).Result;
 }

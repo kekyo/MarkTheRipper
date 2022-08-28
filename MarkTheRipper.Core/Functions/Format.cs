@@ -19,9 +19,7 @@ namespace MarkTheRipper.Functions;
 internal static class Format
 {
     public static async ValueTask<IExpression> FormatAsync(
-        IExpression[] parameters,
-        MetadataContext metadata,
-        CancellationToken ct)
+        IExpression[] parameters, MetadataContext metadata, CancellationToken ct)
     {
         if (parameters.Length == 0 || parameters.Length >= 3)
         {

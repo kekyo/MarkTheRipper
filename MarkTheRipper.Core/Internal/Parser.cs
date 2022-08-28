@@ -218,9 +218,9 @@ internal static class Parser
                     text,
                     CultureInfo.InvariantCulture,
                     DateTimeStyles.AllowWhiteSpaces,
-                    out var dtv))
+                    out var dto))
                 {
-                    expressions.Add(new ValueExpression(dtv));
+                    expressions.Add(new ValueExpression(new PartialDateEntry(dto)));
                 }
                 else
                 {

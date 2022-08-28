@@ -15,7 +15,7 @@ namespace MarkTheRipper.Metadata;
 public interface IMetadataEntry
 {
     ValueTask<object?> GetImplicitValueAsync(
-        CancellationToken ct);
+        MetadataContext metadata, CancellationToken ct);
 
     ValueTask<object?> GetPropertyValueAsync(
         string keyName, MetadataContext context, CancellationToken ct);

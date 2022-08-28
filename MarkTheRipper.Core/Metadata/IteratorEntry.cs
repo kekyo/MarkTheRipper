@@ -25,7 +25,8 @@ internal sealed class IteratorEntry :
         this.Value = value;
     }
 
-    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         new(this.Value);
 
     public async ValueTask<object?> GetPropertyValueAsync(

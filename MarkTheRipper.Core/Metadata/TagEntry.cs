@@ -31,7 +31,8 @@ public sealed class TagEntry :
         this.Entries = markdownEntries;
     }
 
-    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         new(this.Name);
 
     public ValueTask<object?> GetPropertyValueAsync(

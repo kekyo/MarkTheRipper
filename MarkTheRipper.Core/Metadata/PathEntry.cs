@@ -38,7 +38,8 @@ public sealed class PathEntry :
     internal string PhysicalPath =>
         System.IO.Path.Combine(this.PathElements);
 
-    public ValueTask<object?> GetImplicitValueAsync(CancellationToken ct) =>
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
         new(this.Path);
 
     public ValueTask<object?> GetPropertyValueAsync(
