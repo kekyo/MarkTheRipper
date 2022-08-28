@@ -168,7 +168,7 @@ public sealed class ParserTests
     [Test]
     public Task ParseDateTimeOffset1()
     {
-        var actual = Parser.ParseExpression("2022/08/20 12:34:56", ListTypes.Array);
+        var actual = Parser.ParseExpression("2022/08/20 12:34:56 +09:30", ListTypes.Array);
 
         return Verifier.Verify(actual.PrettyPrint);
     }
