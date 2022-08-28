@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
 using NUnit.Framework;
@@ -35,12 +36,12 @@ public sealed class RipperTests
         {
             { templateName, template }
         };
-        metadata.Set("template", new PartialTemplateEntry(templateName));
-        metadata.Set("templateList", templateList);
+        metadata.SetValue("template", new PartialTemplateEntry(templateName));
+        metadata.SetValue("templateList", templateList);
 
         foreach (var entry in baseMetadata)
         {
-            metadata.Set(entry.keyName, entry.value);
+            metadata.SetValue(entry.keyName, entry.value);
         }
 
         var ripper = new Ripper();
@@ -141,7 +142,39 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <p>Date: {date:yyyy/MM/dd HH:mm:ss.fff zzz}</p>
+    <p>Date: {format date 'yyyy/MM/dd HH:mm:ss.fff zzz'}</p>
+{contentBody}</body>
+</html>
+",
+("date", date));
+
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffDateFormatting2()
+    {
+        var date = new DateTimeOffset(2022, 1, 2, 12, 34, 56, 789, TimeSpan.FromHours(9));
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+lang: ja-jp
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <p>Date: {date}</p>
 {contentBody}</body>
 </html>
 ",
@@ -174,9 +207,9 @@ This is test contents.
   </head>
   <body>
     <ul>
-{foreach:tags}
+{foreach tags}
         <li>{item}</li>
-{/}
+{end}
     </ul>
 {contentBody}</body>
 </html>
@@ -208,9 +241,9 @@ This is test contents.
   </head>
   <body>
     <ul>
-{foreach:tags}
+{foreach tags}
         <li>{item.index}</li>
-{/}
+{end}
     </ul>
 {contentBody}</body>
 </html>
@@ -243,14 +276,14 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:author item1}
+{foreach author item1}
     <h3>{item1}</h3>
     <ul>
-{foreach:tags item2}
+{foreach tags item2}
         <li>{item1}: {item2} [{item1.index}-{item2.index}]</li>
-{/}
+{end}
     </ul>
-{/}
+{end}
 
 {contentBody}</body>
 </html>
@@ -282,9 +315,9 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    <h1>{*category}</h1>
-
-{contentBody}</body>
+    <h1>{lookup category}</h1>
+    {contentBody}
+  </body>
 </html>
 ",
 ("main", "MAIN CATEGORY"),
@@ -317,9 +350,9 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-{foreach:category.breadcrumbs}
+{foreach category.breadcrumbs}
       <h1>Category: {item.name}</h1>
-{/}
+{end}
     {contentBody}
   </body>
 </html>
@@ -407,9 +440,9 @@ This is test contents.
     <title>{title}</title>
   </head>
   <body>
-{foreach:tags}
+{foreach tags}
     <p>tag: {item}</p>
-{/}
+{end}
 {contentBody}</body>
 </html>
 ");
@@ -436,15 +469,93 @@ This is test contents.
     <title>{title}</title>
   </head>
   <body>
-{foreach:category.breadcrumbs}
+{foreach category.breadcrumbs}
     <h1>{item.name}</h1>
-{foreach:item.breadcrumbs}
+{foreach item.breadcrumbs}
     <h2>{item.name}</h2>
-{/}
-{/}
+{end}
+{end}
 {contentBody}</body>
 </html>
 ");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffFunction1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach tags}
+    <h1>Tag: {test item.name 123}</h1>
+    {end}
+    {contentBody}
+  </body>
+</html>
+",
+("test", FunctionFactory.CreateAsyncFunction(
+    async (parameters, metadata, ct) =>
+    {
+        var name = await parameters[0].ReduceExpressionAndFormatAsync(metadata, ct);
+        var arg1 = await parameters[1].ReduceExpressionAndFormatAsync(metadata, ct);
+        return new ValueExpression(name + arg1);
+    })));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffFunction2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {foreach tags}
+    <h1>Tag: {test item.name 123}</h1>
+    {end}
+    {contentBody}
+  </body>
+</html>
+",
+("test", FunctionFactory.CreateAsyncFunction(
+    (parameters, metadata, fp, ct) =>
+    {
+        var name = parameters[0]?.ToString();
+        var arg1 = parameters[1]?.ToString();
+        return Task.FromResult((object?)(name + arg1));
+    })));
         await Verifier.Verify(actual);
     }
 }

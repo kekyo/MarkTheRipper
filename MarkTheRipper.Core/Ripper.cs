@@ -9,6 +9,8 @@
 
 using Markdig.Parsers;
 using Markdig.Renderers;
+using MarkTheRipper.Expressions;
+using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.Template;
@@ -36,7 +38,7 @@ public sealed class Ripper
         Parser.ParseTemplateAsync(templateName, new StringReader(templateText), ct);
 
     private static void InjectAdditionalMetadata(
-        Dictionary<string, object?> markdownMetadata,
+        Dictionary<string, IExpression> markdownMetadata,
         PathEntry markdownPath,
         string? contentBody)
     {
@@ -46,8 +48,8 @@ public sealed class Ripper
                 Path.DirectorySeparatorChar.ToString(),
                 Path.GetFileNameWithoutExtension(markdownPath.PhysicalPath) + ".html"));
 
-        markdownMetadata["markdownPath"] = markdownPath;
-        markdownMetadata["path"] = storeToPathHint;
+        markdownMetadata["markdownPath"] = new ValueExpression(markdownPath);
+        markdownMetadata["path"] = new ValueExpression(storeToPathHint);
 
         // Special: Automatic insertion for category when not available.
         if (!markdownMetadata.ContainsKey("category"))
@@ -57,15 +59,15 @@ public sealed class Ripper
                 Path.DirectorySeparatorChar.ToString();
             var pathElements = relativeDirectoryPath.
                 Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-            markdownMetadata.Add("category",
+            markdownMetadata.Add("category", new ValueExpression(
                 pathElements.Aggregate(
                     new PartialCategoryEntry(),
-                    (agg, v) => new PartialCategoryEntry(v, agg)));
+                    (agg, v) => new PartialCategoryEntry(v, agg))));
         }
 
         if (contentBody != null)
         {
-            markdownMetadata["contentBody"] = contentBody;
+            markdownMetadata["contentBody"] = new ValueExpression(contentBody);
         }
     }
 
@@ -125,26 +127,42 @@ public sealed class Ripper
             ConfigureAwait(false);
     }
 
-    private static RootTemplateNode GetTemplate(MetadataContext context)
+    private static async ValueTask<RootTemplateNode> GetTemplateAsync(
+        MetadataContext metadata, CancellationToken ct)
     {
-        if (context.Lookup("templateList") is IReadOnlyDictionary<string, RootTemplateNode> tl)
+        if (metadata.Lookup("templateList") is { } templateListExpression &&
+            await Reducer.ReduceExpressionAsync(templateListExpression, metadata, ct).
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTemplateNode> tl)
         {
-            if (context.Lookup("template") is { } tn &&
-                Expression.FormatValue(tn, null, context) is { } templateName)
+            if (metadata.Lookup("template") is { } templateExpression &&
+                await Reducer.ReduceExpressionAsync(templateExpression, metadata, ct).
+                    ConfigureAwait(false) is { } templateValue)
             {
-                if (tl.TryGetValue(templateName, out var template))
+                if (templateValue is RootTemplateNode template)
                 {
                     return template;
+                }
+                else if (templateValue is PartialTemplateEntry entry)
+                {
+                    if (tl.TryGetValue(entry.Name, out template!))
+                    {
+                        return template;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            $"Template `{entry.Name}` was not found.");
+                    }
                 }
                 else
                 {
                     throw new InvalidOperationException(
-                        $"Template `{templateName}` was not found.");
+                        $"Invalid template object. Value={templateValue.GetType().Name}");
                 }
             }
-            else if (tl.TryGetValue("page", out var template2))
+            else if (tl.TryGetValue("page", out var template))
             {
-                return template2;
+                return template;
             }
             else
             {
@@ -160,17 +178,21 @@ public sealed class Ripper
     }
 
     private static MetadataContext SpawnWithAdditionalMetadata(
-        Dictionary<string, object?> markdownMetadata,
+        Dictionary<string, IExpression> markdownMetadata,
         MetadataContext parentMetadata,
         PathEntry markdownPath,
         string? contentBody)
     {
+        var mc = parentMetadata.Spawn();
+
+        mc.SetValue("relative", FunctionFactory.CreateAsyncFunction(Relative.RelativeAsync));
+        mc.SetValue("lookup", FunctionFactory.CreateAsyncFunction(Lookup.LookupAsync));
+        mc.SetValue("format", FunctionFactory.CreateAsyncFunction(Format.FormatAsync));
+
         InjectAdditionalMetadata(
             markdownMetadata,
             markdownPath,
             contentBody);
-
-        var mc = parentMetadata.Spawn();
         foreach (var kv in markdownMetadata)
         {
             mc.Set(kv.Key, kv.Value);
@@ -205,7 +227,8 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var template = GetTemplate(metadata);
+        var template = await GetTemplateAsync(metadata, ct).
+            ConfigureAwait(false);
 
         var mc = SpawnWithAdditionalMetadata(
             markdownMetadata,

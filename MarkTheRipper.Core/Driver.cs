@@ -29,29 +29,6 @@ namespace MarkTheRipper;
 /// </summary>
 public static class Driver
 {
-    private static async ValueTask<IReadOnlyDictionary<string, object?>> ReadMetadataAsync(
-        string path,
-        CancellationToken ct)
-    {
-        using var rs = new FileStream(
-            path,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            65536,
-            true);
-        using var tr = new StreamReader(
-            rs,
-            Encoding.UTF8,
-            true);
-        var jr = new JsonTextReader(tr);
-
-        var s = Utilities.GetDefaultJsonSerializer();
-
-        var jt = await JToken.LoadAsync(jr, ct);
-        return jt.ToObject<Dictionary<string, object?>>(s) ?? new();
-    }
-
     private static async ValueTask<RootTemplateNode> ReadTemplateAsync(
         string templatePath,
         string templateName,
@@ -119,7 +96,7 @@ public static class Driver
         var metadataList = (await Task.WhenAll(
             Directory.EnumerateFiles(
                 resourceBasePath, "metadata*.json", SearchOption.TopDirectoryOnly).
-            Select(metadataPath => ReadMetadataAsync(metadataPath, ct).AsTask())).
+            Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask())).
             ConfigureAwait(false)).
             SelectMany(metadata => metadata).
             DistinctBy(entry => entry.Key).
@@ -191,11 +168,12 @@ public static class Driver
 
         var rootMetadata = new MetadataContext();
 
-        rootMetadata.Set("generated", DateTimeOffset.Now);
-        rootMetadata.Set("lang", CultureInfo.CurrentCulture);
-        rootMetadata.Set("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
-        rootMetadata.Set("templateList", templateList);
-        rootMetadata.Set("template", "page");
+        rootMetadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
+        rootMetadata.SetValue("generated", DateTimeOffset.Now);
+        rootMetadata.SetValue("lang", CultureInfo.CurrentCulture);
+        rootMetadata.SetValue("timezone", TimeZoneInfo.Local);
+        rootMetadata.SetValue("templateList", templateList);
+        rootMetadata.SetValue("template", "page");
 
         foreach (var kv in metadataList)
         {

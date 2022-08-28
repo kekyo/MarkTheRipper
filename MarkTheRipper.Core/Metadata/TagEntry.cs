@@ -8,6 +8,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -29,15 +31,17 @@ public sealed class TagEntry :
         this.Entries = markdownEntries;
     }
 
-    object? IMetadataEntry.ImplicitValue =>
-        this.Name;
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
+        new(this.Name);
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
+    public ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
         keyName switch
         {
-            "name" => this.Name,
-            "entries" => this.Entries,
-            _ => null,
+            "name" => new(this.Name),
+            "entries" => new(this.Entries),
+            _ => Utilities.NullAsync,
         };
 
     public override string ToString() =>

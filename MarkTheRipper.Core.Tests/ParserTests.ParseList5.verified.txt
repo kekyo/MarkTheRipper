@@ -1,0 +1,20 @@
+﻿{
+  Function: {
+    Value: 123,
+    Type: Int64
+  },
+  Parameters: [
+    {
+      Function: {
+        Value: 456,
+        Type: Int64
+      },
+      Parameters: [
+        {
+          Value: 789,
+          Type: Int64
+        }
+      ]
+    }
+  ]
+}

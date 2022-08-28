@@ -30,6 +30,32 @@ internal static class Utilities
 
     ///////////////////////////////////////////////////////////////////////////////////
 
+    public static int IndexOfNotAll(this string str, char[] separators, int start)
+    {
+        var index = start;
+        while (index < str.Length)
+        {
+            var ch = str[index];
+            var found = false;
+            for (var i = 0; i < separators.Length; i++)
+            {
+                if (separators[i] == ch)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                return index;
+            }
+            index++;
+        }
+        return -1;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static JsonSerializer GetDefaultJsonSerializer()
     {
         var defaultNamingStrategy = new CamelCaseNamingStrategy();
@@ -82,6 +108,11 @@ internal static class Utilities
             current = selector(current);
         }
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static readonly ValueTask<object?> NullAsync =
+        new(default(object?));
 
     ///////////////////////////////////////////////////////////////////////////////////
 

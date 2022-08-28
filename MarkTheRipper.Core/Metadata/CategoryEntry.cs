@@ -10,6 +10,8 @@
 using MarkTheRipper.Internal;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
@@ -53,18 +55,20 @@ public sealed class CategoryEntry :
         }
     }
 
-    object? IMetadataEntry.ImplicitValue =>
-        string.Join("/", this.Breadcrumbs.Select(c => c.Name));
+    public ValueTask<object?> GetImplicitValueAsync(
+        MetadataContext metadata, CancellationToken ct) =>
+        new(string.Join("/", this.Breadcrumbs.Select(c => c.Name)));
 
-    public object? GetProperty(string keyName, MetadataContext context) =>
+    public ValueTask<object?> GetPropertyValueAsync(
+        string keyName, MetadataContext metadata, CancellationToken ct) =>
         keyName switch
         {
-            "name" => this.Name,
-            "children" => this.Children.Values,
-            "entries" => this.Entries,
-            "parent" => this.parent,
-            "breadcrumbs" => this.Breadcrumbs,
-            _ => null,
+            "name" => new(this.Name),
+            "children" => new(this.Children.Values),
+            "entries" => new(this.Entries),
+            "parent" => new(this.parent),
+            "breadcrumbs" => new(this.Breadcrumbs),
+            _ => Utilities.NullAsync,
         };
 
     public override string ToString() =>

@@ -1,0 +1,11 @@
+﻿{
+  Elements: [
+    {
+      Name: abc
+    },
+    {
+      Value: 123,
+      Type: Int64
+    }
+  ]
+}

@@ -7,9 +7,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Internal;
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,17 +18,14 @@ namespace MarkTheRipper.Template;
 
 internal sealed class ForEachNode : ITemplateNode
 {
-    private readonly string keyName;
-    private readonly string boundName;
+    private readonly IExpression[] parameters;
     private readonly ITemplateNode[] childNodes;
 
     public ForEachNode(
-        string keyName,
-        string boundName,
+        IExpression[] parameters,
         ITemplateNode[] childNodes)
     {
-        this.keyName = keyName;
-        this.boundName = boundName;
+        this.parameters = parameters;
         this.childNodes = childNodes;
     }
 
@@ -36,16 +34,22 @@ internal sealed class ForEachNode : ITemplateNode
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (Expression.Reduce(keyName, metadata) is { } rawValue &&
-            Expression.EnumerateValue(rawValue, metadata) is { } enumerable)
+        if (this.parameters.FirstOrDefault() is { } expression0 &&
+            await expression0.ReduceExpressionAsync(metadata, ct).
+                ConfigureAwait(false) is { } rawValue &&
+            MetadataUtilities.EnumerateValue(rawValue, metadata) is { } enumerable)
         {
             var iterationMetadata = metadata.Spawn();
+
+            var boundName =
+                this.parameters.ElementAtOrDefault(1)?.PrettyPrint ??
+                "item";
 
             var index = 0;
             foreach (var iterationValue in enumerable)
             {
-                iterationMetadata.Set(
-                    this.boundName,
+                iterationMetadata.SetValue(
+                    boundName,
                     new IteratorEntry(index, iterationValue));
 
                 foreach (var childNode in childNodes)
@@ -60,5 +64,5 @@ internal sealed class ForEachNode : ITemplateNode
     }
 
     public override string ToString() =>
-        $"ForEach: {{{keyName}}}";
+        $"ForEach: {{{string.Join(" ", (object[])this.parameters)}}}";
 }

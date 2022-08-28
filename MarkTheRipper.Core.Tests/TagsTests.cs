@@ -23,7 +23,7 @@ public sealed class TagsTests
     private static readonly MetadataContext empty = new();
 
     [Test]
-    public Task AggregateTags1()
+    public async Task AggregateTags1()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -35,16 +35,16 @@ public sealed class TagsTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateTags(new[]
+        var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
             mh1,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateTags2()
+    public async Task AggregateTags2()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -57,16 +57,16 @@ public sealed class TagsTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateTags(new[]
+        var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
             mh1,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateTags3()
+    public async Task AggregateTags3()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -87,16 +87,16 @@ public sealed class TagsTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateTags(new[]
+        var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
             mh1, mh2,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateTags4()
+    public async Task AggregateTags4()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -118,16 +118,16 @@ public sealed class TagsTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateTags(new[]
+        var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
             mh1, mh2,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateTags5()
+    public async Task AggregateTags5()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -158,16 +158,16 @@ public sealed class TagsTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateTags(new[]
+        var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
             mh1, mh2, mh3,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 
     [Test]
-    public Task AggregateTags6()
+    public async Task AggregateTags6()
     {
         var mh1 = new MarkdownEntry(
             new Dictionary<string, object?>()
@@ -176,11 +176,11 @@ public sealed class TagsTests
             },
             null!);
 
-        var actual = EntryAggregator.AggregateTags(new[]
+        var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
             mh1,
-        }, empty);
+        }, empty, default);
 
-        return Verifier.Verify(actual);
+        await Verifier.Verify(actual);
     }
 }

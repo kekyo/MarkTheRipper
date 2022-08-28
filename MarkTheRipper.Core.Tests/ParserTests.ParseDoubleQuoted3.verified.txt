@@ -1,0 +1,4 @@
+﻿{
+  Value: abc'def,
+  Type: String
+}
