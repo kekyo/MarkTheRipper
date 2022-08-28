@@ -779,7 +779,56 @@ The various format strings are also detailed around the .NET documentation liste
 
 #### relative
 
-As already explained, the `relative` function returns the current
+As already explained, the `relative` function calculates a path relative to the current article path.
+
+```html
+<p>{relative item.path}</p>
+```
+
+You can also pass a string as an argument to the function. For example:
+
+```html
+<link rel="stylesheet" href="{relative 'github.css'}">
+```
+
+This way, you can specify the correct relative path where the stylesheet resides.
+The path specified in the argument is relative to the site's root directory, `docs`.
+In the above example, the path is relative to `docs/github.css`.
+
+Normally, in such a case, you would specify an absolute path.
+However, if you use an absolute path, it will be invalid depending on the deployment environment of your site.
+Using the `relative` function improves the portability of the generated content.
+
+#### lookup
+
+The `lookup` function searches the metadata dictionary again for keywords
+with the same name as the value specified in the argument.
+A typical use case is to look up the name of a tag or category in the metadata dictionary:
+
+```html
+<p>Tag: {lookup tag}</p>
+```
+
+With `{tag}`, the true name of the tag is output,
+but with the `lookup` function The output is obtained from the metadata dictionary
+with the same keyword value as the tag name.
+Thus, if `metadata.json` contains:
+
+```json
+{
+     :
+  "diary": "What happened today",
+     :
+}
+```
+
+You can actually swap the strings that are output.
+As we have seen, you can also directly specify a value for a function argument,
+so even if you want to output a fixed string, you can use:
+
+```html
+<p>Tag: {lookup 'diary'}</p>
+```
 
 ----
 
