@@ -8,6 +8,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
+using MarkTheRipper.Metadata;
+using MarkTheRipper.Template;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -27,30 +29,27 @@ namespace MarkTheRipper;
 /// </summary>
 public static class Driver
 {
-    private static async ValueTask<IReadOnlyDictionary<string, object?>> ReadMetadataAsync(
-        string path, CancellationToken ct)
-    {
-        using var rs = new FileStream(
-            path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
-        using var tr = new StreamReader(
-            rs, Encoding.UTF8, true);
-        var jr = new JsonTextReader(tr);
-
-        var s = Utilities.GetDefaultJsonSerializer();
-
-        var jt = await JToken.LoadAsync(jr, ct);
-        return jt.ToObject<Dictionary<string, object?>>(s) ?? new();
-    }
-
     private static async ValueTask<RootTemplateNode> ReadTemplateAsync(
-        string path, CancellationToken ct)
+        string templatePath,
+        string templateName,
+        CancellationToken ct)
     {
         using var rs = new FileStream(
-            path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+            templatePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            65536,
+            true);
         using var tr = new StreamReader(
-            rs, Encoding.UTF8, true);
+            rs,
+            Encoding.UTF8,
+            true);
 
-        return await Ripper.ParseTemplateAsync(path, tr, ct).
+        return await Ripper.ParseTemplateAsync(
+            templateName,
+            tr,
+            ct).
             ConfigureAwait(false);
     }
 
@@ -66,7 +65,9 @@ public static class Driver
     /// <param name="requiredBeforeCleanup">Before cleanup</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask RunAsync(
-        TextWriter output, string storeToBasePath, string resourceBasePath,
+        TextWriter output,
+        string storeToBasePath,
+        string resourceBasePath,
         IEnumerable<string> contentsBasePathList,
         bool requiredBeforeCleanup,
         CancellationToken ct)
@@ -90,26 +91,20 @@ public static class Driver
         var sw = new Stopwatch();
         sw.Start();
 
-        var now = DateTimeOffset.Now;
-        var baseMetadata = new Dictionary<string, object?>()
-        {
-            { "now", now },
-            { "lang", CultureInfo.CurrentCulture }
-        };
+        //////////////////////////////////////////////////////////////
 
-        var metadataList = await Task.WhenAll(
+        var metadataList = (await Task.WhenAll(
             Directory.EnumerateFiles(
                 resourceBasePath, "metadata*.json", SearchOption.TopDirectoryOnly).
-            Select(metadataPath => ReadMetadataAsync(metadataPath, ct).AsTask())).
-            ConfigureAwait(false);
-        baseMetadata = baseMetadata.Concat(
-            metadataList.SelectMany(entries => entries)).
+            Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask())).
+            ConfigureAwait(false)).
+            SelectMany(metadata => metadata).
             DistinctBy(entry => entry.Key).
-            ToDictionary(entry => entry.Key, entry => entry.Value);
+            ToArray();
         if (metadataList.Length >= 1)
         {
             await output.WriteLineAsync(
-                $"Read metadata: {baseMetadata.Count} / {metadataList.Length}").
+                $"Read metadata: {metadataList.Length}").
                 WithCancellation(ct).
                 ConfigureAwait(false);
             await output.WriteLineAsync().
@@ -117,7 +112,9 @@ public static class Driver
                 ConfigureAwait(false);
         }
 
-        var templates = (await Task.WhenAll(
+        //////////////////////////////////////////////////////////////
+
+        var templateList = (await Task.WhenAll(
             Directory.EnumerateFiles(
                 resourceBasePath, "template-*.html", SearchOption.TopDirectoryOnly).
             Select(async templatePath =>
@@ -125,22 +122,24 @@ public static class Driver
                 var templateName =
                     Path.GetFileNameWithoutExtension(templatePath).
                     Substring("template-".Length);
-                var template = await ReadTemplateAsync(templatePath, ct).
+                var template = await ReadTemplateAsync(templatePath, templateName, ct).
                     ConfigureAwait(false);
                 return (templateName, template);
             })).
             ConfigureAwait(false)).
             ToDictionary(entry => entry.templateName, entry => entry.template);
-        if (templates.Count >= 1)
+        if (templateList.Count >= 1)
         {
             await output.WriteLineAsync(
-                $"Read templates: {string.Join(", ", templates.Keys)}").
+                $"Read templates: {string.Join(", ", templateList.Keys)}").
                 WithCancellation(ct).
                 ConfigureAwait(false);
             await output.WriteLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
         }
+
+        //////////////////////////////////////////////////////////////
 
         if (requiredBeforeCleanup && Directory.Exists(storeToBasePath))
         {
@@ -165,18 +164,34 @@ public static class Driver
                 ConfigureAwait(false);
         }
 
-        var generator = new Ripper(
-            storeToBasePath,
-            templates,
-            baseMetadata);
+        //////////////////////////////////////////////////////////////
+
+        var rootMetadata = new MetadataContext();
+
+        rootMetadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
+        rootMetadata.SetValue("generated", DateTimeOffset.Now);
+        rootMetadata.SetValue("lang", CultureInfo.CurrentCulture);
+        rootMetadata.SetValue("timezone", TimeZoneInfo.Local);
+        rootMetadata.SetValue("templateList", templateList);
+        rootMetadata.SetValue("template", "page");
+
+        foreach (var kv in metadataList)
+        {
+            rootMetadata.Set(kv.Key, kv.Value);
+        }
+
+        var generator = new BulkRipper(storeToBasePath);
 
         var (count, maxConcurrentProcessing) = await generator.RipOffAsync(
             contentsBasePathList,
             (relativeContentsPath, relativeGeneratedPath, contentsBasePath, templateName) =>
                 output.WriteLineAsync($"Generated: {templateName}: {relativeContentsPath} ==> {relativeGeneratedPath}").
                 WithCancellation(ct),
+            rootMetadata,
             ct).
             ConfigureAwait(false);
+        
+        //////////////////////////////////////////////////////////////
 
         sw.Stop();
 

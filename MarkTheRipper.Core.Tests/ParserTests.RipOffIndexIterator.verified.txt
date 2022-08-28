@@ -1,0 +1,15 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <ul>
+        <li>0</li>
+        <li>1</li>
+    </ul>
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>

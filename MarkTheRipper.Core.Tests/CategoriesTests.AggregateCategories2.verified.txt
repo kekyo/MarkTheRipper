@@ -1,0 +1,29 @@
+﻿{
+  Name: (root),
+  Children: {
+    cat1: {
+      Name: cat1,
+      Children: {
+        cat2: {
+          Name: cat2,
+          Entries: [
+            {
+              Metadata: {
+                category: {
+                  Name: cat2,
+                  Parent: {
+                    Name: cat1,
+                    Parent: {
+                      Name: (root)
+                    }
+                  }
+                },
+                path: content1
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

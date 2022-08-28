@@ -1,0 +1,10 @@
+﻿{
+  Name: (root),
+  Entries: [
+    {
+      Metadata: {
+        path: content1
+      }
+    }
+  ]
+}

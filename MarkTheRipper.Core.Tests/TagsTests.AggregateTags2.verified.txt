@@ -1,0 +1,38 @@
+﻿{
+  tag1: {
+    Name: tag1,
+    Entries: [
+      {
+        Metadata: {
+          path: content1,
+          tags: [
+            {
+              Name: tag1
+            },
+            {
+              Name: tag2
+            }
+          ]
+        }
+      }
+    ]
+  },
+  tag2: {
+    Name: tag2,
+    Entries: [
+      {
+        Metadata: {
+          path: content1,
+          tags: [
+            {
+              Name: tag1
+            },
+            {
+              Name: tag2
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

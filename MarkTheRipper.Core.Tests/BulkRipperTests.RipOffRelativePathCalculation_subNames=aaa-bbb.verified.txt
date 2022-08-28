@@ -1,0 +1,17 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+     <h1>Tags: reftag</h1>
+     <h2>Title: <a href='../../ref.html' alt='ref.html'>ref</a>
+     <h1>Tags: foo</h1>
+     <h2>Title: <a href='temp.html' alt='aaa/bbb/temp.html'>hoehoe</a>
+     <h1>Tags: bar</h1>
+     <h2>Title: <a href='temp.html' alt='aaa/bbb/temp.html'>hoehoe</a>
+    <p>Hello MarkTheRipper!
+This is test contents.</p>
+  </body>
+</html>

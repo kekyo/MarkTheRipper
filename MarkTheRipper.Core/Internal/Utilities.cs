@@ -11,7 +11,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +22,40 @@ namespace MarkTheRipper.Internal;
 
 internal static class Utilities
 {
+    public static readonly char[] PathSeparators = new[]
+    {
+        Path.DirectorySeparatorChar,
+        Path.AltDirectorySeparatorChar,
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static int IndexOfNotAll(this string str, char[] separators, int start)
+    {
+        var index = start;
+        while (index < str.Length)
+        {
+            var ch = str[index];
+            var found = false;
+            for (var i = 0; i < separators.Length; i++)
+            {
+                if (separators[i] == ch)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                return index;
+            }
+            index++;
+        }
+        return -1;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static JsonSerializer GetDefaultJsonSerializer()
     {
         var defaultNamingStrategy = new CamelCaseNamingStrategy();
@@ -34,18 +71,16 @@ internal static class Utilities
         serializer.Converters.Add(new StringEnumConverter(defaultNamingStrategy));
         return serializer;
     }
-    
+
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static string? FormatValue(
-        object? value, object? parameter, IFormatProvider fp) =>
-        (value, parameter) switch
-        {
-            (null, _) => null,
-            (_, null) => value.ToString(),
-            (IFormattable formattable, string format) => formattable.ToString(format, fp),
-            _ => value.ToString(),
-        };
+    private static class EmtyArray<T>
+    {
+        public static readonly T[] Empty = new T[0];
+    }
+
+    public static T[] Empty<T>() =>
+        EmtyArray<T>.Empty;
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -63,6 +98,21 @@ internal static class Utilities
         }
     }
 #endif
+
+    public static IEnumerable<T> Unfold<T>(this T value, Func<T, T?> selector)
+    {
+        var current = value;
+        while (current != null)
+        {
+            yield return current;
+            current = selector(current);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static readonly ValueTask<object?> NullAsync =
+        new(default(object?));
 
     ///////////////////////////////////////////////////////////////////////////////////
 

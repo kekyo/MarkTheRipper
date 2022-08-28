@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="author" content="{author}" />
-    <meta name="generator" content="https://github.com/kekyo/MarkTheRipper" />
+    <meta name="generator" content="{generator}" />
     <meta name="keywords" content="{tags}" />
     <meta name="referrer" content="same-origin" />
     <meta name="robots" content="index, follow" />
@@ -12,7 +12,7 @@
     <link rel="preconnect"
           href="https://cdn.jsdelivr.net"
           crossorigin="anonymous">
-    <link rel="stylesheet" href="github.css">
+    <link rel="stylesheet" href="{relative 'github.css'}">
     <!-- https://getbootstrap.jp/docs/5.0/getting-started/introduction/ -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
@@ -36,20 +36,56 @@
             <a class="navbar-brand" href="/">MarkTheRipper</a>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mr-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="#">Home</a>
-                    </li>
+                    <!-- Root category: Enumerate directly at root entries -->
+                    {foreach rootCategory.entries entry}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Link</a>
+                        <a class="nav-link active" aria-current="page"
+                           href="{relative entry.path}">{entry.title}</a>
                     </li>
+                    {end}
+                    <!-- 2nd category -->
+                    {foreach rootCategory.children cat2}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#"
+                           id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {cat2.name}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <!-- Enumerate 2nd category entries -->
+                            {foreach cat2.entries entry}
+                            <li><a class="dropdown-item" href="{relative entry.path}">{entry.title}</a></li>
+                            {end}
+                        </ul>
+                    </li>
+                    {end}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Contents body -->
-    <div style="padding: 1.5rem; counter-reset: level1 0; counter-reset: cpage 0;">
-        {contentBody}
-    </div>
+    <section style="padding: 1.5rem; counter-reset: level1 0; counter-reset: cpage 0;">
+        <!-- Contents header -->
+        <header>
+            <h1>{title}</h1>
+            <!-- Bootstrap breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li style="padding-right: 0.5em;">Category:</li>
+                    {foreach category.breadcrumb}
+                    <li class="breadcrumb-item"><span aria-label="category" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span></li>
+                    {end}
+                </ol>
+            </nav>
+            <!-- Tags use Bootstrap badge -->
+            <nav aria-label="tags">
+                Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span>{end}
+            </nav>
+        </header>
+        <hr />
+        <!-- Contents body -->
+        <article>
+            {contentBody}
+        </article>
+    </section>
 </body>
 </html>
