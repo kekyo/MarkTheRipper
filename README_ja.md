@@ -41,7 +41,7 @@ dotnet tool install -g MarkTheRipper
 初めて使う場合は、
 
 ```bash
-$ mtr new mininum
+$ mtr init mininum
 ```
 
 とすると、現在のディレクトリの配下に、以下のようにサンプルのひな形が生成されます。
@@ -131,13 +131,13 @@ $ mtr
 
 ## もう少し実用的なサンプル
 
-`mtr new minimum`が生成するサンプルはあまりにシンプルであり（minimumは伊達じゃありません！）、もう少しカスタマイズの例が見たいという場合のために、
+`mtr init minimum`が生成するサンプルはあまりにシンプルであり（minimumは伊達じゃありません！）、もう少しカスタマイズの例が見たいという場合のために、
 標準でサンプルをいくつか内蔵しています。
 
 ```bash
-$ mtr new sidebar
-$ mtr new standard
-$ mtr new rich
+$ mtr init sidebar
+$ mtr init standard
+$ mtr init rich
 ```
 
 `sidebar`、`standard`または`rich`というサンプルを指定できます。以下のような機能があります:

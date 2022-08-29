@@ -93,9 +93,9 @@ public static class Program
                 Console.Out.WriteLine("  https://github.com/kekyo/MarkTheRipper");
                 Console.Out.WriteLine();
 
-                Console.Out.WriteLine("usage: mtr.exe [options] new [<sample name>]");
+                Console.Out.WriteLine("usage: mtr.exe [options] init [<sample name>]");
                 Console.Out.WriteLine("  <sample name>: \"minimum\", \"standard\" and \"rich\"");
-                Console.Out.WriteLine("usage: mtr.exe [options] build [<store to dir path> [<contents dir path> ...]]");
+                Console.Out.WriteLine("usage: mtr.exe [options] [build [<store to dir path> [<contents dir path> ...]]]");
                 Console.Out.WriteLine();
 
                 options.WriteOptionDescriptions(Console.Out);
@@ -107,7 +107,7 @@ public static class Program
 
                 var command = extras.
                     ElementAtOrDefault(0) ?? "build";
-                if (command == "new")
+                if (command == "init")
                 {
                     var sampleName = extras.
                         ElementAtOrDefault(1) ?? "minimum";
