@@ -97,7 +97,7 @@
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>ParserTests.cs</DependentUpon>
     </None>
-    <None Update="ParserTests.RipOffWithExplicitTemplate.verified.txt">
+    <None Update="ParserTests.RipOffWithExplicitLayout.verified.txt">
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>ParserTests.cs</DependentUpon>
     </None>
@@ -205,7 +205,7 @@
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>CategoriesTests.cs</DependentUpon>
     </None>
-    <None Update="CategoriesTests.RipOffWithExplicitTemplate.verified.txt">
+    <None Update="CategoriesTests.RipOffWithExplicitLayout.verified.txt">
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>CategoriesTests.cs</DependentUpon>
     </None>
@@ -265,7 +265,7 @@
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>TagsTests.cs</DependentUpon>
     </None>
-    <None Update="TagsTests.RipOffWithExplicitTemplate.verified.txt">
+    <None Update="TagsTests.RipOffWithExplicitLayout.verified.txt">
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>TagsTests.cs</DependentUpon>
     </None>
@@ -301,7 +301,7 @@
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>BulkRipperTests.cs</DependentUpon>
     </None>
-    <None Update="BulkRipperTests.RipOffWithExplicitTemplate.verified.txt">
+    <None Update="BulkRipperTests.RipOffWithExplicitLayout.verified.txt">
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>BulkRipperTests.cs</DependentUpon>
     </None>

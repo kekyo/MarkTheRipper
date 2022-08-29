@@ -13,7 +13,7 @@ using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
+using MarkTheRipper.Layout;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,13 +29,13 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    public static ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templateName, TextReader template, CancellationToken ct) =>
-        Parser.ParseTemplateAsync(templateName, template, ct);
+    public static ValueTask<RootLayoutNode> ParseLayoutAsync(
+        string layoutName, TextReader layout, CancellationToken ct) =>
+        Parser.ParseLayoutAsync(layoutName, layout, ct);
 
-    public static ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templateName, string templateText, CancellationToken ct) =>
-        Parser.ParseTemplateAsync(templateName, new StringReader(templateText), ct);
+    public static ValueTask<RootLayoutNode> ParseLayoutAsync(
+        string layoutName, string layoutText, CancellationToken ct) =>
+        Parser.ParseLayoutAsync(layoutName, new StringReader(layoutText), ct);
 
     private static void InjectAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
@@ -78,7 +78,7 @@ public sealed class Ripper
     /// <param name="markdownPath">Markdown content path</param>
     /// <param name="markdownReader">Markdown content reader</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied template name.</returns>
+    /// <returns>Applied layout name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentBasePathHint,
         PathEntry markdownPath,
@@ -101,7 +101,7 @@ public sealed class Ripper
     /// <param name="contentsBasePath">Markdown content path</param>
     /// <param name="markdownPath">Markdown content path</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied template name.</returns>
+    /// <returns>Applied layout name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentsBasePath,
         PathEntry markdownPath,
@@ -127,53 +127,53 @@ public sealed class Ripper
             ConfigureAwait(false);
     }
 
-    private static async ValueTask<RootTemplateNode> GetTemplateAsync(
+    private static async ValueTask<RootLayoutNode> GetLayoutAsync(
         MetadataContext metadata, CancellationToken ct)
     {
-        if (metadata.Lookup("templateList") is { } templateListExpression &&
-            await Reducer.ReduceExpressionAsync(templateListExpression, metadata, ct).
-            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTemplateNode> tl)
+        if (metadata.Lookup("layoutList") is { } layoutListExpression &&
+            await Reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootLayoutNode> tl)
         {
-            if (metadata.Lookup("template") is { } templateExpression &&
-                await Reducer.ReduceExpressionAsync(templateExpression, metadata, ct).
-                    ConfigureAwait(false) is { } templateValue)
+            if (metadata.Lookup("layout") is { } layoutExpression &&
+                await Reducer.ReduceExpressionAsync(layoutExpression, metadata, ct).
+                    ConfigureAwait(false) is { } layoutValue)
             {
-                if (templateValue is RootTemplateNode template)
+                if (layoutValue is RootLayoutNode layout)
                 {
-                    return template;
+                    return layout;
                 }
-                else if (templateValue is PartialTemplateEntry entry)
+                else if (layoutValue is PartialLayoutEntry entry)
                 {
-                    if (tl.TryGetValue(entry.Name, out template!))
+                    if (tl.TryGetValue(entry.Name, out layout!))
                     {
-                        return template;
+                        return layout;
                     }
                     else
                     {
                         throw new InvalidOperationException(
-                            $"Template `{entry.Name}` was not found.");
+                            $"Layout `{entry.Name}` was not found.");
                     }
                 }
                 else
                 {
                     throw new InvalidOperationException(
-                        $"Invalid template object. Value={templateValue.GetType().Name}");
+                        $"Invalid layout object. Value={layoutValue.GetType().Name}");
                 }
             }
-            else if (tl.TryGetValue("page", out var template))
+            else if (tl.TryGetValue("page", out var layout))
             {
-                return template;
+                return layout;
             }
             else
             {
                 throw new InvalidOperationException(
-                    "Template `page` was not found.");
+                    "Layout `page` was not found.");
             }
         }
         else
         {
             throw new InvalidOperationException(
-                "Template list was not found.");
+                "Layout list was not found.");
         }
     }
 
@@ -209,7 +209,7 @@ public sealed class Ripper
     /// <param name="metadata">Metadata context</param>
     /// <param name="outputHtmlWriter">Generated html content writer</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied template name.</returns>
+    /// <returns>Applied layout name.</returns>
     public async ValueTask<string> RenderContentAsync(
         PathEntry markdownPath,
         TextReader markdownReader,
@@ -227,7 +227,7 @@ public sealed class Ripper
         var renderer = new HtmlRenderer(new StringWriter(contentBody));
         renderer.Render(markdownDocument);
 
-        var template = await GetTemplateAsync(metadata, ct).
+        var layout = await GetLayoutAsync(metadata, ct).
             ConfigureAwait(false);
 
         var mc = SpawnWithAdditionalMetadata(
@@ -236,13 +236,13 @@ public sealed class Ripper
             markdownPath,
             contentBody.ToString());
 
-        await template.RenderAsync(
+        await layout.RenderAsync(
             (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
             mc,
             ct).
             ConfigureAwait(false);
 
-        return template.Name;
+        return layout.Name;
     }
 
     /// <summary>
@@ -252,7 +252,7 @@ public sealed class Ripper
     /// <param name="metadata">Metadata context</param>
     /// <param name="storeToBasePath">Generated html content base path</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied template name.</returns>
+    /// <returns>Applied layout name.</returns>
     public async ValueTask<string> RenderContentAsync(
         MarkdownEntry markdownEntry,
         MetadataContext metadata,
@@ -286,7 +286,7 @@ public sealed class Ripper
             outputHtmlStream,
             Encoding.UTF8);
 
-        var appliedTemplateName = await this.RenderContentAsync(
+        var appliedLayoutName = await this.RenderContentAsync(
             markdownEntry.MarkdownPath,
             markdownReader,
             metadata,
@@ -297,6 +297,6 @@ public sealed class Ripper
         await outputHtmlWriter.FlushAsync().
             ConfigureAwait(false);
 
-        return appliedTemplateName;
+        return appliedLayoutName;
     }
 }

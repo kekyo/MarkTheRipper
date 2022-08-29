@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
+using MarkTheRipper.Layout;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -219,7 +219,7 @@ public sealed class BulkRipper
             if (entriesByCandidate.TryGetValue(
                 (contentBasePath, relativeContentPath), out var markdownEntry))
             {
-                var appliedTemplateName = await this.ripper.RenderContentAsync(
+                var appliedLayoutName = await this.ripper.RenderContentAsync(
                     markdownEntry,
                     mc,
                     this.storeToBasePath,
@@ -230,7 +230,7 @@ public sealed class BulkRipper
                     relativeContentPath.PhysicalPath,
                     storeToPathElements.RelativePath,
                     contentBasePath,
-                    appliedTemplateName).
+                    appliedLayoutName).
                     ConfigureAwait(false);
             }
             else

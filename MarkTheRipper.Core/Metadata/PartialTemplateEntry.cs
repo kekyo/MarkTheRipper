@@ -8,38 +8,38 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using MarkTheRipper.Template;
+using MarkTheRipper.Layout;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Metadata;
 
-internal sealed class PartialTemplateEntry :
+internal sealed class PartialLayoutEntry :
     IMetadataEntry
 {
     public readonly string Name;
 
-    public PartialTemplateEntry(string name) =>
+    public PartialLayoutEntry(string name) =>
         this.Name = name;
 
     public ValueTask<object?> GetImplicitValueAsync(
         MetadataContext metadata, CancellationToken ct) =>
         new(this.Name);
 
-    private async ValueTask<RootTemplateNode?> GetRealTemplateNodeAsync(
+    private async ValueTask<RootLayoutNode?> GetRealLayoutNodeAsync(
         MetadataContext metadata, CancellationToken ct) =>
-        metadata.Lookup("templateList") is { } templateListExpression &&
-        await templateListExpression.ReduceExpressionAsync(metadata, ct).
-            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTemplateNode> templateList &&
-        templateList.TryGetValue(this.Name, out var template) ?
-            template : null;
+        metadata.Lookup("layoutList") is { } layoutListExpression &&
+        await layoutListExpression.ReduceExpressionAsync(metadata, ct).
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootLayoutNode> layoutList &&
+        layoutList.TryGetValue(this.Name, out var layout) ?
+            layout : null;
 
     public async ValueTask<object?> GetPropertyValueAsync(
         string keyName, MetadataContext metadata, CancellationToken ct) =>
-        await this.GetRealTemplateNodeAsync(metadata, ct).
-            ConfigureAwait(false) is { } template &&
-        await template.GetPropertyValueAsync(keyName, metadata, ct).
+        await this.GetRealLayoutNodeAsync(metadata, ct).
+            ConfigureAwait(false) is { } layout &&
+        await layout.GetPropertyValueAsync(keyName, metadata, ct).
             ConfigureAwait(false) is { } value ?
             value :
             keyName switch
@@ -49,5 +49,5 @@ internal sealed class PartialTemplateEntry :
             };
 
     public override string ToString() =>
-        $"PartialTemplate={this.Name}";
+        $"PartialLayout={this.Name}";
 }

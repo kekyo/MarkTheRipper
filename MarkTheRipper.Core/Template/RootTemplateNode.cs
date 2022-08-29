@@ -13,18 +13,18 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Template;
+namespace MarkTheRipper.Layout;
 
-public sealed class RootTemplateNode :
-    ITemplateNode, IMetadataEntry
+public sealed class RootLayoutNode :
+    ILayoutNode, IMetadataEntry
 {
     public readonly string Name;
     public readonly string OriginalText;
 
-    private readonly ITemplateNode[] nodes;
+    private readonly ILayoutNode[] nodes;
 
-    public RootTemplateNode(
-        string name, string originalText, ITemplateNode[] nodes)
+    public RootLayoutNode(
+        string name, string originalText, ILayoutNode[] nodes)
     {
         Name = name;
         OriginalText = originalText;
@@ -57,5 +57,5 @@ public sealed class RootTemplateNode :
     }
 
     public override string ToString() =>
-        $"RootTemplate: {this.Name}";
+        $"RootLayout: {this.Name}";
 }

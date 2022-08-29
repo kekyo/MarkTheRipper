@@ -9,7 +9,7 @@
 
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
+using MarkTheRipper.Layout;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -268,7 +268,7 @@ public static class Parser
         {
             "title" => ParseExpression(expressionString, ListTypes.SingleValue),
             "author" => ParseExpression(expressionString, ListTypes.Array),
-            "template" => new ValueExpression(new PartialTemplateEntry(
+            "layout" => new ValueExpression(new PartialLayoutEntry(
                 await ParseExpression(expressionString, ListTypes.SingleValue).
                     ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
                     ConfigureAwait(false))),
@@ -295,21 +295,21 @@ public static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templateName,
-        TextReader templateReader,
+    public static async ValueTask<RootLayoutNode> ParseLayoutAsync(
+        string layoutName,
+        TextReader layoutReader,
         CancellationToken ct)
     {
         var nestedIterations =
-            new Stack<(IExpression[] iteratorParameters, List<ITemplateNode> nodes)>();
+            new Stack<(IExpression[] iteratorParameters, List<ILayoutNode> nodes)>();
 
         var originalText = new StringBuilder();
-        var nodes = new List<ITemplateNode>();
+        var nodes = new List<ILayoutNode>();
         var buffer = new StringBuilder();
 
         while (true)
         {
-            var line = await templateReader.ReadLineAsync().
+            var line = await layoutReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
@@ -341,7 +341,7 @@ public static class Parser
                     }
 
                     throw new FormatException(
-                        $"Could not find open bracket. Template={templateName}");
+                        $"Could not find open bracket. Layout={layoutName}");
                 }
 
                 if (openIndex + 1 < line.Length &&
@@ -363,7 +363,7 @@ public static class Parser
                 if (closeIndex == -1)
                 {
                     throw new FormatException(
-                        $"Could not find close bracket. Template={templateName}");
+                        $"Could not find close bracket. Layout={layoutName}");
                 }
 
                 startIndex = closeIndex + 1;
@@ -379,7 +379,7 @@ public static class Parser
                     if (iteratorParameters.Length <= 0)
                     {
                         throw new FormatException(
-                            $"`foreach` parameter required. Template={templateName}");
+                            $"`foreach` parameter required. Layout={layoutName}");
                     }
 
                     nestedIterations.Push((iteratorParameters, nodes));
@@ -391,7 +391,7 @@ public static class Parser
                     if (nestedIterations.Count <= 0)
                     {
                         throw new FormatException(
-                            $"Could not find iterator-begin. Template={templateName}");
+                            $"Could not find iterator-begin. Layout={layoutName}");
                     }
 
                     var childNodes = nodes.ToArray();
@@ -412,8 +412,8 @@ public static class Parser
             nodes.Add(new TextNode(buffer.ToString()));
         }
 
-        return new RootTemplateNode(
-           templateName,
+        return new RootLayoutNode(
+           layoutName,
            originalText.ToString(),
            nodes.ToArray());
     }

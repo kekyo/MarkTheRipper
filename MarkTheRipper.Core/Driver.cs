@@ -9,7 +9,7 @@
 
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
+using MarkTheRipper.Layout;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -29,13 +29,13 @@ namespace MarkTheRipper;
 /// </summary>
 public static class Driver
 {
-    private static async ValueTask<RootTemplateNode> ReadTemplateAsync(
-        string templatePath,
-        string templateName,
+    private static async ValueTask<RootLayoutNode> ReadLayoutAsync(
+        string layoutPath,
+        string layoutName,
         CancellationToken ct)
     {
         using var rs = new FileStream(
-            templatePath,
+            layoutPath,
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
@@ -46,8 +46,8 @@ public static class Driver
             Encoding.UTF8,
             true);
 
-        return await Ripper.ParseTemplateAsync(
-            templateName,
+        return await Ripper.ParseLayoutAsync(
+            layoutName,
             tr,
             ct).
             ConfigureAwait(false);
@@ -114,24 +114,24 @@ public static class Driver
 
         //////////////////////////////////////////////////////////////
 
-        var templateList = (await Task.WhenAll(
+        var layoutList = (await Task.WhenAll(
             Directory.EnumerateFiles(
-                resourceBasePath, "template-*.html", SearchOption.TopDirectoryOnly).
-            Select(async templatePath =>
+                resourceBasePath, "layout-*.html", SearchOption.TopDirectoryOnly).
+            Select(async layoutPath =>
             {
-                var templateName =
-                    Path.GetFileNameWithoutExtension(templatePath).
-                    Substring("template-".Length);
-                var template = await ReadTemplateAsync(templatePath, templateName, ct).
+                var layoutName =
+                    Path.GetFileNameWithoutExtension(layoutPath).
+                    Substring("layout-".Length);
+                var layout = await ReadLayoutAsync(layoutPath, layoutName, ct).
                     ConfigureAwait(false);
-                return (templateName, template);
+                return (layoutName, layout);
             })).
             ConfigureAwait(false)).
-            ToDictionary(entry => entry.templateName, entry => entry.template);
-        if (templateList.Count >= 1)
+            ToDictionary(entry => entry.layoutName, entry => entry.layout);
+        if (layoutList.Count >= 1)
         {
             await output.WriteLineAsync(
-                $"Read templates: {string.Join(", ", templateList.Keys)}").
+                $"Read layouts: {string.Join(", ", layoutList.Keys)}").
                 WithCancellation(ct).
                 ConfigureAwait(false);
             await output.WriteLineAsync().
@@ -172,8 +172,8 @@ public static class Driver
         rootMetadata.SetValue("generated", DateTimeOffset.Now);
         rootMetadata.SetValue("lang", CultureInfo.CurrentCulture);
         rootMetadata.SetValue("timezone", TimeZoneInfo.Local);
-        rootMetadata.SetValue("templateList", templateList);
-        rootMetadata.SetValue("template", "page");
+        rootMetadata.SetValue("layoutList", layoutList);
+        rootMetadata.SetValue("layout", "page");
 
         foreach (var kv in metadataList)
         {
@@ -184,8 +184,8 @@ public static class Driver
 
         var (count, maxConcurrentProcessing) = await generator.RipOffAsync(
             contentsBasePathList,
-            (relativeContentsPath, relativeGeneratedPath, contentsBasePath, templateName) =>
-                output.WriteLineAsync($"Generated: {templateName}: {relativeContentsPath} ==> {relativeGeneratedPath}").
+            (relativeContentsPath, relativeGeneratedPath, contentsBasePath, layoutName) =>
+                output.WriteLineAsync($"Generated: {layoutName}: {relativeContentsPath} ==> {relativeGeneratedPath}").
                 WithCancellation(ct),
             rootMetadata,
             ct).

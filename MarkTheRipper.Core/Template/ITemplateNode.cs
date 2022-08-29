@@ -12,9 +12,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Template;
+namespace MarkTheRipper.Layout;
 
-public interface ITemplateNode
+public interface ILayoutNode
 {
     ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,
