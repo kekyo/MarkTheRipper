@@ -21,6 +21,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace MarkTheRipper;
 
@@ -72,57 +73,93 @@ public sealed class Ripper
     /// <summary>
     /// Parse markdown markdownEntry.
     /// </summary>
-    /// <param name="contentBasePathHint">Markdown content base path (Hint)</param>
-    /// <param name="markdownPath">Markdown content path</param>
-    /// <param name="markdownReader">Markdown content reader</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied layout name.</returns>
-    public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
-        string contentBasePathHint,
-        PathEntry markdownPath,
-        TextReader markdownReader,
-        CancellationToken ct)
-    {
-        var metadata = await Parser.ParseMarkdownHeaderAsync(
-            markdownPath, markdownReader, ct).
-            ConfigureAwait(false);
-
-        InjectAdditionalMetadata
-            (metadata, markdownPath, null);
-
-        return new(metadata, contentBasePathHint);
-    }
-
-    /// <summary>
-    /// Parse markdown markdownEntry.
-    /// </summary>
     /// <param name="contentsBasePath">Markdown content path</param>
     /// <param name="markdownPath">Markdown content path</param>
+    /// <param name="generatedDate">Generated date</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied layout name.</returns>
     public async ValueTask<MarkdownEntry> ParseMarkdownHeaderAsync(
         string contentsBasePath,
         PathEntry markdownPath,
+        DateTimeOffset generatedDate,
         CancellationToken ct)
     {
-        using var markdownStream = new FileStream(
-            Path.Combine(contentsBasePath, markdownPath.PhysicalPath),
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            65536,
-            true);
-        var markdownReader = new StreamReader(
-            markdownStream,
-            Encoding.UTF8,
-            true);
+        var path = Path.Combine(contentsBasePath, markdownPath.PhysicalPath);
 
-        return await this.ParseMarkdownHeaderAsync(
-            contentsBasePath,
-            markdownPath,
-            markdownReader,
-            ct).
+        async ValueTask<Dictionary<string, IExpression>> ParseAsync()
+        {
+            using var markdownStream = new FileStream(
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                65536,
+                true);
+            var markdownReader = new StreamReader(
+                markdownStream,
+                Encoding.UTF8,
+                true);
+
+            return await Parser.ParseMarkdownHeaderAsync(
+                markdownPath, markdownReader, ct).
+                ConfigureAwait(false);
+        }
+
+        var metadata = await ParseAsync().
             ConfigureAwait(false);
+
+        if (!metadata.TryGetValue("date", out var _))
+        {
+            try
+            {
+                using var markdownStream = new FileStream(
+                    path,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    65536,
+                    true);
+                var markdownReader = new StreamReader(
+                    markdownStream,
+                    Encoding.UTF8,
+                    true);
+
+                using var markdownOutputStream = new FileStream(
+                    path + ".tmp",
+                    FileMode.Create,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    65536,
+                    true);
+                var markdownWriter = new StreamWriter(
+                    markdownOutputStream,
+                    Encoding.UTF8);
+
+                await Parser.ParseAndAppendMarkdownHeaderAsync(
+                    markdownReader,
+                    new Dictionary<string, string>
+                    {
+                        { "date", generatedDate.ToString(null, CultureInfo.InvariantCulture) },
+                    },
+                    markdownWriter,
+                    ct);
+
+                await markdownWriter.FlushAsync().
+                    ConfigureAwait(false);
+            }
+            catch
+            {
+                File.Delete(path + ".tmp");
+                throw;
+            }
+
+            File.Delete(path);
+            File.Move(path + ".tmp", path);
+        }
+
+        InjectAdditionalMetadata(metadata, markdownPath, null);
+
+        return new(metadata, contentsBasePath);
     }
 
     private static async ValueTask<RootLayoutNode> GetLayoutAsync(

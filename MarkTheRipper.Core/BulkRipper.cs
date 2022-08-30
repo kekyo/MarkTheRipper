@@ -7,8 +7,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Layout;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -173,6 +173,9 @@ public sealed class BulkRipper
                      relativeContentPath: new PathEntry(path.Substring(contentsBasePath.Length + 1))))).
             ToArray();
 
+        var generatedDate = metadata.Lookup("generated") is ValueExpression(DateTimeOffset gd) ?
+            gd : DateTimeOffset.Now;
+
 #if DEBUG
         var markdownEntries = new List<MarkdownEntry>();
         foreach (var candidate in candidates.
@@ -181,6 +184,7 @@ public sealed class BulkRipper
             var markdownEntry = await this.ripper.ParseMarkdownHeaderAsync(
                 candidate.contentsBasePath,
                 candidate.relativeContentPath,
+                generatedDate,
                 ct).
                 ConfigureAwait(false);
             markdownEntries.Add(markdownEntry);
@@ -193,6 +197,7 @@ public sealed class BulkRipper
                 this.ripper.ParseMarkdownHeaderAsync(
                     candidate.contentsBasePath,
                     candidate.relativeContentPath,
+                    generatedDate,
                     ct).
                 AsTask())).
             ConfigureAwait(false);

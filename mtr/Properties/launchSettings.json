@@ -1,8 +1,7 @@
 {
   "profiles": {
     "mtr": {
-      "commandName": "Project",
-      "commandLineArgs": "new a b c"
+      "commandName": "Project"
     }
   }
 }

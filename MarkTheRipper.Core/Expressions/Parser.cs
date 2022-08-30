@@ -490,6 +490,123 @@ public static class Parser
         return markdownMetadata;
     }
 
+    internal static async ValueTask ParseAndAppendMarkdownHeaderAsync(
+        TextReader markdownReader,
+        IReadOnlyDictionary<string, string> values,
+        TextWriter markdownWriter,
+        CancellationToken ct)
+    {
+        // Writer is overlapped.
+        ValueTask writingTask = new();
+
+        try
+        {
+            // `---`
+            while (true)
+            {
+                var line = await markdownReader.ReadLineAsync().
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+                if (line == null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                await writingTask.
+                    ConfigureAwait(false);
+
+                writingTask = markdownWriter.WriteLineAsync(line).
+                    WithCancellation(ct);
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    if (line.Trim().StartsWith("---"))
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // `title: Hello world`
+            while (true)
+            {
+                var line = await markdownReader.ReadLineAsync().
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+                if (line == null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    var keyIndex = line.IndexOf(':');
+                    if (keyIndex == -1)
+                    {
+                        // `---`
+                        if (line.Trim().StartsWith("---"))
+                        {
+                            await writingTask.
+                                ConfigureAwait(false);
+
+                            foreach (var entry in values)
+                            {
+                                await markdownWriter.WriteLineAsync($"{entry.Key}: {entry.Value}").
+                                    WithCancellation(ct).
+                                    ConfigureAwait(false);
+                            }
+
+                            writingTask = markdownWriter.WriteLineAsync(line).
+                                WithCancellation(ct);
+                            break;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException();
+                        }
+                    }
+                }
+
+                await writingTask.
+                    ConfigureAwait(false);
+
+                await markdownWriter.WriteLineAsync(line).
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+            }
+
+            while (true)
+            {
+                var line = await markdownReader.ReadLineAsync().
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+
+                // EOF
+                if (line == null)
+                {
+                    break;
+                }
+
+                await writingTask.
+                    ConfigureAwait(false);
+
+                writingTask = markdownWriter.WriteLineAsync(line).
+                    WithCancellation(ct);
+            }
+        }
+        finally
+        {
+            try
+            {
+                await writingTask.
+                    ConfigureAwait(false);
+            }
+            catch
+            {
+            }
+        }
+    }
+
     internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
