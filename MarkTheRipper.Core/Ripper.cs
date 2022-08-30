@@ -29,14 +29,6 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    public static ValueTask<RootLayoutNode> ParseLayoutAsync(
-        string layoutName, TextReader layout, CancellationToken ct) =>
-        Parser.ParseLayoutAsync(layoutName, layout, ct);
-
-    public static ValueTask<RootLayoutNode> ParseLayoutAsync(
-        string layoutName, string layoutText, CancellationToken ct) =>
-        Parser.ParseLayoutAsync(layoutName, new StringReader(layoutText), ct);
-
     private static void InjectAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
         PathEntry markdownPath,
