@@ -39,10 +39,13 @@ public sealed class BulkRipper
     }
 
     private readonly string storeToBasePath;
-    private readonly Ripper ripper = new();
+    private readonly Ripper ripper;
 
-    public BulkRipper(string storeToBasePath) =>
+    public BulkRipper(Ripper ripper, string storeToBasePath)
+    {
+        this.ripper = ripper;
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
+    }
 
     private StoreToPathElements GetStoreToPathElements(PathEntry markdownPath)
     {

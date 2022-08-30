@@ -70,7 +70,7 @@ tags: reftag
 ref doc.
 ");
 
-            var bulkRipper = new BulkRipper(storeToBasePath);
+            var bulkRipper = new BulkRipper(new Ripper(), storeToBasePath);
 
             await bulkRipper.RipOffAsync(metadata, contentBasePath);
 

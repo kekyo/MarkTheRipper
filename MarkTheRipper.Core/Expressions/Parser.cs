@@ -295,7 +295,7 @@ public static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<RootLayoutNode> ParseLayoutAsync(
+    internal static async ValueTask<RootLayoutNode> ParseLayoutAsync(
         string layoutName,
         TextReader layoutReader,
         CancellationToken ct)
@@ -416,7 +416,7 @@ public static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
+    internal static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
@@ -490,7 +490,7 @@ public static class Parser
         return markdownMetadata;
     }
 
-    public static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
+    internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
