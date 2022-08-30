@@ -303,7 +303,6 @@ public static class Parser
         var nestedIterations =
             new Stack<(IExpression[] iteratorParameters, List<ILayoutNode> nodes)>();
 
-        var originalText = new StringBuilder();
         var nodes = new List<ILayoutNode>();
         var buffer = new StringBuilder();
 
@@ -316,8 +315,6 @@ public static class Parser
             {
                 break;
             }
-
-            originalText.AppendLine(line);
 
             var startIndex = 0;
             while (startIndex < line.Length)
@@ -414,7 +411,6 @@ public static class Parser
 
         return new RootLayoutNode(
            layoutName,
-           originalText.ToString(),
            nodes.ToArray());
     }
 
