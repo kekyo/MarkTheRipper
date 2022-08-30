@@ -92,7 +92,7 @@ public static class Parser
                 break;
             }
 
-            if (currentType == ListTypes.Value &&
+            if ((currentType == ListTypes.Value || currentType == ListTypes.SingleValue) &&
                 nested.Count == 0 &&
                 expressions.Count >= 1)
             {
