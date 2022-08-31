@@ -441,7 +441,7 @@ Now suppose we convert the following markdown:
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar]
+tags: [foo,bar,baz]
 ---
 
 (... Body ...)
@@ -455,7 +455,7 @@ Again, documents between `{foreach tags}` and `{end}` are output repeatedly, so 
 ```html
 <ul>
   {foreach tags}
-  <li>{item.index} {item}</li>
+  <li>{item.index}/{item.count} {item}</li>
   {end}
 </ul>
 ```
@@ -464,13 +464,16 @@ Result:
 
 ```html
 <ul>
-  <li>0 foo</li>
-  <li>1 bar</li>
+  <li>0/3 foo</li>
+  <li>1/3 bar</li>
+  <li>2/3 baz</li>
 </ul>
 ```
 
 The `{item}` inserted between the tags is a keyword that can refer to each repeated value.
 Also, specifying `{item.index}` will give you a number starting from 0 and counting 1,2,3....
+`{item.count}` is the number of repetitions.
+In the above there are 3 tags, so this value is always 3.
 
 In addition, you can nest different keywords.
 For example, for each category and you can enumerate multiple tags.

@@ -17,11 +17,13 @@ internal sealed class IteratorEntry :
     IMetadataEntry
 {
     public readonly int Index;
+    public readonly int Count;
     public readonly object? Value;
 
-    public IteratorEntry(int index, object? value)
+    public IteratorEntry(int index, int count, object? value)
     {
         this.Index = index;
+        this.Count = count;
         this.Value = value;
     }
 
@@ -38,6 +40,7 @@ internal sealed class IteratorEntry :
             keyName switch
             {
                 "index" => new(this.Index),
+                "count" => new(this.Count),
                 _ => Utilities.NullAsync,
             };
 

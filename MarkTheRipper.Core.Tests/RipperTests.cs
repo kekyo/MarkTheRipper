@@ -216,8 +216,6 @@ This is test contents.
         await Verifier.Verify(actual);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////
-
     [Test]
     public async Task RipOffIndexIterator()
     {
@@ -250,6 +248,37 @@ This is test contents.
         await Verifier.Verify(actual);
     }
 
+    [Test]
+    public async Task RipOffIteratorCount()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    <ul>
+{foreach tags}
+        <li>{item.index}/{item.count}</li>
+{end}
+    </ul>
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////
 

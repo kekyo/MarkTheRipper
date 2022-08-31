@@ -392,21 +392,21 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar]
+tags: [foo,bar,baz]
 ---
 
 (... 本文 ...)
 ```
 
-すると、`<p>Tags: 'foo' 'bar'</p>` と出力されます。
-`tags`の`foo,bar`が、スペースで区切られて展開されて、クオートされて出力されました。
+すると、`<p>Tags: 'foo' 'bar' 'baz'</p>` と出力されます。
+`tags`の`foo,bar,baz`が、スペースで区切られて展開されて、クオートされて出力されました。
 
 `{foreach tags}`と`{end}`の間にある文書が繰り返し出力されるので、以下のように使う事も出来ます:
 
 ```html
 <ul>
   {foreach tags}
-  <li>{item.index} {item}</li>
+  <li>{item.index}/{item.count} {item}</li>
   {end}
 </ul>
 ```
@@ -415,13 +415,15 @@ tags: [foo,bar]
 
 ```html
 <ul>
-  <li>0 foo</li>
-  <li>1 bar</li>
+  <li>0/3 foo</li>
+  <li>1/3 bar</li>
+  <li>2/3 baz</li>
 </ul>
 ```
 
 間に挿入されている`{item}`は、繰り返される一つ一つの値を参照できるキーワードです。
 また、`{item.index}` と指定すると、0から始まって1,2,3... とカウントする数値が得られます。
+`{item.count}` は、繰り返しの個数です。上記ではタグが3個あるため、この値は常に3となります。
 
 さらに、複数のキーワードをネストさせる事も出来ます。以下の例は、タグを2重に繰り返します:
 

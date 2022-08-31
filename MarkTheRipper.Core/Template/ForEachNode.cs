@@ -10,6 +10,8 @@
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,14 +45,23 @@ internal sealed class ForEachNode : ILayoutNode
 
             var boundName =
                 this.parameters.ElementAtOrDefault(1)?.PrettyPrint ??
-                "item";
+            "item";
+
+            var count = enumerable switch
+            {
+                Array arr => arr.Length,
+                IReadOnlyCollection<object?> corr => corr.Count,
+                ICollection<object?> corr => corr.Count,
+                ICollection corr => corr.Count,
+                _ => enumerable.Count(),
+            };
 
             var index = 0;
             foreach (var iterationValue in enumerable)
             {
                 iterationMetadata.SetValue(
                     boundName,
-                    new IteratorEntry(index, iterationValue));
+                    new IteratorEntry(index, count, iterationValue));
 
                 foreach (var childNode in childNodes)
                 {
