@@ -22,11 +22,11 @@ public delegate ValueTask<IExpression> AsyncFunctionDelegate(
 public static class FunctionFactory
 {
     public static AsyncFunctionDelegate
-        CreateAsyncFunction(AsyncFunctionDelegate func) =>
+        CastTo(AsyncFunctionDelegate func) =>
         func;
 
     public static Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>>
-        CreateAsyncFunction(
+        CastTo(
             Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>> func) =>
             func;
 }

@@ -520,10 +520,10 @@ Result:
 
 ```html
 <ul>
-  <li>0-0 foo-foo</li>
-  <li>0-1 foo-bar</li>
-  <li>1-0 bar-foo</li>
-  <li>1-1 bar-bar</li>
+  <li>0-0 foo/foo</li>
+  <li>0-1 foo/bar</li>
+  <li>1-0 bar/foo</li>
+  <li>1-1 bar/bar</li>
 </ul>
 ```
 
@@ -737,6 +737,11 @@ Here is a list of built-in functions, including the functions that have appeared
 |`format`|Format arguments into strings. |
 |`relative`|Convert argument paths to relative paths. |
 |`lookup`|Draws a metadata dictionary based on the results given by the `argument`. |
+|`add`|Add numeric arguments.|
+|`sub`|Subtract numeric arguments.|
+|`mul`|Multiply numeric arguments.|
+|`div`|Divide numeric arguments.|
+|`mod`|Get the remainder of numeric arguments.|
 
 #### format
 
@@ -863,6 +868,80 @@ so even if you want to output a fixed string, you can use:
 ```html
 <p>Tag: {lookup 'diary'}</p>
 ```
+
+#### add, sub, mul, div, mod (Numerical calculation)
+
+These are functions that perform numerical calculations.
+At least one argument is required, and if there are three or more arguments,
+the calculation is performed consecutively. For example:
+
+```html
+<p>1 + 2 + 3 = {add 1 2 3}</p>
+```
+
+Adds all the numbers in the argument.
+For complex calculations, use parentheses:
+
+```html
+<p>(1 + 2) * 4 = {mul (add 1 2) 4}</p>
+```
+
+You can nest any number of parentheses.
+Parentheses can be applied and formatted as desired using the `format` function:
+
+```html
+<p>1 / 3 = {format (div 1 3) 'F3'}</p>
+```
+
+Result:
+
+```html
+<p>1 / 3 = 0.333</p>
+```
+
+Results containing decimals may not always turn out as intended.
+It may be better to always use the `format` function to account for such possibilities.
+For information on how to specify formats that include decimals, [see here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f).
+
+The argument does not have to be a number,
+as long as the string can be regarded as a number:
+
+```html
+<p>1 + 2 + 3 = {add 1 '2' 3}</p>
+```
+
+It is acceptable to have numbers containing decimals in the arguments.
+If so, it will be treated as a calculation with decimals
+(called "Floating-point operation"):
+
+```html
+<p>1 + 2.1 + 3 = {add 1 2.1 3}</p>
+```
+
+Here is a simple example of using the calculation.
+In enumeration, `item.index` is a number and starting from 0.
+On the other hand, `item.count` is a number that can be enumerated,
+but it is not a general notation if you put it in a sequence:
+
+``html
+<p>index/count = {item.index}/{item.count}</p>
+```
+
+Result:
+
+```html
+<p>index/count = 0/3</p>
+<p>index/count = 1/3</p>
+<p>index/count = 2/3</p>
+```
+
+In such a case, you can use `add` function to get:
+
+```html
+<p>index/count = {add item.index}/{item.count}</p>
+```
+
+Would result in a number from 1 to `count`, which is closer to a natural representation.
 
 ----
 

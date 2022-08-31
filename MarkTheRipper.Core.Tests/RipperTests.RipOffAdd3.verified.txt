@@ -1,0 +1,12 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <p>1 + 2.1 + 3 = 6.1</p>
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>
