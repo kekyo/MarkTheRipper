@@ -85,7 +85,7 @@ public static class Program
     private static string GetSafeStoreToPath(string? categoryArgument, string? fileNameArgument)
     {
         var categories = !string.IsNullOrWhiteSpace(categoryArgument) ?
-            categoryArgument!.Split(new[] { '/', '.', ' ' }, StringSplitOptions.RemoveEmptyEntries) :
+            categoryArgument!.Split(new[] { '/', '\\', '-', '.', ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries) :
             Array.Empty<string>();
 
         if (!string.IsNullOrWhiteSpace(fileNameArgument))

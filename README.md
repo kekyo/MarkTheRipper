@@ -140,6 +140,30 @@ Additional files, such as pictures for example,
 can be placed as you wish to manage them,
 and you can write markdowns with relative paths to point to them.
 
+### Daily operation
+
+MarkTheRipper automatically recognizes all markdown files placed under the `contents` directory.
+If you want to write an article,
+you can simply create a markdown file in any directory you like and start writing it.
+
+Is even this operation a hassle? Yes, of course we know.
+So, there is an easier way to create and place markdown files so you can concentrate on writing articles.
+
+```bash
+$ mtr new
+```
+
+This will generate a template markdown file directly under the `contents` directory,
+based on the current date naming, and automatically open the default markdown editor.
+Categories will be discussed in more detail later,
+but if you want to place articles in categories, you can use:
+
+```bash
+$ mtr new foo/bar/baz
+```
+
+Will place the article in the nested category "foo", "bar" and "baz" in the category.
+
 ----
 
 ## A more practical sample
