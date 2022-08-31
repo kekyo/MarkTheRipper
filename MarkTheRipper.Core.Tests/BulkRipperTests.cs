@@ -7,8 +7,9 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
+using MarkTheRipper.Layout;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -23,19 +24,19 @@ namespace MarkTheRipper;
 public sealed class BulkRipperTests
 {
     private static async ValueTask<string> RipOffContentAsync(
-        string[] categoryNames, string markdownText, string templateName, string templateText,
+        string[] categoryNames, string markdownText, string layoutName, string layoutText,
         params (string keyName, object? value)[] baseMetadata)
     {
         var metadata = new MetadataContext();
 
-        var template = await Ripper.ParseTemplateAsync(
-            templateName, templateText, default);
-        var templateList = new Dictionary<string, RootTemplateNode>
+        var layout = await Parser.ParseLayoutAsync(
+            layoutName, new StringReader(layoutText), default);
+        var layoutList = new Dictionary<string, RootLayoutNode>
         {
-            { templateName, template }
+            { layoutName, layout }
         };
-        metadata.SetValue("template", new PartialTemplateEntry(templateName));
-        metadata.SetValue("templateList", templateList);
+        metadata.SetValue("layout", new PartialLayoutEntry(layoutName));
+        metadata.SetValue("layoutList", layoutList);
 
         foreach (var entry in baseMetadata)
         {
@@ -69,7 +70,7 @@ tags: reftag
 ref doc.
 ");
 
-            var bulkRipper = new BulkRipper(storeToBasePath);
+            var bulkRipper = new BulkRipper(new Ripper(), storeToBasePath);
 
             await bulkRipper.RipOffAsync(metadata, contentBasePath);
 

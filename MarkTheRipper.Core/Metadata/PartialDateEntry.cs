@@ -12,7 +12,10 @@ using MarkTheRipper.Internal;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
+#if !NET6_0_OR_GREATER
 using TimeZoneConverter;
+#endif
 
 namespace MarkTheRipper.Metadata;
 
@@ -47,10 +50,29 @@ internal sealed class PartialDateEntry :
                 return dto => dto.Add(timezoneDifference);
             }
 
+#if NET6_0_OR_GREATER
+            if (TimeZoneInfo.TryConvertIanaIdToWindowsId(timezoneString, out var windowsId))
+            {
+                tzi = TimeZoneInfo.FindSystemTimeZoneById(windowsId);
+                return dto => TimeZoneInfo.ConvertTime(dto, tzi);
+            }
+            else
+            {
+                try
+                {
+                    tzi = TimeZoneInfo.FindSystemTimeZoneById(timezoneString);
+                    return dto => TimeZoneInfo.ConvertTime(dto, tzi);
+                }
+                catch
+                {
+                }
+            }
+#else
             if (TZConvert.TryGetTimeZoneInfo(timezoneString, out tzi))
             {
                 return dto => TimeZoneInfo.ConvertTime(dto, tzi);
             }
+#endif
         }
 
         return date => date;

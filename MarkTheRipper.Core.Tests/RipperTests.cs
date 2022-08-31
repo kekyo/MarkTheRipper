@@ -8,15 +8,14 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using MarkTheRipper.Layout;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using VerifyNUnit;
-
 using static NUnit.Framework.Assert;
 
 namespace MarkTheRipper;
@@ -25,19 +24,19 @@ namespace MarkTheRipper;
 public sealed class RipperTests
 {
     private static async ValueTask<string> RipOffContentAsync(
-        string markdownText, string templateName, string templateText,
+        string markdownText, string layoutName, string layoutText,
         params (string keyName, object? value)[] baseMetadata)
     {
         var metadata = new MetadataContext();
 
-        var template = await Ripper.ParseTemplateAsync(
-            templateName, templateText, default);
-        var templateList = new Dictionary<string, RootTemplateNode>
+        var layout = await Parser.ParseLayoutAsync(
+            layoutName, new StringReader(layoutText), default);
+        var layoutList = new Dictionary<string, RootLayoutNode>
         {
-            { templateName, template }
+            { layoutName, layout }
         };
-        metadata.SetValue("template", new PartialTemplateEntry(templateName));
-        metadata.SetValue("templateList", templateList);
+        metadata.SetValue("layout", new PartialLayoutEntry(layoutName));
+        metadata.SetValue("layoutList", layoutList);
 
         foreach (var entry in baseMetadata)
         {
@@ -47,14 +46,14 @@ public sealed class RipperTests
         var ripper = new Ripper();
 
         var htmlWriter = new StringWriter();
-        var appliedTemplateName = await ripper.RenderContentAsync(
+        var appliedLayoutName = await ripper.RenderContentAsync(
             new PathEntry("RipperTests.md"),
             new StringReader(markdownText),
             metadata,
             htmlWriter,
             default);
 
-        AreEqual(templateName, appliedTemplateName);
+        AreEqual(layoutName, appliedLayoutName);
 
         return htmlWriter.ToString();
     }
@@ -91,14 +90,14 @@ This is test contents.
     ///////////////////////////////////////////////////////////////////////////////////
 
     [Test]
-    public async Task RipOffWithExplicitTemplate()
+    public async Task RipOffWithExplicitLayout()
     {
         var actual = await RipOffContentAsync(
 @"
 ---
 title: hoehoe
 tags: [foo,bar]
-template: baz
+layout: baz
 ---
 
 Hello MarkTheRipper!

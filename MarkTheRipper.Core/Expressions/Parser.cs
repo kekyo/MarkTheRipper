@@ -9,7 +9,7 @@
 
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
+using MarkTheRipper.Layout;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -92,7 +92,7 @@ public static class Parser
                 break;
             }
 
-            if (currentType == ListTypes.Value &&
+            if ((currentType == ListTypes.Value || currentType == ListTypes.SingleValue) &&
                 nested.Count == 0 &&
                 expressions.Count >= 1)
             {
@@ -268,7 +268,7 @@ public static class Parser
         {
             "title" => ParseExpression(expressionString, ListTypes.SingleValue),
             "author" => ParseExpression(expressionString, ListTypes.Array),
-            "template" => new ValueExpression(new PartialTemplateEntry(
+            "layout" => new ValueExpression(new PartialLayoutEntry(
                 await ParseExpression(expressionString, ListTypes.SingleValue).
                     ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
                     ConfigureAwait(false))),
@@ -295,29 +295,26 @@ public static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<RootTemplateNode> ParseTemplateAsync(
-        string templateName,
-        TextReader templateReader,
+    internal static async ValueTask<RootLayoutNode> ParseLayoutAsync(
+        string layoutName,
+        TextReader layoutReader,
         CancellationToken ct)
     {
         var nestedIterations =
-            new Stack<(IExpression[] iteratorParameters, List<ITemplateNode> nodes)>();
+            new Stack<(IExpression[] iteratorParameters, List<ILayoutNode> nodes)>();
 
-        var originalText = new StringBuilder();
-        var nodes = new List<ITemplateNode>();
+        var nodes = new List<ILayoutNode>();
         var buffer = new StringBuilder();
 
         while (true)
         {
-            var line = await templateReader.ReadLineAsync().
+            var line = await layoutReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
                 break;
             }
-
-            originalText.AppendLine(line);
 
             var startIndex = 0;
             while (startIndex < line.Length)
@@ -341,7 +338,7 @@ public static class Parser
                     }
 
                     throw new FormatException(
-                        $"Could not find open bracket. Template={templateName}");
+                        $"Could not find open bracket. Layout={layoutName}");
                 }
 
                 if (openIndex + 1 < line.Length &&
@@ -363,7 +360,7 @@ public static class Parser
                 if (closeIndex == -1)
                 {
                     throw new FormatException(
-                        $"Could not find close bracket. Template={templateName}");
+                        $"Could not find close bracket. Layout={layoutName}");
                 }
 
                 startIndex = closeIndex + 1;
@@ -379,7 +376,7 @@ public static class Parser
                     if (iteratorParameters.Length <= 0)
                     {
                         throw new FormatException(
-                            $"`foreach` parameter required. Template={templateName}");
+                            $"`foreach` parameter required. Layout={layoutName}");
                     }
 
                     nestedIterations.Push((iteratorParameters, nodes));
@@ -391,7 +388,7 @@ public static class Parser
                     if (nestedIterations.Count <= 0)
                     {
                         throw new FormatException(
-                            $"Could not find iterator-begin. Template={templateName}");
+                            $"Could not find iterator-begin. Layout={layoutName}");
                     }
 
                     var childNodes = nodes.ToArray();
@@ -412,15 +409,14 @@ public static class Parser
             nodes.Add(new TextNode(buffer.ToString()));
         }
 
-        return new RootTemplateNode(
-           templateName,
-           originalText.ToString(),
+        return new RootLayoutNode(
+           layoutName,
            nodes.ToArray());
     }
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
+    internal static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
@@ -494,7 +490,124 @@ public static class Parser
         return markdownMetadata;
     }
 
-    public static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
+    internal static async ValueTask ParseAndAppendMarkdownHeaderAsync(
+        TextReader markdownReader,
+        IReadOnlyDictionary<string, string> values,
+        TextWriter markdownWriter,
+        CancellationToken ct)
+    {
+        // Writer is overlapped.
+        ValueTask writingTask = new();
+
+        try
+        {
+            // `---`
+            while (true)
+            {
+                var line = await markdownReader.ReadLineAsync().
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+                if (line == null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                await writingTask.
+                    ConfigureAwait(false);
+
+                writingTask = markdownWriter.WriteLineAsync(line).
+                    WithCancellation(ct);
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    if (line.Trim().StartsWith("---"))
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // `title: Hello world`
+            while (true)
+            {
+                var line = await markdownReader.ReadLineAsync().
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+                if (line == null)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    var keyIndex = line.IndexOf(':');
+                    if (keyIndex == -1)
+                    {
+                        // `---`
+                        if (line.Trim().StartsWith("---"))
+                        {
+                            await writingTask.
+                                ConfigureAwait(false);
+
+                            foreach (var entry in values)
+                            {
+                                await markdownWriter.WriteLineAsync($"{entry.Key}: {entry.Value}").
+                                    WithCancellation(ct).
+                                    ConfigureAwait(false);
+                            }
+
+                            writingTask = markdownWriter.WriteLineAsync(line).
+                                WithCancellation(ct);
+                            break;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException();
+                        }
+                    }
+                }
+
+                await writingTask.
+                    ConfigureAwait(false);
+
+                await markdownWriter.WriteLineAsync(line).
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+            }
+
+            while (true)
+            {
+                var line = await markdownReader.ReadLineAsync().
+                    WithCancellation(ct).
+                    ConfigureAwait(false);
+
+                // EOF
+                if (line == null)
+                {
+                    break;
+                }
+
+                await writingTask.
+                    ConfigureAwait(false);
+
+                writingTask = markdownWriter.WriteLineAsync(line).
+                    WithCancellation(ct);
+            }
+        }
+        finally
+        {
+            try
+            {
+                await writingTask.
+                    ConfigureAwait(false);
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)

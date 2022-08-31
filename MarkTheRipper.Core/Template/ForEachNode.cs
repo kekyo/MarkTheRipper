@@ -14,16 +14,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Template;
+namespace MarkTheRipper.Layout;
 
-internal sealed class ForEachNode : ITemplateNode
+internal sealed class ForEachNode : ILayoutNode
 {
     private readonly IExpression[] parameters;
-    private readonly ITemplateNode[] childNodes;
+    private readonly ILayoutNode[] childNodes;
 
     public ForEachNode(
         IExpression[] parameters,
-        ITemplateNode[] childNodes)
+        ILayoutNode[] childNodes)
     {
         this.parameters = parameters;
         this.childNodes = childNodes;

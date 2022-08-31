@@ -7,8 +7,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Template;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,10 +39,13 @@ public sealed class BulkRipper
     }
 
     private readonly string storeToBasePath;
-    private readonly Ripper ripper = new();
+    private readonly Ripper ripper;
 
-    public BulkRipper(string storeToBasePath) =>
+    public BulkRipper(Ripper ripper, string storeToBasePath)
+    {
+        this.ripper = ripper;
         this.storeToBasePath = Path.GetFullPath(storeToBasePath);
+    }
 
     private StoreToPathElements GetStoreToPathElements(PathEntry markdownPath)
     {
@@ -170,6 +173,9 @@ public sealed class BulkRipper
                      relativeContentPath: new PathEntry(path.Substring(contentsBasePath.Length + 1))))).
             ToArray();
 
+        var generatedDate = metadata.Lookup("generated") is ValueExpression(DateTimeOffset gd) ?
+            gd : DateTimeOffset.Now;
+
 #if DEBUG
         var markdownEntries = new List<MarkdownEntry>();
         foreach (var candidate in candidates.
@@ -178,6 +184,7 @@ public sealed class BulkRipper
             var markdownEntry = await this.ripper.ParseMarkdownHeaderAsync(
                 candidate.contentsBasePath,
                 candidate.relativeContentPath,
+                generatedDate,
                 ct).
                 ConfigureAwait(false);
             markdownEntries.Add(markdownEntry);
@@ -190,6 +197,7 @@ public sealed class BulkRipper
                 this.ripper.ParseMarkdownHeaderAsync(
                     candidate.contentsBasePath,
                     candidate.relativeContentPath,
+                    generatedDate,
                     ct).
                 AsTask())).
             ConfigureAwait(false);
@@ -219,7 +227,7 @@ public sealed class BulkRipper
             if (entriesByCandidate.TryGetValue(
                 (contentBasePath, relativeContentPath), out var markdownEntry))
             {
-                var appliedTemplateName = await this.ripper.RenderContentAsync(
+                var appliedLayoutName = await this.ripper.RenderContentAsync(
                     markdownEntry,
                     mc,
                     this.storeToBasePath,
@@ -230,7 +238,7 @@ public sealed class BulkRipper
                     relativeContentPath.PhysicalPath,
                     storeToPathElements.RelativePath,
                     contentBasePath,
-                    appliedTemplateName).
+                    appliedLayoutName).
                     ConfigureAwait(false);
             }
             else

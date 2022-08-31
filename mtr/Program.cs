@@ -9,60 +9,122 @@
 
 using Mono.Options;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper;
 
 public static class Program
 {
+    private static async Task ExtractSampleContentAsync(
+        SafeDirectoryCreator dc, string resourceName, string storeToPath)
+    {
+        var basePath = Path.GetDirectoryName(storeToPath) switch
+        {
+            null => Path.DirectorySeparatorChar.ToString(),
+            "" => ".",
+            var dp => dp,
+        };
+
+        await dc.CreateIfNotExistAsync(basePath, default);
+
+        using var ms = typeof(Program).Assembly.
+            GetManifestResourceStream(resourceName);
+
+        await BulkRipper.CopyContentToAsync(ms!, storeToPath, default);
+    }
+
     private static async ValueTask ExtractSampleAsync(string sampleName)
     {
         var dc = new SafeDirectoryCreator();
 
-        async Task ExtractSampleContentAsync(string resourceName)
-        {
-            var pathElements = resourceName.Split('.');
-            var path = string.Join(
-                Path.DirectorySeparatorChar.ToString(),
-                pathElements.
-                    Skip(3).   // "MarkTheRipper.embeds.minimum."
-                    Take(pathElements.Length - 3 - 1)) +
-                    $".{pathElements.Last()}";
-            var basePath = Path.GetDirectoryName(path) switch
-            {
-                null => Path.DirectorySeparatorChar.ToString(),
-                "" => ".",
-                var dp => dp,
-            };
-
-            await dc.CreateIfNotExistAsync(basePath, default);
-
-            using var ms = typeof(Program).Assembly.
-                GetManifestResourceStream(resourceName);
-
-            await BulkRipper.CopyContentToAsync(ms!, path, default);
-        }
-
+        var baseName = "MarkTheRipper.embeds." + sampleName;
 #if DEBUG
         foreach (var resourceName in
             typeof(Program).Assembly.GetManifestResourceNames().
-            Where(resourceName => resourceName.StartsWith("MarkTheRipper.embeds." + sampleName)))
+            Where(resourceName => resourceName.StartsWith(baseName)))
         {
-            await ExtractSampleContentAsync(resourceName);
+            var pathElements = resourceName.
+                Substring(baseName.Length + 1).
+                Split('.');
+            var path = string.Join(
+                Path.DirectorySeparatorChar.ToString(),
+                pathElements.
+                    Take(pathElements.Length - 3 - 1)) +
+                    $".{pathElements.Last()}";
+            await ExtractSampleContentAsync(
+                dc, resourceName, path);
         }
 #else
         await Task.WhenAll(
             typeof(Program).Assembly.GetManifestResourceNames().
-            Where(resourceName => resourceName.StartsWith("MarkTheRipper.embeds." + sampleName)).
-            Select(resourceName => ExtractSampleContentAsync(resourceName)));
+            Where(resourceName => resourceName.StartsWith(baseName)).
+            Select(resourceName => {
+                var pathElements = resourceName.
+                    Substring(baseName.Length + 1).
+                    Split('.');
+                var path = string.Join(
+                    Path.DirectorySeparatorChar.ToString(),
+                    pathElements.
+                        Take(pathElements.Length - 3 - 1)) +
+                        $".{pathElements.Last()}";
+                return ExtractSampleContentAsync(
+                    dc, resourceName, path);
+            }));
 #endif
 
         Console.Out.WriteLine($"Extracted sample files: {sampleName}");
         Console.Out.WriteLine();
+    }
+
+    private static string GetSafeStoreToPath(string? categoryArgument, string? fileNameArgument)
+    {
+        var categories = !string.IsNullOrWhiteSpace(categoryArgument) ?
+            categoryArgument!.Split(new[] { '/', '\\', '-', '.', ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries) :
+            Array.Empty<string>();
+
+        if (!string.IsNullOrWhiteSpace(fileNameArgument))
+        {
+            var fileName = $"{fileNameArgument}.md";
+            return Path.Combine(
+                new[] { "contents" }.Concat(categories).Concat(new[] { fileName }).ToArray());
+        }
+        else
+        {
+            var suffix = 1;
+            while (true)
+            {
+                var fileName = $"{DateTime.Now.ToString("yyyyMMdd")}{(suffix >= 2 ? $"-{suffix}" : "")}.md";
+                var storeToPath = Path.Combine(
+                    new[] { "contents" }.Concat(categories).Concat(new[] { fileName }).ToArray());
+                if (!File.Exists(storeToPath))
+                {
+                    return storeToPath;
+                }
+                suffix++;
+            }
+        }
+    }
+
+    private static async ValueTask<string> ExtractNewMarkdownAsync(
+        string storeToPath)
+    {
+        var dc = new SafeDirectoryCreator();
+
+        await ExtractSampleContentAsync(
+            dc,
+            "MarkTheRipper.embeds.new.md",
+            storeToPath);
+
+        Console.Out.WriteLine($"Ready the new post: {storeToPath}");
+        Console.Out.WriteLine();
+
+        return storeToPath;
     }
 
     public static async Task<int> Main(string[] args)
@@ -72,13 +134,13 @@ public static class Program
             var help = false;
             var resourceBasePath = "resources";
             var requiredBeforeCleanup = true;
-            var requiredShowBrowser = true;
+            var requiredOpen = true;
 
             var options = new OptionSet()
             {
                 { "resources=", "Resource base path", v => resourceBasePath = v },
                 { "no-cleanup", "Do not cleanup before processing if exists", _ => requiredBeforeCleanup = false },
-                { "n|no-show-browser", "Do not show browser automatically", _ => requiredShowBrowser = true },
+                { "n|no-open", "Do not open editor/browser automatically", _ => requiredOpen = true },
                 { "h|help", "Print this help", _ => help = true },
             };
 
@@ -93,9 +155,10 @@ public static class Program
                 Console.Out.WriteLine("  https://github.com/kekyo/MarkTheRipper");
                 Console.Out.WriteLine();
 
-                Console.Out.WriteLine("usage: mtr.exe [options] new [<sample name>]");
+                Console.Out.WriteLine("usage: mtr.exe [options] init [<sample name>]");
                 Console.Out.WriteLine("  <sample name>: \"minimum\", \"standard\" and \"rich\"");
-                Console.Out.WriteLine("usage: mtr.exe [options] build [<store to dir path> [<contents dir path> ...]]");
+                Console.Out.WriteLine("usage: mtr.exe [options] new [<category path> [<slug>]]");
+                Console.Out.WriteLine("usage: mtr.exe [options] [build [<store to dir path> [<contents dir path> ...]]]");
                 Console.Out.WriteLine();
 
                 options.WriteOptionDescriptions(Console.Out);
@@ -107,36 +170,51 @@ public static class Program
 
                 var command = extras.
                     ElementAtOrDefault(0) ?? "build";
-                if (command == "new")
+                switch (command)
                 {
-                    var sampleName = extras.
-                        ElementAtOrDefault(1) ?? "minimum";
+                    case "init":
+                        var sampleName = extras.
+                            ElementAtOrDefault(1) ?? "standard";
+                        await ExtractSampleAsync(sampleName);
+                        break;
 
-                    await ExtractSampleAsync(sampleName);
-                }
-                else if (command == "build")
-                {
-                    var storeToBasePath = extras.
-                        ElementAtOrDefault(1) ?? "docs";
-                    var contentsBasePathList = extras.
-                        Skip(3).
-                        DefaultIfEmpty("contents").
-                        Distinct().
-                        ToArray();
+                    case "new":
+                        var storeToPath = GetSafeStoreToPath(
+                            extras.ElementAtOrDefault(1),
+                            extras.ElementAtOrDefault(2));
+                        await ExtractNewMarkdownAsync(storeToPath);
+                        if (requiredOpen)
+                        {
+                            Process.Start(storeToPath);
+                        }
+                        break;
 
-                    await Driver.RunAsync(
-                        Console.Out,
-                        storeToBasePath,
-                        resourceBasePath,
-                        contentsBasePathList,
-                        requiredBeforeCleanup,
-                        default);
+                    case "build":
+                        var storeToBasePath = extras.
+                            ElementAtOrDefault(1) ?? "docs";
+                        var contentsBasePathList = extras.
+                            Skip(3).
+                            DefaultIfEmpty("contents").
+                            Distinct().
+                            ToArray();
+                        await Driver.RunAsync(
+                            Console.Out,
+                            storeToBasePath,
+                            resourceBasePath,
+                            contentsBasePathList,
+                            requiredBeforeCleanup,
+                            default);
+                        if (requiredOpen)
+                        {
+                            var indexPath = Path.Combine(storeToBasePath, "index.html");
+                            Process.Start(indexPath);
+                        }
+                        break;
 
-                    if (requiredShowBrowser)
-                    {
-                        var indexPath = Path.Combine(storeToBasePath, "index.html");
-                        Process.Start(indexPath);
-                    }
+                    default:
+                        Console.Out.WriteLine($"Invalid command: {command}");
+                        Console.Out.WriteLine();
+                        break;
                 }
             }
         }

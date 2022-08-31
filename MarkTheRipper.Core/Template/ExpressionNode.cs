@@ -14,9 +14,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Template;
+namespace MarkTheRipper.Layout;
 
-internal sealed class ExpressionNode : ITemplateNode
+internal sealed class ExpressionNode : ILayoutNode
 {
     private readonly IExpression expression;
 

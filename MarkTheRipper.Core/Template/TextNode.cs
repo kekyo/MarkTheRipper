@@ -12,9 +12,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Template;
+namespace MarkTheRipper.Layout;
 
-internal sealed class TextNode : ITemplateNode
+internal sealed class TextNode : ILayoutNode
 {
     private readonly string text;
 
