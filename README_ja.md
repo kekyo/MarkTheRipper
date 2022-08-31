@@ -851,7 +851,7 @@ lang: ja-jp
 このような場合に、`add`を使って:
 
 ```html
-<p>index/count = {add item.index}/{item.count}</p>
+<p>index/count = {add item.index 1}/{item.count}</p>
 ```
 
 とすれば、1から`count`までの数値となり、自然な表現に近づける事が出来ます。

@@ -938,7 +938,7 @@ Result:
 In such a case, you can use `add` function to get:
 
 ```html
-<p>index/count = {add item.index}/{item.count}</p>
+<p>index/count = {add item.index 1}/{item.count}</p>
 ```
 
 Would result in a number from 1 to `count`, which is closer to a natural representation.
