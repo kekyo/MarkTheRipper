@@ -108,7 +108,8 @@ public sealed class Ripper
         var metadata = await ParseAsync().
             ConfigureAwait(false);
 
-        if (!metadata.TryGetValue("date", out var _))
+        if (MarkdownEntry.GetPublishedState(metadata) &&
+            !metadata.TryGetValue("date", out var _))
         {
             try
             {

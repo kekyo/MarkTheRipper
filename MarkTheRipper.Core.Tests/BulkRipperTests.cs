@@ -23,7 +23,7 @@ namespace MarkTheRipper;
 [TestFixture]
 public sealed class BulkRipperTests
 {
-    private static async ValueTask<string> RipOffContentAsync(
+    private static async ValueTask<string?> RipOffContentAsync(
         string[] categoryNames, string markdownText, string layoutName, string layoutText,
         params (string keyName, object? value)[] baseMetadata)
     {
@@ -74,9 +74,17 @@ ref doc.
 
             await bulkRipper.RipOffAsync(metadata, contentBasePath);
 
-            var html = File.ReadAllText(
-                Path.Combine(storeToBasePath, categoryUnderContentBasePath, "temp.html"));
-            return html;
+            var resultPath = Path.Combine(
+                storeToBasePath, categoryUnderContentBasePath, "temp.html");
+            if (File.Exists(resultPath))
+            {
+                var html = File.ReadAllText(resultPath);
+                return html;
+            }
+            else
+            {
+                return null;
+            }
         }
         finally
         {
@@ -229,6 +237,107 @@ This is test contents.
       <li>{item.name}</li>
       {end}
     </ul>
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffUnpublished()
+    {
+        var actual = await RipOffContentAsync(
+            new[] { "" },
+@"
+---
+title: hoehoe
+published: false
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+      <h1>Category: {category}</h1>
+{foreach category.breadcrumbs}
+      <h2>Category: {item.name}</h1>
+{end}
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffUnpublished2()
+    {
+        var actual = await RipOffContentAsync(
+            new[] { "" },
+@"
+---
+title: hoehoe
+published: 123
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+      <h1>Category: {category}</h1>
+{foreach category.breadcrumbs}
+      <h2>Category: {item.name}</h1>
+{end}
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffExactPublished()
+    {
+        var actual = await RipOffContentAsync(
+            new[] { "" },
+@"
+---
+title: hoehoe
+published: true
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+      <h1>Category: {category}</h1>
+{foreach category.breadcrumbs}
+      <h2>Category: {item.name}</h1>
+{end}
     {contentBody}
   </body>
 </html>

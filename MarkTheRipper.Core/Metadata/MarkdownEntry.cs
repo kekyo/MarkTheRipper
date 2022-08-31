@@ -61,6 +61,17 @@ public sealed class MarkdownEntry :
             value is PathEntry path ?
             path : PathEntry.Unknown;
 
+    internal static bool GetPublishedState(
+        IReadOnlyDictionary<string, IExpression> metadata) =>
+        // true if `published` does not exist, or if it exists and true
+        metadata.TryGetValue("published", out var publishedExpression) ?
+            Reducer.UnsafeReduceExpression(
+                publishedExpression, MetadataContext.Empty) is bool published && published :
+        true;
+
+    internal bool DoesNotPublish =>
+        !GetPublishedState(this.metadata);
+
     internal string Title =>
         this.metadata.TryGetValue("title", out var titleExpression) &&
         Reducer.UnsafeReduceExpressionAndFormat(

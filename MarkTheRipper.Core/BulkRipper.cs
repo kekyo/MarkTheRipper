@@ -207,9 +207,9 @@ public sealed class BulkRipper
             markdownEntry => (markdownEntry.contentBasePath, markdownEntry.MarkdownPath));
 
         var tagList = await EntryAggregator.AggregateTagsAsync(
-            markdownEntries, metadata, ct);
+            markdownEntries.Where(entry => !entry.DoesNotPublish), metadata, ct);
         var rootCategory = await EntryAggregator.AggregateCategoriesAsync(
-            markdownEntries, metadata, ct);
+            markdownEntries.Where(entry => !entry.DoesNotPublish), metadata, ct);
 
         var mc = metadata.Spawn();
         mc.SetValue("tagList", tagList.Values.ToArray());
@@ -227,19 +227,22 @@ public sealed class BulkRipper
             if (entriesByCandidate.TryGetValue(
                 (contentBasePath, relativeContentPath), out var markdownEntry))
             {
-                var appliedLayoutName = await this.ripper.RenderContentAsync(
-                    markdownEntry,
-                    mc,
-                    this.storeToBasePath,
-                    ct).
-                    ConfigureAwait(false);
+                if (!markdownEntry.DoesNotPublish)
+                {
+                    var appliedLayoutName = await this.ripper.RenderContentAsync(
+                        markdownEntry,
+                        mc,
+                        this.storeToBasePath,
+                        ct).
+                        ConfigureAwait(false);
 
-                await generated(
-                    relativeContentPath.PhysicalPath,
-                    storeToPathElements.RelativePath,
-                    contentBasePath,
-                    appliedLayoutName).
-                    ConfigureAwait(false);
+                    await generated(
+                        relativeContentPath.PhysicalPath,
+                        storeToPathElements.RelativePath,
+                        contentBasePath,
+                        appliedLayoutName).
+                        ConfigureAwait(false);
+                }
             }
             else
             {

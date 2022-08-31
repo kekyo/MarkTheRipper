@@ -258,6 +258,7 @@ stylesheet: darcula
 |`lang`|ロケール(`en-us`や`ja-jp`など)|
 |`date`|記事の日時|
 |`timezone`|MarkTheRipperでサイトを生成した環境のタイムゾーン。IANA表記、または時間|
+|`published`|明示的に`false`と指定する事で、このマークダウンを無視する|
 
 * この他にもいくつか特殊なキーワードがありますが、後で解説します。
 
