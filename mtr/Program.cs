@@ -9,10 +9,12 @@
 
 using Mono.Options;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper;
@@ -80,12 +82,40 @@ public static class Program
         Console.Out.WriteLine();
     }
 
-    private static async ValueTask<string> ExtractNewMarkdownAsync(string[] categories)
+    private static string GetSafeStoreToPath(string? categoryArgument, string? fileNameArgument)
+    {
+        var categories = !string.IsNullOrWhiteSpace(categoryArgument) ?
+            categoryArgument!.Split(new[] { '/', '\\', '-', '.', ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries) :
+            Array.Empty<string>();
+
+        if (!string.IsNullOrWhiteSpace(fileNameArgument))
+        {
+            var fileName = $"{fileNameArgument}.md";
+            return Path.Combine(
+                new[] { "contents" }.Concat(categories).Concat(new[] { fileName }).ToArray());
+        }
+        else
+        {
+            var suffix = 1;
+            while (true)
+            {
+                var fileName = $"{DateTime.Now.ToString("yyyyMMdd")}{(suffix >= 2 ? $"-{suffix}" : "")}.md";
+                var storeToPath = Path.Combine(
+                    new[] { "contents" }.Concat(categories).Concat(new[] { fileName }).ToArray());
+                if (!File.Exists(storeToPath))
+                {
+                    return storeToPath;
+                }
+                suffix++;
+            }
+        }
+    }
+
+    private static async ValueTask<string> ExtractNewMarkdownAsync(
+        string storeToPath)
     {
         var dc = new SafeDirectoryCreator();
 
-        var storeToPath = Path.Combine(
-            new[] { "docs" }.Concat(categories).Concat(new[] { "new.md" }).ToArray());
         await ExtractSampleContentAsync(
             dc,
             "MarkTheRipper.embeds.new.md",
@@ -127,7 +157,7 @@ public static class Program
 
                 Console.Out.WriteLine("usage: mtr.exe [options] init [<sample name>]");
                 Console.Out.WriteLine("  <sample name>: \"minimum\", \"standard\" and \"rich\"");
-                Console.Out.WriteLine("usage: mtr.exe [options] new [category [category ...]]");
+                Console.Out.WriteLine("usage: mtr.exe [options] new [<category path> [<slug>]]");
                 Console.Out.WriteLine("usage: mtr.exe [options] [build [<store to dir path> [<contents dir path> ...]]]");
                 Console.Out.WriteLine();
 
@@ -144,15 +174,15 @@ public static class Program
                 {
                     case "init":
                         var sampleName = extras.
-                            ElementAtOrDefault(1) ?? "minimum";
+                            ElementAtOrDefault(1) ?? "standard";
                         await ExtractSampleAsync(sampleName);
                         break;
 
                     case "new":
-                        var storeToPath = await ExtractNewMarkdownAsync(
-                            extras.Skip(1).
-                            SelectMany(category => category.Split(new[] { '/', '.' }, StringSplitOptions.RemoveEmptyEntries)).
-                            ToArray());
+                        var storeToPath = GetSafeStoreToPath(
+                            extras.ElementAtOrDefault(1),
+                            extras.ElementAtOrDefault(2));
+                        await ExtractNewMarkdownAsync(storeToPath);
                         if (requiredOpen)
                         {
                             Process.Start(storeToPath);

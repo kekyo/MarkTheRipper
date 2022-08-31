@@ -8,10 +8,8 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
-using MarkTheRipper.Metadata;
 using MarkTheRipper.Layout;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,6 +28,7 @@ namespace MarkTheRipper;
 public static class Driver
 {
     private static async ValueTask<RootLayoutNode> ReadLayoutAsync(
+        Ripper ripper,
         string layoutPath,
         string layoutName,
         CancellationToken ct)
@@ -46,7 +45,7 @@ public static class Driver
             Encoding.UTF8,
             true);
 
-        return await Ripper.ParseLayoutAsync(
+        return await ripper.ParseLayoutAsync(
             layoutName,
             tr,
             ct).
@@ -114,6 +113,8 @@ public static class Driver
 
         //////////////////////////////////////////////////////////////
 
+        var ripper = new Ripper();
+
         var layoutList = (await Task.WhenAll(
             Directory.EnumerateFiles(
                 resourceBasePath, "layout-*.html", SearchOption.TopDirectoryOnly).
@@ -122,7 +123,7 @@ public static class Driver
                 var layoutName =
                     Path.GetFileNameWithoutExtension(layoutPath).
                     Substring("layout-".Length);
-                var layout = await ReadLayoutAsync(layoutPath, layoutName, ct).
+                var layout = await ReadLayoutAsync(ripper, layoutPath, layoutName, ct).
                     ConfigureAwait(false);
                 return (layoutName, layout);
             })).
@@ -180,7 +181,7 @@ public static class Driver
             rootMetadata.Set(kv.Key, kv.Value);
         }
 
-        var generator = new BulkRipper(storeToBasePath);
+        var generator = new BulkRipper(ripper, storeToBasePath);
 
         var (count, maxConcurrentProcessing) = await generator.RipOffAsync(
             contentsBasePathList,

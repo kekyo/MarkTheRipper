@@ -19,15 +19,13 @@ public sealed class RootLayoutNode :
     ILayoutNode, IMetadataEntry
 {
     public readonly string Name;
-    public readonly string OriginalText;
 
     private readonly ILayoutNode[] nodes;
 
     public RootLayoutNode(
-        string name, string originalText, ILayoutNode[] nodes)
+        string name, ILayoutNode[] nodes)
     {
-        Name = name;
-        OriginalText = originalText;
+        this.Name = name;
         this.nodes = nodes;
     }
 
@@ -40,7 +38,6 @@ public sealed class RootLayoutNode :
         keyName switch
         {
             "name" => new(this.Name),
-            "text" => new(this.OriginalText),
             _ => Utilities.NullAsync,
         };
 
