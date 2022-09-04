@@ -9,7 +9,7 @@
 
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Layout;
+using MarkTheRipper.TextTreeNodes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -48,6 +48,8 @@ public static class Parser
         new[] { '(', ')', '[', ']', '\'', '"' },  // Value
         new[] { '\'', '"' },  // SingleValue
     };
+
+    private static readonly char[] escapeChars = new[] { '`', '~' };
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -295,25 +297,31 @@ public static class Parser
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    internal static async ValueTask<RootLayoutNode> ParseLayoutAsync(
-        string layoutName,
-        TextReader layoutReader,
+    internal static async ValueTask<RootTextNode> ParseTextTreeAsync(
+        PathEntry textPathHint,
+        TextReader textReader,
         CancellationToken ct)
     {
         var nestedIterations =
-            new Stack<(IExpression[] iteratorParameters, List<ILayoutNode> nodes)>();
+            new Stack<(IExpression[] iteratorParameters, List<ITextTreeNode> nodes)>();
 
-        var nodes = new List<ILayoutNode>();
+        var nodes = new List<ITextTreeNode>();
         var buffer = new StringBuilder();
 
         while (true)
         {
-            var line = await layoutReader.ReadLineAsync().
+            var line = await textReader.ReadLineAsync().
                 WithCancellation(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
                 break;
+            }
+
+            if (line.Length == 0)
+            {
+                buffer.AppendLine();
+                continue;
             }
 
             var startIndex = 0;
@@ -329,30 +337,51 @@ public static class Parser
                         break;
                     }
 
+                    // "}}"
                     if (closeIndex2 + 1 < line.Length &&
                         line[closeIndex2 + 1] == '}')
                     {
-                        buffer.Append(line.Substring(startIndex, closeIndex2 - startIndex + 1));
+                        if ((closeIndex2 + 2) < line.Length)
+                        {
+                            buffer.Append(line.Substring(startIndex, closeIndex2 - startIndex + 1));
+                        }
                         startIndex = closeIndex2 + 2;
+                        if (startIndex >= line.Length)
+                        {
+                            buffer.AppendLine();
+                        }
                         continue;
                     }
 
                     throw new FormatException(
-                        $"Could not find open bracket. Layout={layoutName}");
+                        $"Could not find open bracket. Path={textPathHint}");
                 }
 
+                // "{{"
                 if (openIndex + 1 < line.Length &&
                     line[openIndex + 1] == '{')
                 {
                     buffer.Append(line.Substring(startIndex, openIndex - startIndex + 1));
                     startIndex = openIndex + 2;
+                    if (startIndex >= line.Length)
+                    {
+                        buffer.AppendLine();
+                    }
                     continue;
                 }
 
-                buffer.Append(line.Substring(startIndex, openIndex - startIndex));
+                if (startIndex >= line.Length)
+                {
+                    buffer.AppendLine(line.Substring(startIndex, openIndex - startIndex));
+                }
+                else
+                {
+                    buffer.Append(line.Substring(startIndex, openIndex - startIndex));
+                }
+
                 if (buffer.Length >= 1)
                 {
-                    nodes.Add(new TextNode(buffer.ToString()));
+                    nodes.Add(new LiteralTextNode(buffer.ToString()));
                     buffer.Clear();
                 }
 
@@ -360,7 +389,7 @@ public static class Parser
                 if (closeIndex == -1)
                 {
                     throw new FormatException(
-                        $"Could not find close bracket. Layout={layoutName}");
+                        $"Could not find close bracket. Path={textPathHint}");
                 }
 
                 startIndex = closeIndex + 1;
@@ -376,7 +405,7 @@ public static class Parser
                     if (iteratorParameters.Length <= 0)
                     {
                         throw new FormatException(
-                            $"`foreach` parameter required. Layout={layoutName}");
+                            $"`foreach` parameter required. Path={textPathHint}");
                     }
 
                     nestedIterations.Push((iteratorParameters, nodes));
@@ -388,7 +417,7 @@ public static class Parser
                     if (nestedIterations.Count <= 0)
                     {
                         throw new FormatException(
-                            $"Could not find iterator-begin. Layout={layoutName}");
+                            $"Could not find iterator-begin. Path={textPathHint}");
                     }
 
                     var childNodes = nodes.ToArray();
@@ -400,17 +429,22 @@ public static class Parser
                 else
                 {
                     nodes.Add(new ExpressionNode(expression));
+
+                    if (startIndex >= line.Length)
+                    {
+                        buffer.AppendLine();
+                    }
                 }
             }
         }
 
         if (buffer.Length >= 1)
         {
-            nodes.Add(new TextNode(buffer.ToString()));
+            nodes.Add(new LiteralTextNode(buffer.ToString()));
         }
 
-        return new RootLayoutNode(
-           layoutName,
+        return new RootTextNode(
+           textPathHint,
            nodes.ToArray());
     }
 
@@ -430,7 +464,7 @@ public static class Parser
             if (line == null)
             {
                 throw new FormatException(
-                    $"Could not find any markdown header: {relativeContentPathHint}");
+                    $"Could not find any markdown header. Path={relativeContentPathHint}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -453,7 +487,7 @@ public static class Parser
             if (line == null)
             {
                 throw new FormatException(
-                    $"Could not find any markdown header: Path={relativeContentPathHint}");
+                    $"Could not find any markdown header. Path={relativeContentPathHint}");
             }
 
             if (!string.IsNullOrWhiteSpace(line))
@@ -481,7 +515,7 @@ public static class Parser
                     else
                     {
                         throw new FormatException(
-                            $"Could not find any markdown header: Path={relativeContentPathHint}");
+                            $"Could not find any markdown header. Path={relativeContentPathHint}");
                     }
                 }
             }
@@ -607,7 +641,21 @@ public static class Parser
         }
     }
 
-    internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody)> ParseMarkdownBodyAsync(
+    private sealed class CodeBlockContext
+    {
+        public readonly int StartLineIndex;
+        public readonly int IndentLength;
+        public readonly int CodeEscapeLength;
+
+        public CodeBlockContext(int startLineIndex, int indentLength, int codeEscapeLength)
+        {
+            this.StartLineIndex = startLineIndex;
+            this.IndentLength = indentLength;
+            this.CodeEscapeLength = codeEscapeLength;
+        }
+    }
+
+    internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody, Func<int, int, bool>[] inCodeFragments)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         TextReader markdownReader,
         CancellationToken ct)
@@ -616,6 +664,9 @@ public static class Parser
             relativeContentPathHint, markdownReader, ct);
 
         var markdownBody = new StringBuilder();
+        var inCodeFragments = new List<Func<int, int, bool>>();
+        var lineIndex = 0;
+
         while (true)
         {
             var line = await markdownReader.ReadLineAsync().
@@ -625,31 +676,100 @@ public static class Parser
             {
                 break;
             }
+
+            lineIndex++;
 
             // Skip empty lines, will detect start of body
             if (!string.IsNullOrWhiteSpace(line))
             {
-                markdownBody.AppendLine(line);
+                var codeBlockContext = default(CodeBlockContext);
+                while (true)
+                {
+                    // Code block/span detection.
+                    var codeEscapeStartIndex = line.IndexOfAny(
+                        escapeChars);
+                    if (codeEscapeStartIndex >= 0)
+                    {
+                        var codeEscapeChar = line[codeEscapeStartIndex];
+
+                        var codeStartIndex = line.IndexOfNot(
+                            codeEscapeChar, codeEscapeStartIndex + 1);
+                        if (codeStartIndex >= 0)
+                        {
+                            var codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
+
+                            // First spanning?   "aaa`bbb`ccc"
+                            var codeEndIndex = line.IndexOf(
+                                codeEscapeChar, codeStartIndex);
+                            if (codeEndIndex >= 0)
+                            {
+                            loop:
+                                var codeEscapeEndIndex = line.IndexOfNot(
+                                    codeEscapeChar, codeEndIndex + 1) is { } i && i >= 0 ?
+                                        i : line.Length;
+
+                                // Should really be the same length, but judged loose.
+                                if ((codeEscapeEndIndex - codeEndIndex) >= codeEscapeLength)
+                                {
+                                    var closure = (lineIndex, codeStartIndex, codeEndIndex);
+                                    inCodeFragments.Add((l, c) =>
+                                        l == closure.lineIndex &&
+                                        c >= closure.codeStartIndex &&
+                                        c < closure.codeEndIndex);
+                                }
+
+                                // Search next code span.
+                                codeEscapeStartIndex = line.IndexOfAny(
+                                    escapeChars, codeEscapeEndIndex);
+                                if (codeEscapeStartIndex >= 0)
+                                {
+                                    codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
+                                    codeEndIndex = line.IndexOf(
+                                        codeEscapeChar, codeStartIndex);
+                                    if (codeEndIndex >= 0)
+                                    {
+                                        goto loop;
+                                    }
+                                }
+                            }
+                            // Code block.
+                            else
+                            {
+                                var indentEndIndex = line.IndexOfNot(' ', 0);
+
+                                // Start code block
+                                if (codeBlockContext == null)
+                                {
+                                    codeBlockContext = new(lineIndex, 0, codeEscapeLength);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // error/ignore?
+                        }
+                    }
+
+                    // (Sanitizing EOL)
+                    markdownBody.AppendLine(line);
+
+                    line = await markdownReader.ReadLineAsync().
+                        WithCancellation(ct).
+                        ConfigureAwait(false);
+
+                    // EOF
+                    if (line == null)
+                    {
+                        break;
+                    }
+
+                    lineIndex++;
+                }
+
                 break;
             }
         }
 
-        while (true)
-        {
-            var line = await markdownReader.ReadLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
-
-            // EOF
-            if (line == null)
-            {
-                break;
-            }
-
-            // (Sanitizing EOL)
-            markdownBody.AppendLine(line);
-        }
-
-        return (markdownMetadata, markdownBody.ToString());
+        return (markdownMetadata, markdownBody.ToString(), inCodeFragments.ToArray());
     }
 }

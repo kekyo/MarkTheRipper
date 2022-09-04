@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using MarkTheRipper.Layout;
+using MarkTheRipper.TextTreeNodes;
 using MarkTheRipper.Metadata;
 using NUnit.Framework;
 using System;
@@ -29,9 +29,9 @@ public sealed class BulkRipperTests
     {
         var metadata = new MetadataContext();
 
-        var layout = await Parser.ParseLayoutAsync(
-            layoutName, new StringReader(layoutText), default);
-        var layoutList = new Dictionary<string, RootLayoutNode>
+        var layout = await Parser.ParseTextTreeAsync(
+            new PathEntry(layoutName), new StringReader(layoutText), default);
+        var layoutList = new Dictionary<string, RootTextNode>
         {
             { layoutName, layout }
         };

@@ -88,7 +88,7 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach category.breadcrumb} {item.name}{end}</p>
+        <p>Category:{foreach category.breadcrumbs} {item.name}{end}</p>
         <p>Tags:{foreach tags} {item.name}{end}</p>
     </header>
     <hr />
@@ -708,18 +708,18 @@ i.e., automatic recursively enumerate even the descendant categories that exist.
 This is by design because MarkTheRipper does not have the ability to define any functions and recursive functions.
 (Such a request is probably only for outputting a site-wide structure list, as we did not see the need for such a request.)
 
-At the end of the category operation is an example of outputting a breadcrumb list.
+At the end of the category operation is an example of outputting breadcrumb list.
 It is very simple:
 
 ```html
 <ul>
-  {foreach category.breadcrumb}
+  {foreach category.breadcrumbs}
   <li>{item.name}</li>
   {end}
 </ul>
 ```
 
-The ``breadcrumb`` property returns a value that allows you to enumerate the categories leading to the target category,
+The `breadcrumbs` property returns a value that allows you to enumerate the categories leading to the target category,
 starting from the root.
 (However, if the target category is root, the root category is included; otherwise, it is not included.)
 

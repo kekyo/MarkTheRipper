@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////////////////////
+﻿/////////////////////////////////////////////////////////////////////////////////////
 //
 // MarkTheRipper - Fantastic faster generates static site comes from simply Markdowns.
 // Copyright (c) Kouji Matsui (@kozy_kekyo, @kekyo@mastodon.cloud)
@@ -13,7 +13,7 @@ using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.Layout;
+using MarkTheRipper.TextTreeNodes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,16 +30,15 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
-    public ValueTask<RootLayoutNode> ParseLayoutAsync(
-        string layoutName,
+    public ValueTask<RootTextNode> ParseLayoutAsync(
+        PathEntry layoutPathHint,
         TextReader layoutReader,
         CancellationToken ct) =>
-        Parser.ParseLayoutAsync(layoutName, layoutReader, ct);
+        Parser.ParseTextTreeAsync(layoutPathHint, layoutReader, ct);
 
     private static void InjectAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
-        PathEntry markdownPath,
-        string? contentBody)
+        PathEntry markdownPath)
     {
         var storeToPathHint = new PathEntry(
             Path.Combine(
@@ -62,11 +61,6 @@ public sealed class Ripper
                 pathElements.Aggregate(
                     new PartialCategoryEntry(),
                     (agg, v) => new PartialCategoryEntry(v, agg))));
-        }
-
-        if (contentBody != null)
-        {
-            markdownMetadata["contentBody"] = new ValueExpression(contentBody);
         }
     }
 
@@ -97,7 +91,7 @@ public sealed class Ripper
                 true);
             var markdownReader = new StreamReader(
                 markdownStream,
-                Encoding.UTF8,
+                Utilities.UTF8,
                 true);
 
             return await Parser.ParseMarkdownHeaderAsync(
@@ -122,7 +116,7 @@ public sealed class Ripper
                     true);
                 var markdownReader = new StreamReader(
                     markdownStream,
-                    Encoding.UTF8,
+                    Utilities.UTF8,
                     true);
 
                 using var markdownOutputStream = new FileStream(
@@ -134,7 +128,8 @@ public sealed class Ripper
                     true);
                 var markdownWriter = new StreamWriter(
                     markdownOutputStream,
-                    Encoding.UTF8);
+                    Utilities.UTF8);
+                markdownWriter.NewLine = Environment.NewLine;
 
                 await Parser.ParseAndAppendMarkdownHeaderAsync(
                     markdownReader,
@@ -158,23 +153,23 @@ public sealed class Ripper
             File.Move(path + ".tmp", path);
         }
 
-        InjectAdditionalMetadata(metadata, markdownPath, null);
+        InjectAdditionalMetadata(metadata, markdownPath);
 
         return new(metadata, contentsBasePath);
     }
 
-    private static async ValueTask<RootLayoutNode> GetLayoutAsync(
+    private static async ValueTask<RootTextNode> GetLayoutAsync(
         MetadataContext metadata, CancellationToken ct)
     {
         if (metadata.Lookup("layoutList") is { } layoutListExpression &&
             await Reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
-            ConfigureAwait(false) is IReadOnlyDictionary<string, RootLayoutNode> tl)
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> tl)
         {
             if (metadata.Lookup("layout") is { } layoutExpression &&
                 await Reducer.ReduceExpressionAsync(layoutExpression, metadata, ct).
                     ConfigureAwait(false) is { } layoutValue)
             {
-                if (layoutValue is RootLayoutNode layout)
+                if (layoutValue is RootTextNode layout)
                 {
                     return layout;
                 }
@@ -216,8 +211,7 @@ public sealed class Ripper
     private static MetadataContext SpawnWithAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
         MetadataContext parentMetadata,
-        PathEntry markdownPath,
-        string? contentBody)
+        PathEntry markdownPath)
     {
         var mc = parentMetadata.Spawn();
 
@@ -230,10 +224,8 @@ public sealed class Ripper
         mc.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
         mc.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
 
-        InjectAdditionalMetadata(
-            markdownMetadata,
-            markdownPath,
-            contentBody);
+        InjectAdditionalMetadata(markdownMetadata, markdownPath);
+
         foreach (var kv in markdownMetadata)
         {
             mc.Set(kv.Key, kv.Value);
@@ -250,32 +242,49 @@ public sealed class Ripper
     /// <param name="metadata">Metadata context</param>
     /// <param name="outputHtmlWriter">Generated html content writer</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied layout name.</returns>
-    public async ValueTask<string> RenderContentAsync(
+    /// <returns>Applied layout path.</returns>
+    public async ValueTask<PathEntry> RenderContentAsync(
         PathEntry markdownPath,
         TextReader markdownReader,
         MetadataContext metadata,
         TextWriter outputHtmlWriter,
         CancellationToken ct)
     {
-        var (markdownMetadata, markdownBody) = await Parser.ParseMarkdownBodyAsync(
-            markdownPath, markdownReader, ct).
-            ConfigureAwait(false);
+        var (markdownMetadata, markdownBody, inCodeFragments) =
+            await Parser.ParseMarkdownBodyAsync(
+                markdownPath, markdownReader, ct).
+                ConfigureAwait(false);
 
-        var markdownDocument = MarkdownParser.Parse(markdownBody);
-
-        var contentBody = new StringBuilder();
-        var renderer = new HtmlRenderer(new StringWriter(contentBody));
-        renderer.Render(markdownDocument);
-
-        var layout = await GetLayoutAsync(metadata, ct).
-            ConfigureAwait(false);
+        var markdownBodyTree = await Parser.ParseTextTreeAsync(
+            markdownPath, new StringReader(markdownBody), ct);
 
         var mc = SpawnWithAdditionalMetadata(
             markdownMetadata,
             metadata,
-            markdownPath,
-            contentBody.ToString());
+            markdownPath);
+
+        var renderedMarkdownBody = new StringWriter();
+        renderedMarkdownBody.NewLine = Environment.NewLine;
+        await markdownBodyTree.RenderAsync(
+            (text, _) => { renderedMarkdownBody.Write(text); return default; }, mc, ct).
+            ConfigureAwait(false);
+
+        var markdownDocument = MarkdownParser.Parse(
+            renderedMarkdownBody.ToString());
+
+        // TODO: Make a dictionary of CodeBlocks and the range of CodeInlines
+        // found by enumerating LeafBlock.Inline, and then
+        // ParseLayoutAsync() while ignoring `{...}`
+
+        var contentBody = new StringWriter();
+        var renderer = new HtmlRenderer(contentBody);
+        contentBody.NewLine = Environment.NewLine;  // HACK: MarkDig will update NewLine signature...
+        renderer.Render(markdownDocument);
+
+        mc.SetValue("contentBody", contentBody.ToString());
+
+        var layout = await GetLayoutAsync(metadata, ct).
+            ConfigureAwait(false);
 
         await layout.RenderAsync(
             (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
@@ -283,7 +292,7 @@ public sealed class Ripper
             ct).
             ConfigureAwait(false);
 
-        return layout.Name;
+        return layout.Path;
     }
 
     /// <summary>
@@ -293,8 +302,8 @@ public sealed class Ripper
     /// <param name="metadata">Metadata context</param>
     /// <param name="storeToBasePath">Generated html content base path</param>
     /// <param name="ct">CancellationToken</param>
-    /// <returns>Applied layout name.</returns>
-    public async ValueTask<string> RenderContentAsync(
+    /// <returns>Applied layout path.</returns>
+    public async ValueTask<PathEntry> RenderContentAsync(
         MarkdownEntry markdownEntry,
         MetadataContext metadata,
         string storeToBasePath,
@@ -311,7 +320,7 @@ public sealed class Ripper
             true);
         var markdownReader = new StreamReader(
             markdownStream,
-            Encoding.UTF8,
+            Utilities.UTF8,
             true);
 
         using var outputHtmlStream = new FileStream(
@@ -325,9 +334,10 @@ public sealed class Ripper
             true);
         var outputHtmlWriter = new StreamWriter(
             outputHtmlStream,
-            Encoding.UTF8);
+            Utilities.UTF8);
+        outputHtmlWriter.NewLine = Environment.NewLine;
 
-        var appliedLayoutName = await this.RenderContentAsync(
+        var appliedLayoutPath = await this.RenderContentAsync(
             markdownEntry.MarkdownPath,
             markdownReader,
             metadata,
@@ -338,6 +348,6 @@ public sealed class Ripper
         await outputHtmlWriter.FlushAsync().
             ConfigureAwait(false);
 
-        return appliedLayoutName;
+        return appliedLayoutPath;
     }
 }

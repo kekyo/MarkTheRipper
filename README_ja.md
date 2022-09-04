@@ -84,7 +84,7 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach category.breadcrumb} {item.name}{end}</p>
+        <p>Category:{foreach category.breadcrumbs} {item.name}{end}</p>
         <p>Tags:{foreach tags} {item.name}{end}</p>
     </header>
     <hr />
@@ -643,13 +643,13 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 
 ```html
 <ul>
-  {foreach category.breadcrumb}
+  {foreach category.breadcrumbs}
   <li>{item.name}</li>
   {end}
 </ul>
 ```
 
-`breadcrumb`プロパティは、対象のカテゴリに至るカテゴリを、ルートから列挙出来る値を返します。
+`breadcrumbs`プロパティは、対象のカテゴリに至るカテゴリを、ルートから列挙出来る値を返します。
 （但し、対象のカテゴリがルートの場合は、ルートカテゴリを含み、それ以外の場合は含みません）
 
 列挙した個々の要素は、今まで説明してきたカテゴリと同様です。上記例では`name`プロパティでカテゴリ名を出力しています。

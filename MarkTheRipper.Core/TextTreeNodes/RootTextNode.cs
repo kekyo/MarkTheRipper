@@ -13,31 +13,31 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Layout;
+namespace MarkTheRipper.TextTreeNodes;
 
-public sealed class RootLayoutNode :
-    ILayoutNode, IMetadataEntry
+public sealed class RootTextNode :
+    ITextTreeNode, IMetadataEntry
 {
-    public readonly string Name;
+    public readonly PathEntry Path;
 
-    private readonly ILayoutNode[] nodes;
+    private readonly ITextTreeNode[] nodes;
 
-    public RootLayoutNode(
-        string name, ILayoutNode[] nodes)
+    public RootTextNode(
+        PathEntry path, ITextTreeNode[] nodes)
     {
-        this.Name = name;
+        this.Path = path;
         this.nodes = nodes;
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
         MetadataContext metadata, CancellationToken ct) =>
-        new(this.Name);
+        new(this.Path);
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, MetadataContext context, CancellationToken ct) =>
         keyName switch
         {
-            "name" => new(this.Name),
+            "name" => new(this.Path),
             _ => Utilities.NullAsync,
         };
 
@@ -54,5 +54,5 @@ public sealed class RootLayoutNode :
     }
 
     public override string ToString() =>
-        $"RootLayout: {this.Name}";
+        $"RootText: {this.Path}";
 }
