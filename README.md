@@ -945,6 +945,43 @@ Would result in a number from 1 to `count`, which is closer to a natural represe
 
 ----
 
+## Replacing keywords in markdown
+
+The keyword replacement described so far is for "Layout" files.
+It feature applies equally to markdown files.
+For example, the keyword replacement in:
+
+```markdown
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Title: {title}
+```
+
+If you write such a markdown, `{title}` will be keyword-substituted in the same way.
+Of course, the function keyword calculations described so far are also possible.
+
+Keyword substitution on markdown does not work for code blocks:
+
+````markdown
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Title: `{title}`
+
+```
+{title}
+```
+````
+
+As shown above, `{...}` are not interpreted by MarkTheRipper and are output as is.
+
+----
+
 ## Install develop branch package
 
 ```
