@@ -84,7 +84,7 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach category.breadcrumb} {item.name}{end}</p>
+        <p>Category:{foreach category.breadcrumbs} {item.name}{end}</p>
         <p>Tags:{foreach tags} {item.name}{end}</p>
     </header>
     <hr />
@@ -258,6 +258,7 @@ stylesheet: darcula
 |`lang`|ロケール(`en-us`や`ja-jp`など)|
 |`date`|記事の日時|
 |`timezone`|MarkTheRipperでサイトを生成した環境のタイムゾーン。IANA表記、または時間|
+|`published`|明示的に`false`と指定する事で、このマークダウンを無視する|
 
 * この他にもいくつか特殊なキーワードがありますが、後で解説します。
 
@@ -391,21 +392,21 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar]
+tags: [foo,bar,baz]
 ---
 
 (... 本文 ...)
 ```
 
-すると、`<p>Tags: 'foo' 'bar'</p>` と出力されます。
-`tags`の`foo,bar`が、スペースで区切られて展開されて、クオートされて出力されました。
+すると、`<p>Tags: 'foo' 'bar' 'baz'</p>` と出力されます。
+`tags`の`foo,bar,baz`が、スペースで区切られて展開されて、クオートされて出力されました。
 
 `{foreach tags}`と`{end}`の間にある文書が繰り返し出力されるので、以下のように使う事も出来ます:
 
 ```html
 <ul>
   {foreach tags}
-  <li>{item.index} {item}</li>
+  <li>{item.index}/{item.count} {item}</li>
   {end}
 </ul>
 ```
@@ -414,13 +415,15 @@ tags: [foo,bar]
 
 ```html
 <ul>
-  <li>0 foo</li>
-  <li>1 bar</li>
+  <li>0/3 foo</li>
+  <li>1/3 bar</li>
+  <li>2/3 baz</li>
 </ul>
 ```
 
 間に挿入されている`{item}`は、繰り返される一つ一つの値を参照できるキーワードです。
 また、`{item.index}` と指定すると、0から始まって1,2,3... とカウントする数値が得られます。
+`{item.count}` は、繰り返しの個数です。上記ではタグが3個あるため、この値は常に3となります。
 
 さらに、複数のキーワードをネストさせる事も出来ます。以下の例は、タグを2重に繰り返します:
 
@@ -463,10 +466,10 @@ tags: [foo,bar]
 
 ```html
 <ul>
-  <li>0-0 foo-foo</li>
-  <li>0-1 foo-bar</li>
-  <li>1-0 bar-foo</li>
-  <li>1-1 bar-bar</li>
+  <li>0-0 foo/foo</li>
+  <li>0-1 foo/bar</li>
+  <li>1-0 bar/foo</li>
+  <li>1-1 bar/bar</li>
 </ul>
 ```
 
@@ -640,13 +643,13 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 
 ```html
 <ul>
-  {foreach category.breadcrumb}
+  {foreach category.breadcrumbs}
   <li>{item.name}</li>
   {end}
 </ul>
 ```
 
-`breadcrumb`プロパティは、対象のカテゴリに至るカテゴリを、ルートから列挙出来る値を返します。
+`breadcrumbs`プロパティは、対象のカテゴリに至るカテゴリを、ルートから列挙出来る値を返します。
 （但し、対象のカテゴリがルートの場合は、ルートカテゴリを含み、それ以外の場合は含みません）
 
 列挙した個々の要素は、今まで説明してきたカテゴリと同様です。上記例では`name`プロパティでカテゴリ名を出力しています。
@@ -662,6 +665,11 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 |`format`|引数を文字列に整形します。|
 |`relative`|引数のパスを、相対パスに変換します。|
 |`lookup`|引数が示す結果を元に、メタデータ辞書を引きます。|
+|`add`|引数を加算します。|
+|`sub`|引数を減算します。|
+|`mul`|引数を乗算します。|
+|`div`|引数を除算します。|
+|`mod`|引数の剰余を取得します。|
 
 #### format
 
@@ -781,6 +789,108 @@ lang: ja-jp
 ```
 
 のようにすれば、置き換えが可能です。
+
+#### add, sub, mul, div, mod (計算全般)
+
+これらは計算を行う関数です。引数は1個以上必要で、3個以上の場合は、連続して計算を行います。例えば:
+
+```html
+<p>1 + 2 + 3 = {add 1 2 3}</p>
+```
+
+のように、引数の数値を全て加算します。
+複雑な計算を行う場合は、括弧を使います:
+
+```html
+<p>(1 + 2) * 4 = {mul (add 1 2) 4}</p>
+```
+
+括弧はいくつでもネスト出来ます。括弧を応用して、`format`関数を使って望ましい形に整形出来ます:
+
+```html
+<p>1 / 3 = {format (div 1 3) 'F3'}</p>
+```
+
+結果:
+
+```html
+<p>1 / 3 = 0.333</p>
+```
+
+小数を含む結果は、意図したとおりの表示にならない事があります。
+そのような可能性を考えて、常に`format`関数を使った方が良いかもしれません。
+小数を含む書式の指定方法は、[ここを参照して下さい](https://docs.microsoft.com/ja-jp/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f)。
+
+引数が数値ではなくても、文字列が数値として見なすことが出来ればOKです:
+
+```html
+<p>1 + 2 + 3 = {add 1 '2' 3}</p>
+```
+
+引数の中に、小数を含む数値があっても構いません。その場合は小数を含む計算として処理されます(浮動小数点演算と呼びます):
+
+```html
+<p>1 + 2.1 + 3 = {add 1 2.1 3}</p>
+```
+
+計算を使用する簡単な例を示します。列挙中の`item.index`は、0から開始される数値です。
+一方、`item.count`は列挙できる数ですが、これを並べると一般的な表記となりません:
+
+```html
+<p>index/count = {item.index}/{item.count}</p>
+```
+
+結果:
+
+```html
+<p>index/count = 0/3</p>
+<p>index/count = 1/3</p>
+<p>index/count = 2/3</p>
+```
+
+このような場合に、`add`を使って:
+
+```html
+<p>index/count = {add item.index 1}/{item.count}</p>
+```
+
+とすれば、1から`count`までの数値となり、自然な表現に近づける事が出来ます。
+
+----
+
+## マークダウン中のキーワードの置き換え
+
+これまでに説明してきたキーワードの置き換えは、レイアウトファイルに対して行うというものでした。
+このキーワード置き換え機能は、マークダウンファイルにも同様に適用されます。例えば:
+
+```markdown
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Title: {title}
+```
+
+このようなマークダウンを記述すると、`{title}`が同じようにキーワード置換されます。
+もちろんこれまでに説明してきた、関数キーワードによる計算も可能です。
+
+マークダウン上のキーワード置き換えは、コードブロックに対しては機能しません:
+
+````markdown
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Title: `{title}`
+
+```
+{title}
+```
+````
+
+上記のように、コードブロック内に配置された`{...}`は、MarkTheRipperで解釈されずに、そのまま出力されます。
 
 ----
 

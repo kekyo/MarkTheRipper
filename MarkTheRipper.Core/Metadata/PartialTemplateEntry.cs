@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using MarkTheRipper.Layout;
+using MarkTheRipper.TextTreeNodes;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,11 +27,11 @@ internal sealed class PartialLayoutEntry :
         MetadataContext metadata, CancellationToken ct) =>
         new(this.Name);
 
-    private async ValueTask<RootLayoutNode?> GetRealLayoutNodeAsync(
+    private async ValueTask<RootTextNode?> GetRealLayoutNodeAsync(
         MetadataContext metadata, CancellationToken ct) =>
         metadata.Lookup("layoutList") is { } layoutListExpression &&
         await layoutListExpression.ReduceExpressionAsync(metadata, ct).
-            ConfigureAwait(false) is IReadOnlyDictionary<string, RootLayoutNode> layoutList &&
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> layoutList &&
         layoutList.TryGetValue(this.Name, out var layout) ?
             layout : null;
 

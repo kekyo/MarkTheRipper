@@ -11,10 +11,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +28,25 @@ internal static class Utilities
         Path.AltDirectorySeparatorChar,
     };
 
+    public static readonly Encoding UTF8 =
+        new UTF8Encoding(false);   // No BOM
+
     ///////////////////////////////////////////////////////////////////////////////////
+
+    public static int IndexOfNot(this string str, char separator, int start)
+    {
+        var index = start;
+        while (index < str.Length)
+        {
+            var ch = str[index];
+            if (separator != ch)
+            {
+                return index;
+            }
+            index++;
+        }
+        return -1;
+    }
 
     public static int IndexOfNotAll(this string str, char[] separators, int start)
     {
@@ -106,6 +124,45 @@ internal static class Utilities
         {
             yield return current;
             current = selector(current);
+        }
+    }
+
+    private sealed class Comparer<T> : IComparer<T>
+    {
+        private readonly Func<T, T, int> comparer;
+
+        public Comparer(Func<T, T, int> comparer) =>
+            this.comparer = comparer;
+
+        public int Compare(T? x, T? y) =>
+            this.comparer(x!, y!);
+
+    }
+
+    public static IOrderedEnumerable<T> OrderBy<T, TKey>(
+        this IEnumerable<T> enumerable,
+        Func<T, TKey> selector,
+        Func<TKey, TKey, int> comparer) =>
+        enumerable.OrderBy(selector, new Comparer<TKey>(comparer));
+
+    public static IEnumerable<(T first, T? second)> Overlapped<T>(
+        this IEnumerable<T> enumerable)
+    {
+        using var enumerator = enumerable.GetEnumerator();
+        if (enumerator.MoveNext())
+        {
+            var first = enumerator.Current;
+            if (enumerator.MoveNext())
+            {
+                do
+                {
+                    var second = enumerator.Current;
+                    yield return (first, second);
+                    first = second;
+                }
+                while (enumerator.MoveNext());
+            }
+            yield return (first, default(T));
         }
     }
 

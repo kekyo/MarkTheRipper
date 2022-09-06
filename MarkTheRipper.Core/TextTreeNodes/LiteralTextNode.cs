@@ -12,13 +12,13 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Layout;
+namespace MarkTheRipper.TextTreeNodes;
 
-internal sealed class TextNode : ILayoutNode
+internal sealed class LiteralTextNode : ITextTreeNode
 {
     private readonly string text;
 
-    public TextNode(string text) =>
+    public LiteralTextNode(string text) =>
         this.text = text;
 
     public ValueTask RenderAsync(
@@ -28,5 +28,5 @@ internal sealed class TextNode : ILayoutNode
         writer(text, ct);
 
     public override string ToString() =>
-        $"Text: \"{text}\"";
+        $"LiteralText: \"{text}\"";
 }

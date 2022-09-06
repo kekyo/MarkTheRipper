@@ -12,9 +12,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Layout;
+namespace MarkTheRipper.TextTreeNodes;
 
-public interface ILayoutNode
+public interface ITextTreeNode
 {
     ValueTask RenderAsync(
         Func<string, CancellationToken, ValueTask> writer,

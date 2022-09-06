@@ -1,0 +1,12 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+  </head>
+  <body>
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+<p><code>{title}</code></p>
+
+  </body>
+</html>
