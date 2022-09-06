@@ -30,7 +30,10 @@ public sealed class BulkRipperTests
         var metadata = new MetadataContext();
 
         var layout = await Parser.ParseTextTreeAsync(
-            new PathEntry(layoutName), new StringReader(layoutText), default);
+            new PathEntry(layoutName),
+            new StringReader(layoutText),
+            (_, _) => false,
+            default);
         var layoutList = new Dictionary<string, RootTextNode>
         {
             { layoutName, layout }

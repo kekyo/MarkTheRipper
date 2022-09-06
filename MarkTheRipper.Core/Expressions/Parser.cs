@@ -300,6 +300,7 @@ public static class Parser
     internal static async ValueTask<RootTextNode> ParseTextTreeAsync(
         PathEntry textPathHint,
         TextReader textReader,
+        Func<int, int, bool> inCodeFragment,
         CancellationToken ct)
     {
         var nestedIterations =
@@ -307,6 +308,7 @@ public static class Parser
 
         var nodes = new List<ITextTreeNode>();
         var buffer = new StringBuilder();
+        var lineIndex = 0;
 
         while (true)
         {
@@ -321,31 +323,22 @@ public static class Parser
             if (line.Length == 0)
             {
                 buffer.AppendLine();
+                lineIndex++;
                 continue;
             }
 
             var startIndex = 0;
             while (startIndex < line.Length)
             {
+                // "{"
                 var openIndex = line.IndexOf('{', startIndex);
-                if (openIndex == -1)
+                if (openIndex >= 0)
                 {
-                    var closeIndex2 = line.IndexOf('}', startIndex);
-                    if (closeIndex2 == -1)
+                    // Inside for code span/block.
+                    if (inCodeFragment(lineIndex, openIndex))
                     {
-                        buffer.AppendLine(line.Substring(startIndex));
-                        break;
-                    }
-
-                    // "}}"
-                    if (closeIndex2 + 1 < line.Length &&
-                        line[closeIndex2 + 1] == '}')
-                    {
-                        if ((closeIndex2 + 2) < line.Length)
-                        {
-                            buffer.Append(line.Substring(startIndex, closeIndex2 - startIndex + 1));
-                        }
-                        startIndex = closeIndex2 + 2;
+                        buffer.Append(line.Substring(startIndex, openIndex - startIndex + 1));
+                        startIndex = openIndex + 1;
                         if (startIndex >= line.Length)
                         {
                             buffer.AppendLine();
@@ -353,89 +346,119 @@ public static class Parser
                         continue;
                     }
 
-                    throw new FormatException(
-                        $"Could not find open bracket. Path={textPathHint}");
-                }
-
-                // "{{"
-                if (openIndex + 1 < line.Length &&
-                    line[openIndex + 1] == '{')
-                {
-                    buffer.Append(line.Substring(startIndex, openIndex - startIndex + 1));
-                    startIndex = openIndex + 2;
-                    if (startIndex >= line.Length)
+                    // "{{"
+                    if (openIndex + 1 < line.Length &&
+                        line[openIndex + 1] == '{')
                     {
-                        buffer.AppendLine();
+                        buffer.Append(line.Substring(startIndex, openIndex - startIndex + 1));
+                        startIndex = openIndex + 2;
+                        if (startIndex >= line.Length)
+                        {
+                            buffer.AppendLine();
+                        }
+                        continue;
                     }
-                    continue;
-                }
 
-                if (startIndex >= line.Length)
-                {
-                    buffer.AppendLine(line.Substring(startIndex, openIndex - startIndex));
-                }
-                else
-                {
-                    buffer.Append(line.Substring(startIndex, openIndex - startIndex));
-                }
-
-                if (buffer.Length >= 1)
-                {
-                    nodes.Add(new LiteralTextNode(buffer.ToString()));
-                    buffer.Clear();
-                }
-
-                var closeIndex = line.IndexOf('}', openIndex + 1);
-                if (closeIndex == -1)
-                {
-                    throw new FormatException(
-                        $"Could not find close bracket. Path={textPathHint}");
-                }
-
-                startIndex = closeIndex + 1;
-
-                var expressionString = line.Substring(
-                    openIndex + 1, closeIndex - openIndex - 1);
-
-                var expression = ParseExpression(expressionString, ListTypes.List);
-
-                // Special case: iterator begin
-                if (expression is ApplyExpression(VariableExpression("foreach"), var iteratorParameters))
-                {
-                    if (iteratorParameters.Length <= 0)
+                    // "{ ... }"  (Spanning)
+                    var closeIndex = line.IndexOf('}', openIndex + 1);
+                    if (closeIndex == -1)
                     {
                         throw new FormatException(
-                            $"`foreach` parameter required. Path={textPathHint}");
+                            $"Could not find close bracket. Path={textPathHint}");
                     }
 
-                    nestedIterations.Push((iteratorParameters, nodes));
-                    nodes = new();
-                }
-                // Special case: iterator end
-                else if (expression is VariableExpression("end"))
-                {
-                    if (nestedIterations.Count <= 0)
-                    {
-                        throw new FormatException(
-                            $"Could not find iterator-begin. Path={textPathHint}");
-                    }
-
-                    var childNodes = nodes.ToArray();
-                    var (parameters, lastNodes) = nestedIterations.Pop();
-
-                    nodes = lastNodes;
-                    nodes.Add(new ForEachNode(parameters, childNodes));
-                }
-                else
-                {
-                    nodes.Add(new ExpressionNode(expression));
-
+                    // Exhausts literal text in the buffer.
                     if (startIndex >= line.Length)
                     {
-                        buffer.AppendLine();
+                        buffer.AppendLine(line.Substring(startIndex, openIndex - startIndex));
                     }
+                    else
+                    {
+                        buffer.Append(line.Substring(startIndex, openIndex - startIndex));
+                    }
+
+                    if (buffer.Length >= 1)
+                    {
+                        nodes.Add(new LiteralTextNode(buffer.ToString()));
+                        buffer.Clear();
+                    }
+
+                    startIndex = closeIndex + 1;
+
+                    // Extract an expression string.
+                    var expressionString = line.Substring(
+                        openIndex + 1, closeIndex - openIndex - 1);
+
+                    // Parse an expression.
+                    var expression = ParseExpression(expressionString, ListTypes.List);
+
+                    // Special case: iterator begin
+                    if (expression is ApplyExpression(VariableExpression("foreach"), var iteratorParameters))
+                    {
+                        if (iteratorParameters.Length <= 0)
+                        {
+                            throw new FormatException(
+                                $"`foreach` parameter required. Path={textPathHint}");
+                        }
+
+                        // Push current environment.
+                        nestedIterations.Push((iteratorParameters, nodes));
+                        nodes = new();
+                    }
+                    // Special case: iterator end
+                    else if (expression is VariableExpression("end"))
+                    {
+                        if (nestedIterations.Count <= 0)
+                        {
+                            throw new FormatException(
+                                $"Could not find iterator-begin. Path={textPathHint}");
+                        }
+
+                        // Pop last environment.
+                        var childNodes = nodes.ToArray();
+                        var (parameters, lastNodes) = nestedIterations.Pop();
+
+                        nodes = lastNodes;
+                        nodes.Add(new ForEachNode(parameters, childNodes));
+                    }
+                    // Other expression.
+                    else
+                    {
+                        nodes.Add(new ExpressionNode(expression));
+
+                        if (startIndex >= line.Length)
+                        {
+                            buffer.AppendLine();
+                        }
+                    }
+                }
+                // Not detected expression bracket.
+                else
+                {
+                    // "}}"
+                    var closeIndex = line.IndexOf('}', startIndex);
+                    if (closeIndex >= 0 &&
+                        closeIndex + 1 < line.Length &&
+                        line[closeIndex + 1] == '}')
+                    {
+                        if ((closeIndex + 2) < line.Length)
+                        {
+                            buffer.Append(line.Substring(startIndex, closeIndex - startIndex + 1));
+                        }
+                        startIndex = closeIndex + 2;
+                        if (startIndex >= line.Length)
+                        {
+                            buffer.AppendLine();
+                        }
+                        continue;
+                    }
+
+                    buffer.AppendLine(line.Substring(startIndex));
+                    break;
                 }
             }
+
+            lineIndex++;
         }
 
         if (buffer.Length >= 1)
@@ -645,12 +668,15 @@ public static class Parser
     {
         public readonly int StartLineIndex;
         public readonly int IndentLength;
+        public readonly char CodeEscapeChar;
         public readonly int CodeEscapeLength;
 
-        public CodeBlockContext(int startLineIndex, int indentLength, int codeEscapeLength)
+        public CodeBlockContext(
+            int startLineIndex, int indentLength, char codeEscapeChar, int codeEscapeLength)
         {
             this.StartLineIndex = startLineIndex;
             this.IndentLength = indentLength;
+            this.CodeEscapeChar = codeEscapeChar;
             this.CodeEscapeLength = codeEscapeLength;
         }
     }
@@ -677,8 +703,6 @@ public static class Parser
                 break;
             }
 
-            lineIndex++;
-
             // Skip empty lines, will detect start of body
             if (!string.IsNullOrWhiteSpace(line))
             {
@@ -693,65 +717,73 @@ public static class Parser
                         var codeEscapeChar = line[codeEscapeStartIndex];
 
                         var codeStartIndex = line.IndexOfNot(
-                            codeEscapeChar, codeEscapeStartIndex + 1);
-                        if (codeStartIndex >= 0)
+                            codeEscapeChar, codeEscapeStartIndex + 1) is { } i && i >= 0 ?
+                            i : line.Length;
+
+                        var codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
+
+                        // First spanning?   "aaa`bbb`ccc"
+                        var codeEndIndex = line.IndexOf(
+                            codeEscapeChar, codeStartIndex);
+                        if (codeEndIndex >= 0)
                         {
-                            var codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
+                        loop:
+                            var codeEscapeEndIndex = line.IndexOfNot(
+                                codeEscapeChar, codeEndIndex + 1) is { } i2 && i2 >= 0 ?
+                                    i2 : line.Length;
 
-                            // First spanning?   "aaa`bbb`ccc"
-                            var codeEndIndex = line.IndexOf(
-                                codeEscapeChar, codeStartIndex);
-                            if (codeEndIndex >= 0)
+                            // Should really be the same length, but judged loose.
+                            if ((codeEscapeEndIndex - codeEndIndex) >= codeEscapeLength)
                             {
-                            loop:
-                                var codeEscapeEndIndex = line.IndexOfNot(
-                                    codeEscapeChar, codeEndIndex + 1) is { } i && i >= 0 ?
-                                        i : line.Length;
-
-                                // Should really be the same length, but judged loose.
-                                if ((codeEscapeEndIndex - codeEndIndex) >= codeEscapeLength)
-                                {
-                                    var closure = (lineIndex, codeStartIndex, codeEndIndex);
-                                    inCodeFragments.Add((l, c) =>
-                                        l == closure.lineIndex &&
-                                        c >= closure.codeStartIndex &&
-                                        c < closure.codeEndIndex);
-                                }
-
-                                // Search next code span.
-                                codeEscapeStartIndex = line.IndexOfAny(
-                                    escapeChars, codeEscapeEndIndex);
-                                if (codeEscapeStartIndex >= 0)
-                                {
-                                    codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
-                                    codeEndIndex = line.IndexOf(
-                                        codeEscapeChar, codeStartIndex);
-                                    if (codeEndIndex >= 0)
-                                    {
-                                        goto loop;
-                                    }
-                                }
+                                var closure = (lineIndex, codeEscapeStartIndex, codeEscapeEndIndex);
+                                inCodeFragments.Add((l, c) =>
+                                    l == closure.lineIndex &&
+                                    c >= closure.codeEscapeStartIndex &&
+                                    c < closure.codeEscapeEndIndex);
                             }
-                            // Code block.
-                            else
-                            {
-                                var indentEndIndex = line.IndexOfNot(' ', 0);
 
-                                // Start code block
-                                if (codeBlockContext == null)
+                            // Search next code span.
+                            codeEscapeStartIndex = line.IndexOfAny(
+                                escapeChars, codeEscapeEndIndex);
+                            if (codeEscapeStartIndex >= 0)
+                            {
+                                codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
+                                codeEndIndex = line.IndexOf(
+                                    codeEscapeChar, codeStartIndex);
+                                if (codeEndIndex >= 0)
                                 {
-                                    codeBlockContext = new(lineIndex, 0, codeEscapeLength);
+                                    goto loop;
                                 }
                             }
                         }
+                        // Code block.
                         else
                         {
-                            // error/ignore?
+                            var indentEndIndex = line.IndexOfNot(' ', 0);
+
+                            // Start code block
+                            if (codeBlockContext == null)
+                            {
+                                codeBlockContext = new(
+                                    lineIndex, indentEndIndex, codeEscapeChar, codeEscapeLength);
+                            }
+                            // End code block
+                            else if (
+                                codeBlockContext.IndentLength == indentEndIndex &&
+                                codeBlockContext.CodeEscapeChar == codeEscapeChar &&
+                                codeBlockContext.CodeEscapeLength == codeEscapeLength)
+                            {
+                                var closure = (startLineIndex: codeBlockContext.StartLineIndex, endLineIndex: lineIndex + 1);
+                                inCodeFragments.Add((l, _) =>
+                                    l >= closure.startLineIndex &&
+                                    l < closure.endLineIndex);
+                            }
                         }
                     }
 
                     // (Sanitizing EOL)
                     markdownBody.AppendLine(line);
+                    lineIndex++;
 
                     line = await markdownReader.ReadLineAsync().
                         WithCancellation(ct).
@@ -762,8 +794,6 @@ public static class Parser
                     {
                         break;
                     }
-
-                    lineIndex++;
                 }
 
                 break;

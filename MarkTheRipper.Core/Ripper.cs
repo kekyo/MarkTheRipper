@@ -34,7 +34,7 @@ public sealed class Ripper
         PathEntry layoutPathHint,
         TextReader layoutReader,
         CancellationToken ct) =>
-        Parser.ParseTextTreeAsync(layoutPathHint, layoutReader, ct);
+        Parser.ParseTextTreeAsync(layoutPathHint, layoutReader, (_, _) => false, ct);
 
     private static void InjectAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
@@ -256,7 +256,10 @@ public sealed class Ripper
                 ConfigureAwait(false);
 
         var markdownBodyTree = await Parser.ParseTextTreeAsync(
-            markdownPath, new StringReader(markdownBody), ct);
+            markdownPath,
+            new StringReader(markdownBody),
+            (l, c) => inCodeFragments.Any(icf => icf(l, c)),
+            ct);
 
         var mc = SpawnWithAdditionalMetadata(
             markdownMetadata,
