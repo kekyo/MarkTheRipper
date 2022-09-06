@@ -57,7 +57,7 @@ $ mtr init mininum
 ```markdown
 ---
 title: Hello MarkTheRipper!
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 This is sample post.
@@ -365,8 +365,6 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 
 例えば、記事カテゴリだけを管理するファイルとして、`resource/metadata-category.json`のように別のファイルにしておけば、管理が容易になるでしょう。
 
-この再帰検索は、一度のみ実行できます。つまり、得られた値をキーに繰り返し検索し続ける事は出来ません。
-
 ----
 
 ### 列挙とネスト
@@ -392,7 +390,7 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 (... 本文 ...)
@@ -583,7 +581,7 @@ MarkTheRipper内部では、無名の`(root)`カテゴリに属することに�
 ```markdown
 ---
 title: Hello MarkTheRipper
-category: [foo,bar,baz]
+category: foo,bar,baz
 ---
 
 (... 本文 ...)
@@ -866,7 +864,7 @@ lang: ja-jp
 ```markdown
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Title: {title}
@@ -880,7 +878,7 @@ Title: {title}
 ````markdown
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Title: `{title}`

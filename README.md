@@ -61,7 +61,7 @@ That's it! Just to be sure, let's show you what's inside:
 ```markdown
 ---
 title: Hello MarkTheRipper!
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 This is sample post.
@@ -409,9 +409,6 @@ they will all be read and their contents merged when MarkTheRipper starts.
 For example, it would be easier to manage only article categories as separate files,
 such as `resource/metadata-category.json`.
 
-This recursive search can be performed only once (by design).
-In other words, it is not possible to keep searching repeatedly using the obtained values as keys.
-
 ----
 
 ### Enumeration and nesting
@@ -441,7 +438,7 @@ Now suppose we convert the following markdown:
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 (... Body ...)
@@ -641,7 +638,7 @@ The definition corresponding to `foobarbaz1.md` above is:
 ```markdown.
 ---
 title: Hello MarkTheRipper
-category: [foo,bar,baz]
+category: foo,bar,baz
 ---
 
 (... Body ...)
@@ -954,7 +951,7 @@ For example, the keyword replacement in:
 ```markdown
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Title: {title}
@@ -968,7 +965,7 @@ Keyword substitution on markdown does not work for code blocks:
 ````markdown
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Title: `{title}`
