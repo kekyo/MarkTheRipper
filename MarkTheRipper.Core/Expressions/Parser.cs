@@ -275,14 +275,21 @@ public static class Parser
                     ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
                     ConfigureAwait(false))),
             "category" => new ValueExpression(
-                ParseExpression(expressionString, ListTypes.StrictArray) is ArrayExpression(var elements) ?
-                    (await Task.WhenAll(elements.Select(element =>
-                        element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).AsTask())).
-                        ConfigureAwait(false)).
-                    Aggregate(
+                ParseExpression(expressionString, ListTypes.StrictArray) switch
+                {
+                    ArrayExpression(var elements) =>
+                        (await Task.WhenAll(elements.Select(element =>
+                            element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).AsTask())).
+                            ConfigureAwait(false)).
+                        SelectMany(categoryName => categoryName.
+                            Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).
+                            Where(categoryName => categoryName.Trim().Length >= 1)).
+                        Aggregate(
+                            new PartialCategoryEntry(),
+                            (agg, categoryName) => new PartialCategoryEntry(categoryName, agg)),
+                    _ =>
                         new PartialCategoryEntry(),
-                        (agg, categoryName) => new PartialCategoryEntry(categoryName, agg)) :
-                    new PartialCategoryEntry()),
+                }),
             "tags" => new ValueExpression(
                 ParseExpression(expressionString, ListTypes.StrictArray) is ArrayExpression(var elements) ?
                     await Task.WhenAll(elements.Select(async element =>

@@ -367,7 +367,39 @@ This is test contents.
 @"
 ---
 title: hoehoe
-category: [hoge1,hoge2,hoge3]
+category: hoge1,hoge2,hoge3
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+{foreach category.breadcrumbs}
+      <h1>Category: {item.name}</h1>
+{end}
+    {contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffCategoryLookup2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+category: hoge1/hoge2/hoge3
 tags: foo,bar
 ---
 
