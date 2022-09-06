@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,6 +18,11 @@ namespace MarkTheRipper.Metadata;
 
 internal static class EntryAggregator
 {
+    private static DateTimeOffset GetDate(MarkdownEntry? markdownEntry) =>
+        markdownEntry?.Date is DateTimeOffset dto ?
+            dto :
+            DateTimeOffset.MaxValue;
+
     public static async ValueTask<Dictionary<string, TagEntry>> AggregateTagsAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
         MetadataContext metadata,
@@ -38,7 +44,9 @@ internal static class EntryAggregator
                 g => new TagEntry(
                     g.Key,
                     g.Select(entry => entry.markdownEntry).
-                    OrderBy(markdownEntry => markdownEntry, MarkdownHeaderDateComparer.Instance).
+                    OrderBy(
+                        markdownEntry => markdownEntry,
+                        (lhs, rhs) => GetDate(lhs).CompareTo(GetDate(rhs))).
                     ToArray()));
 
     private static async ValueTask<CategoryEntry> AggregateCategoryAsync(

@@ -229,7 +229,7 @@ public sealed class BulkRipper
             {
                 if (!markdownEntry.DoesNotPublish)
                 {
-                    var appliedLayoutName = await this.ripper.RenderContentAsync(
+                    var appliedLayoutPath = await this.ripper.RenderContentAsync(
                         markdownEntry,
                         mc,
                         this.storeToBasePath,
@@ -240,7 +240,7 @@ public sealed class BulkRipper
                         relativeContentPath.PhysicalPath,
                         storeToPathElements.RelativePath,
                         contentBasePath,
-                        appliedLayoutName).
+                        appliedLayoutPath.PhysicalPath).
                         ConfigureAwait(false);
                 }
             }
@@ -285,7 +285,8 @@ public sealed class BulkRipper
         }
 #else
         await Task.WhenAll(candidates.
-            Select(candidate => RunOnceWithMeasurementAsync(candidate.contentsBasePath, candidate.relativeContentPath))).
+            Select(candidate => RunOnceWithMeasurementAsync(
+                candidate.contentsBasePath, candidate.relativeContentPath))).
             ConfigureAwait(false);
 #endif
 

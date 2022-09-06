@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
-using MarkTheRipper.Layout;
+using MarkTheRipper.TextTreeNodes;
 using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
@@ -27,14 +27,13 @@ namespace MarkTheRipper;
 /// </summary>
 public static class Driver
 {
-    private static async ValueTask<RootLayoutNode> ReadLayoutAsync(
+    private static async ValueTask<RootTextNode> ReadLayoutAsync(
         Ripper ripper,
-        string layoutPath,
-        string layoutName,
+        PathEntry layoutPath,
         CancellationToken ct)
     {
         using var rs = new FileStream(
-            layoutPath,
+            layoutPath.PhysicalPath,
             FileMode.Open,
             FileAccess.Read,
             FileShare.Read,
@@ -42,11 +41,11 @@ public static class Driver
             true);
         using var tr = new StreamReader(
             rs,
-            Encoding.UTF8,
+            Utilities.UTF8,
             true);
 
         return await ripper.ParseLayoutAsync(
-            layoutName,
+            layoutPath,
             tr,
             ct).
             ConfigureAwait(false);
@@ -123,7 +122,7 @@ public static class Driver
                 var layoutName =
                     Path.GetFileNameWithoutExtension(layoutPath).
                     Substring("layout-".Length);
-                var layout = await ReadLayoutAsync(ripper, layoutPath, layoutName, ct).
+                var layout = await ReadLayoutAsync(ripper, new PathEntry(layoutPath), ct).
                     ConfigureAwait(false);
                 return (layoutName, layout);
             })).

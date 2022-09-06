@@ -16,16 +16,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Layout;
+namespace MarkTheRipper.TextTreeNodes;
 
-internal sealed class ForEachNode : ILayoutNode
+internal sealed class ForEachNode : ITextTreeNode
 {
     private readonly IExpression[] parameters;
-    private readonly ILayoutNode[] childNodes;
+    private readonly ITextTreeNode[] childNodes;
 
     public ForEachNode(
         IExpression[] parameters,
-        ILayoutNode[] childNodes)
+        ITextTreeNode[] childNodes)
     {
         this.parameters = parameters;
         this.childNodes = childNodes;

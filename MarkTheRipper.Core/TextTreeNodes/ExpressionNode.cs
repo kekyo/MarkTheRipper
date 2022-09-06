@@ -10,13 +10,12 @@
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Layout;
+namespace MarkTheRipper.TextTreeNodes;
 
-internal sealed class ExpressionNode : ILayoutNode
+internal sealed class ExpressionNode : ITextTreeNode
 {
     private readonly IExpression expression;
 
@@ -42,5 +41,5 @@ internal sealed class ExpressionNode : ILayoutNode
     }
 
     public override string ToString() =>
-        $"Replacer={{{this.expression}}}";
+        $"Expression={{{this.expression}}}";
 }

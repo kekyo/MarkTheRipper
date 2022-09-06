@@ -84,7 +84,7 @@ H3 body.
 <body>
     <header>
         <h1>{title}</h1>
-        <p>Category:{foreach category.breadcrumb} {item.name}{end}</p>
+        <p>Category:{foreach category.breadcrumbs} {item.name}{end}</p>
         <p>Tags:{foreach tags} {item.name}{end}</p>
     </header>
     <hr />
@@ -643,13 +643,13 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 
 ```html
 <ul>
-  {foreach category.breadcrumb}
+  {foreach category.breadcrumbs}
   <li>{item.name}</li>
   {end}
 </ul>
 ```
 
-`breadcrumb`プロパティは、対象のカテゴリに至るカテゴリを、ルートから列挙出来る値を返します。
+`breadcrumbs`プロパティは、対象のカテゴリに至るカテゴリを、ルートから列挙出来る値を返します。
 （但し、対象のカテゴリがルートの場合は、ルートカテゴリを含み、それ以外の場合は含みません）
 
 列挙した個々の要素は、今まで説明してきたカテゴリと同様です。上記例では`name`プロパティでカテゴリ名を出力しています。
@@ -855,6 +855,42 @@ lang: ja-jp
 ```
 
 とすれば、1から`count`までの数値となり、自然な表現に近づける事が出来ます。
+
+----
+
+## マークダウン中のキーワードの置き換え
+
+これまでに説明してきたキーワードの置き換えは、レイアウトファイルに対して行うというものでした。
+このキーワード置き換え機能は、マークダウンファイルにも同様に適用されます。例えば:
+
+```markdown
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Title: {title}
+```
+
+このようなマークダウンを記述すると、`{title}`が同じようにキーワード置換されます。
+もちろんこれまでに説明してきた、関数キーワードによる計算も可能です。
+
+マークダウン上のキーワード置き換えは、コードブロックに対しては機能しません:
+
+````markdown
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Title: `{title}`
+
+```
+{title}
+```
+````
+
+上記のように、コードブロック内に配置された`{...}`は、MarkTheRipperで解釈されずに、そのまま出力されます。
 
 ----
 

@@ -2,12 +2,12 @@
 <html>
   <head>
     <title>hoehoe</title>
-    <meta name="keywords" content="foo,bar" />
   </head>
   <body>
-    <p>1 * 2 * 3 = 6</p>
-
 <p>Hello MarkTheRipper!
 This is test contents.</p>
-</body>
+<pre><code class="language-javascript">{title}
+</code></pre>
+
+  </body>
 </html>

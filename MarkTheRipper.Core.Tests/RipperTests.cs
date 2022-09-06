@@ -8,7 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using MarkTheRipper.Layout;
+using MarkTheRipper.TextTreeNodes;
 using MarkTheRipper.Metadata;
 using NUnit.Framework;
 using System;
@@ -29,9 +29,12 @@ public sealed class RipperTests
     {
         var metadata = new MetadataContext();
 
-        var layout = await Parser.ParseLayoutAsync(
-            layoutName, new StringReader(layoutText), default);
-        var layoutList = new Dictionary<string, RootLayoutNode>
+        var layout = await Parser.ParseTextTreeAsync(
+            new PathEntry(layoutName),
+            new StringReader(layoutText),
+            (_, _) => false,
+            default);
+        var layoutList = new Dictionary<string, RootTextNode>
         {
             { layoutName, layout }
         };
@@ -46,6 +49,7 @@ public sealed class RipperTests
         var ripper = new Ripper();
 
         var htmlWriter = new StringWriter();
+        htmlWriter.NewLine = Environment.NewLine;
         var appliedLayoutName = await ripper.RenderContentAsync(
             new PathEntry("RipperTests.md"),
             new StringReader(markdownText),
@@ -53,7 +57,7 @@ public sealed class RipperTests
             htmlWriter,
             default);
 
-        AreEqual(layoutName, appliedLayoutName);
+        AreEqual(layoutName, appliedLayoutName.Path);
 
         return htmlWriter.ToString();
     }
@@ -1088,6 +1092,250 @@ This is test contents.
     <p>(1 + 2) * 4 = {mul (add '1' 2) '4'}</p>
 
 {contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffBodyExamination1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+* {title}
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExamination2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+{foreach tags}
+* {item.name}
+{end}
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExaminationOnCodeBlock1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+```
+{title}
+```
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExaminationOnCodeBlock2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+```javascript
+{title}
+```
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExaminationOnCodeBlock3()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+   ```
+   {title}
+   ```
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExaminationOnCodeBlock4()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+   ```javascript
+   {title}
+   ```
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExaminationOnCodeSpan1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+`{title}`
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffBodyExaminationOnCodeSpan2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: [foo,bar,baz]
+---
+
+Hello MarkTheRipper!
+This is test contents.
+
+`{title}`
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+{contentBody}
+  </body>
 </html>
 ");
         await Verifier.Verify(actual);

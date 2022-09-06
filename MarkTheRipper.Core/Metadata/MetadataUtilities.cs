@@ -47,7 +47,7 @@ public static class MetadataUtilities
             true);
         var tr = new StreamReader(
             rs,
-            Encoding.UTF8,
+            Utilities.UTF8,
             true);
         var jr = new JsonTextReader(tr);
 
