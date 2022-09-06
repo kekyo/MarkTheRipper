@@ -71,7 +71,7 @@ public sealed class RipperTests
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -100,7 +100,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 layout: baz
 ---
 
@@ -131,7 +131,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -163,7 +163,7 @@ This is test contents.
 ---
 title: hoehoe
 lang: ja-jp
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -195,7 +195,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -227,7 +227,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -259,7 +259,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -293,7 +293,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 author: [hoge,hoe]
 ---
 
@@ -333,7 +333,7 @@ This is test contents.
 ---
 title: hoehoe
 category: main
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -368,7 +368,7 @@ This is test contents.
 ---
 title: hoehoe
 category: [hoge1,hoge2,hoge3]
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -401,7 +401,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -429,7 +429,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -459,7 +459,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -488,7 +488,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-category: [foo,bar,baz]
+category: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -522,7 +522,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -560,7 +560,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -600,7 +600,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -629,7 +629,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -658,7 +658,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -689,7 +689,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -718,7 +718,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -747,7 +747,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -778,7 +778,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -807,7 +807,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -836,7 +836,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -867,7 +867,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -896,7 +896,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -925,7 +925,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -956,7 +956,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -985,7 +985,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -1014,7 +1014,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -1046,7 +1046,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -1075,7 +1075,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -1106,7 +1106,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1135,7 +1135,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1166,7 +1166,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1197,7 +1197,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1228,7 +1228,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1259,7 +1259,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1290,7 +1290,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!
@@ -1319,7 +1319,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 Hello MarkTheRipper!

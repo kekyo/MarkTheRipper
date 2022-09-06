@@ -1,6 +1,6 @@
 ﻿---
 title: (Draft)
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 This is sample post.

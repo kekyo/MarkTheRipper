@@ -1,6 +1,6 @@
 ﻿---
 title: Hello MarkTheRipper!
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 This is sample post.

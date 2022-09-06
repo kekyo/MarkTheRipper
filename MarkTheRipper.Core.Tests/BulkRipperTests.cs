@@ -107,7 +107,7 @@ ref doc.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -145,7 +145,7 @@ This is test contents.
 ---
 title: hoehoe
 category: [hoge1,hoge2,hoge3]
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -182,7 +182,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!
@@ -221,7 +221,7 @@ This is test contents.
 @"
 ---
 title: hoehoe
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 Hello MarkTheRipper!

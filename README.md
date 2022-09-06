@@ -244,11 +244,12 @@ foobar: Hello MarkTheRipper!
 (... Body ...)
 ```
 
-* This header is called "FrontMatter" in other site generators and is written in YAML syntax.
+* Note: This header is called "FrontMatter" in other site generators and is written in YAML syntax.
   However, MarkTheRipper does not strictly use YAML,
   because uses a syntax that allows for greater flexibility in text.
-  For example, `title` is not required to be enclosed in double quotes.
-  For the record, MarkTheRipper does not use the term FrontMatter.
+  For example, `title` is not required to be enclosed in double quotes,
+  and `tags` is correctly recognized without square brackets.
+  For the record, MarkTheRipper does not use the term "FrontMatter."
 
 Do you somehow see how you can make use of metadata dictionaries?
 In other words, MarkTheRipper can treat any set of "key-value" pairs you write in the markdown header as a metadata dictionary,
