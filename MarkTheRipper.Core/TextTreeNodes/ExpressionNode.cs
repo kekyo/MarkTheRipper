@@ -10,6 +10,7 @@
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,15 +28,26 @@ internal sealed class ExpressionNode : ITextTreeNode
         MetadataContext metadata,
         CancellationToken ct)
     {
-        if (await Reducer.ReduceExpressionAndFormatAsync(this.expression, metadata, ct).
-                ConfigureAwait(false) is { } value)
+        var reduced = await expression.ReduceExpressionAsync(metadata, ct).
+            ConfigureAwait(false);
+        if (reduced is HtmlContentExpression(var content))
         {
-            await writer(value, ct).
-                ConfigureAwait(false);
+            if (metadata.Lookup("htmlContents") is ValueExpression(Dictionary<string, string> htmlContents))
+            {
+                var idString = $"__{Guid.NewGuid().ToString("N")}__";
+
+                htmlContents.Add(idString, content);
+
+                await writer(idString, ct).
+                    ConfigureAwait(false);
+            }
         }
         else
         {
-            await writer(this.expression.PrettyPrint, ct).
+            var reducedString = await MetadataUtilities.FormatValueAsync(
+                reduced, metadata, ct).
+                ConfigureAwait(false);
+            await writer(reducedString, ct).
                 ConfigureAwait(false);
         }
     }

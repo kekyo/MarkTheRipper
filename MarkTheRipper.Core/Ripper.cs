@@ -250,52 +250,75 @@ public sealed class Ripper
         TextWriter outputHtmlWriter,
         CancellationToken ct)
     {
+        // Step 1: Parse markdown metadata and code fragment locations.
         var (markdownMetadata, markdownBody, inCodeFragments) =
             await Parser.ParseMarkdownBodyAsync(
                 markdownPath, markdownReader, ct).
                 ConfigureAwait(false);
 
+        // Step 2: Parse markdown body to AST (ITextTreeNode).
         var markdownBodyTree = await Parser.ParseTextTreeAsync(
             markdownPath,
             new StringReader(markdownBody),
             (l, c) => inCodeFragments.Any(icf => icf(l, c)),
             ct);
 
+        // Step 3: Spawn new metadata context derived parent.
         var mc = SpawnWithAdditionalMetadata(
             markdownMetadata,
             metadata,
             markdownPath);
 
-        var renderedMarkdownBody = new StringWriter();
-        renderedMarkdownBody.NewLine = Environment.NewLine;
+        // Step 4: Render markdown with looking up metadata context.
+        var renderedMarkdownBodyWriter = new StringWriter();
+        renderedMarkdownBodyWriter.NewLine = Environment.NewLine;
         await markdownBodyTree.RenderAsync(
-            (text, _) => { renderedMarkdownBody.Write(text); return default; }, mc, ct).
+            (text, _) => { renderedMarkdownBodyWriter.Write(text); return default; }, mc, ct).
             ConfigureAwait(false);
 
+        // Step 5: Parse renderred markdown to AST (MarkDig)
         var markdownDocument = MarkdownParser.Parse(
-            renderedMarkdownBody.ToString());
+            renderedMarkdownBodyWriter.ToString());
 
-        // TODO: Make a dictionary of CodeBlocks and the range of CodeInlines
-        // found by enumerating LeafBlock.Inline, and then
-        // ParseLayoutAsync() while ignoring `{...}`
-
-        var contentBody = new StringWriter();
-        var renderer = new HtmlRenderer(contentBody);
-        contentBody.NewLine = Environment.NewLine;  // HACK: MarkDig will update NewLine signature...
+        // Step 6: Render HTML from AST.
+        var contentBodyWriter = new StringWriter();
+        var renderer = new HtmlRenderer(contentBodyWriter);
+        contentBodyWriter.NewLine = Environment.NewLine;  // HACK: MarkDig will update NewLine signature...
         renderer.Render(markdownDocument);
 
-        mc.SetValue("contentBody", contentBody.ToString());
+        // Step 7: Set renderred HTML into metadata context.
+        mc.SetValue("contentBody", contentBodyWriter.ToString());
 
-        var layout = await GetLayoutAsync(metadata, ct).
+        // Step 8: Get layout AST (ITextTreeNode).
+        var layoutNode = await GetLayoutAsync(metadata, ct).
             ConfigureAwait(false);
 
-        await layout.RenderAsync(
-            (text, ct) => outputHtmlWriter.WriteAsync(text).WithCancellation(ct),
-            mc,
-            ct).
+        // Step 9: Setup HTML content dictionary (will be added by HtmlContentExpression)
+        var htmlContents = new Dictionary<string, string>();
+        mc.SetValue("htmlContents", htmlContents);
+
+        // Step 10: Render markdown from layout AST with overall metadata.
+        var overallHtmlContent = new StringBuilder();
+        var overallHtmlContentWriter = new StringWriter(overallHtmlContent);
+        overallHtmlContentWriter.NewLine = Environment.NewLine;
+        await layoutNode.RenderAsync(
+            (text, _) => { overallHtmlContentWriter.Write(text); return default; }, mc, ct).
+            ConfigureAwait(false);
+        await overallHtmlContentWriter.FlushAsync().
+            WithCancellation(ct).
             ConfigureAwait(false);
 
-        return layout.Path;
+        // Step 11: Replace all contains if required.
+        foreach (var entry in htmlContents)
+        {
+            overallHtmlContent.Replace(entry.Key, entry.Value);
+        }
+
+        await outputHtmlWriter.WriteAsync(overallHtmlContent.ToString()).
+            WithCancellation(ct).
+            ConfigureAwait(false);
+
+        return layoutNode.Path;
     }
 
     /// <summary>
