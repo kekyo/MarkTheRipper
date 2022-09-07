@@ -29,8 +29,14 @@ public static class MetadataUtilities
 
     /////////////////////////////////////////////////////////////////////
 
-    public static void SetDefaultFunctions(MetadataContext metadata)
+    public static void SetDefaults(MetadataContext metadata)
     {
+        metadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
+        metadata.SetValue("generated", DateTimeOffset.Now);
+        metadata.SetValue("lang", CultureInfo.CurrentCulture);
+        metadata.SetValue("timezone", TimeZoneInfo.Local);
+        metadata.SetValue("layout", "page");
+
         metadata.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
         metadata.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
         metadata.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));

@@ -121,6 +121,8 @@ public static class Reducer
                 ReduceArrayAsync(elements, metadata, ct),
             ApplyExpression(var function, var parameters) =>
                 ReduceApplyAsync(function, parameters, metadata, ct),
+            HtmlContentExpression(var content) =>
+                new ValueTask<object?>(new HtmlContentEntry(content)),
             _ => throw new InvalidOperationException(),
         };
 

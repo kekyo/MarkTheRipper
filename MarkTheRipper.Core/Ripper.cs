@@ -261,15 +261,14 @@ public sealed class Ripper
             markdownPath);
 
         // Step 4: Render markdown with looking up metadata context.
-        var renderedMarkdownBodyWriter = new StringWriter();
-        renderedMarkdownBodyWriter.NewLine = Environment.NewLine;
+        var renderedMarkdownBody = new StringBuilder();
         await markdownBodyTree.RenderAsync(
-            (text, _) => { renderedMarkdownBodyWriter.Write(text); return default; }, mc, ct).
+            (text, _) => { renderedMarkdownBody.Append(text); return default; }, mc, ct).
             ConfigureAwait(false);
 
         // Step 5: Parse renderred markdown to AST (MarkDig)
         var markdownDocument = MarkdownParser.Parse(
-            renderedMarkdownBodyWriter.ToString());
+            renderedMarkdownBody.ToString());
 
         // Step 6: Render HTML from AST.
         var contentBodyWriter = new StringWriter();
@@ -290,13 +289,8 @@ public sealed class Ripper
 
         // Step 10: Render markdown from layout AST with overall metadata.
         var overallHtmlContent = new StringBuilder();
-        var overallHtmlContentWriter = new StringWriter(overallHtmlContent);
-        overallHtmlContentWriter.NewLine = Environment.NewLine;
         await layoutNode.RenderAsync(
-            (text, _) => { overallHtmlContentWriter.Write(text); return default; }, mc, ct).
-            ConfigureAwait(false);
-        await overallHtmlContentWriter.FlushAsync().
-            WithCancellation(ct).
+            (text, _) => { overallHtmlContent.Append(text); return default; }, mc, ct).
             ConfigureAwait(false);
 
         // Step 11: Replace all contains if required.

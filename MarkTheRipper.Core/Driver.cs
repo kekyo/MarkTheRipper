@@ -169,15 +169,9 @@ public static class Driver
         //////////////////////////////////////////////////////////////
 
         var rootMetadata = new MetadataContext();
+        MetadataUtilities.SetDefaults(rootMetadata);
 
-        rootMetadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
-        rootMetadata.SetValue("generated", DateTimeOffset.Now);
-        rootMetadata.SetValue("lang", CultureInfo.CurrentCulture);
-        rootMetadata.SetValue("timezone", TimeZoneInfo.Local);
         rootMetadata.SetValue("layoutList", layoutList);
-        rootMetadata.SetValue("layout", "page");
-
-        MetadataUtilities.SetDefaultFunctions(rootMetadata);
 
         foreach (var kv in metadataList)
         {

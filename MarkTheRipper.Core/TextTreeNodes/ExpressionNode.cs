@@ -30,26 +30,26 @@ internal sealed class ExpressionNode : ITextTreeNode
     {
         var reduced = await expression.ReduceExpressionAsync(metadata, ct).
             ConfigureAwait(false);
-        if (reduced is HtmlContentExpression(var content))
+        if (reduced is HtmlContentEntry(var content))
         {
             if (metadata.Lookup("htmlContents") is ValueExpression(Dictionary<string, string> htmlContents))
             {
-                var idString = $"__{Guid.NewGuid().ToString("N")}__";
+                var idString = $"@@{Guid.NewGuid().ToString("N")}@@";
 
                 htmlContents.Add(idString, content);
 
                 await writer(idString, ct).
                     ConfigureAwait(false);
+
+                return;
             }
         }
-        else
-        {
-            var reducedString = await MetadataUtilities.FormatValueAsync(
-                reduced, metadata, ct).
-                ConfigureAwait(false);
-            await writer(reducedString, ct).
-                ConfigureAwait(false);
-        }
+
+        var reducedString = await MetadataUtilities.FormatValueAsync(
+            reduced, metadata, ct).
+            ConfigureAwait(false);
+        await writer(reducedString, ct).
+            ConfigureAwait(false);
     }
 
     public override string ToString() =>

@@ -28,7 +28,7 @@ public sealed class BulkRipperTests
         params (string keyName, object? value)[] baseMetadata)
     {
         var metadata = new MetadataContext();
-        MetadataUtilities.SetDefaultFunctions(metadata);
+        MetadataUtilities.SetDefaults(metadata);
 
         var layout = await Parser.ParseTextTreeAsync(
             new PathEntry(layoutName),
