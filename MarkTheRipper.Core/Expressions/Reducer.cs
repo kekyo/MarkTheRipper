@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Functions;
 using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;

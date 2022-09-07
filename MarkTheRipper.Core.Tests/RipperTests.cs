@@ -8,8 +8,9 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using MarkTheRipper.TextTreeNodes;
+using MarkTheRipper.Functions;
 using MarkTheRipper.Metadata;
+using MarkTheRipper.TextTreeNodes;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
