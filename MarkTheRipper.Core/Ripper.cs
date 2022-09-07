@@ -215,15 +215,6 @@ public sealed class Ripper
     {
         var mc = parentMetadata.Spawn();
 
-        mc.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
-        mc.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
-        mc.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));
-        mc.SetValue("add", FunctionFactory.CastTo(Formula.AddAsync));
-        mc.SetValue("sub", FunctionFactory.CastTo(Formula.SubtractAsync));
-        mc.SetValue("mul", FunctionFactory.CastTo(Formula.MultipleAsync));
-        mc.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
-        mc.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
-
         InjectAdditionalMetadata(markdownMetadata, markdownPath);
 
         foreach (var kv in markdownMetadata)
@@ -314,6 +305,7 @@ public sealed class Ripper
             overallHtmlContent.Replace(entry.Key, entry.Value);
         }
 
+        // Step 12: Final output.
         await outputHtmlWriter.WriteAsync(overallHtmlContent.ToString()).
             WithCancellation(ct).
             ConfigureAwait(false);

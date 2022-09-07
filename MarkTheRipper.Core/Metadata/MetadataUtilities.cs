@@ -20,12 +20,27 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MarkTheRipper.Functions;
 
 namespace MarkTheRipper.Metadata;
 
 public static class MetadataUtilities
 {
     private static readonly object?[] empty = new object?[0];
+
+    /////////////////////////////////////////////////////////////////////
+
+    public static void SetDefaultFunctions(MetadataContext metadata)
+    {
+        metadata.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
+        metadata.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
+        metadata.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));
+        metadata.SetValue("add", FunctionFactory.CastTo(Formula.AddAsync));
+        metadata.SetValue("sub", FunctionFactory.CastTo(Formula.SubtractAsync));
+        metadata.SetValue("mul", FunctionFactory.CastTo(Formula.MultipleAsync));
+        metadata.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
+        metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
+    }
 
     /////////////////////////////////////////////////////////////////////
 

@@ -19,6 +19,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MarkTheRipper.Expressions;
+using MarkTheRipper.Functions;
 
 namespace MarkTheRipper;
 
@@ -174,6 +176,8 @@ public static class Driver
         rootMetadata.SetValue("timezone", TimeZoneInfo.Local);
         rootMetadata.SetValue("layoutList", layoutList);
         rootMetadata.SetValue("layout", "page");
+
+        MetadataUtilities.SetDefaultFunctions(rootMetadata);
 
         foreach (var kv in metadataList)
         {
