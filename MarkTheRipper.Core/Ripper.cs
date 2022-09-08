@@ -10,18 +10,17 @@
 using Markdig.Parsers;
 using Markdig.Renderers;
 using MarkTheRipper.Expressions;
-using MarkTheRipper.Functions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Globalization;
 
 namespace MarkTheRipper;
 
@@ -34,7 +33,11 @@ public sealed class Ripper
         PathEntry layoutPathHint,
         TextReader layoutReader,
         CancellationToken ct) =>
-        Parser.ParseTextTreeAsync(layoutPathHint, layoutReader, (_, _) => false, ct);
+        Parser.ParseTextTreeAsync(
+            layoutPathHint,
+            ct => layoutReader.ReadLineAsync().WithCancellation(ct),
+            (_, _) => false,
+            ct);
 
     private static void InjectAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
@@ -95,7 +98,9 @@ public sealed class Ripper
                 true);
 
             return await Parser.ParseMarkdownHeaderAsync(
-                markdownPath, markdownReader, ct).
+                markdownPath,
+                ct => markdownReader.ReadLineAsync().WithCancellation(ct),
+                ct).
                 ConfigureAwait(false);
         }
 
@@ -132,15 +137,16 @@ public sealed class Ripper
                 markdownWriter.NewLine = Environment.NewLine;
 
                 await Parser.ParseAndAppendMarkdownHeaderAsync(
-                    markdownReader,
+                    ct => markdownReader.ReadLineAsync().WithCancellation(ct),
                     new Dictionary<string, string>
                     {
                         { "date", generatedDate.ToString(null, CultureInfo.InvariantCulture) },
                     },
-                    markdownWriter,
+                    (text, ct) => markdownWriter.WriteLineAsync(text).WithCancellation(ct),
                     ct);
 
                 await markdownWriter.FlushAsync().
+                    WithCancellation(ct).
                     ConfigureAwait(false);
             }
             catch
@@ -244,13 +250,16 @@ public sealed class Ripper
         // Step 1: Parse markdown metadata and code fragment locations.
         var (markdownMetadata, markdownBody, inCodeFragments) =
             await Parser.ParseMarkdownBodyAsync(
-                markdownPath, markdownReader, ct).
+                markdownPath,
+                ct => markdownReader.ReadLineAsync().WithCancellation(ct),
+                ct).
                 ConfigureAwait(false);
 
         // Step 2: Parse markdown body to AST (ITextTreeNode).
+        var tr = new StringReader(markdownBody);
         var markdownBodyTree = await Parser.ParseTextTreeAsync(
             markdownPath,
-            new StringReader(markdownBody),
+            _ => new ValueTask<string?>(tr.ReadLine()),
             (l, c) => inCodeFragments.Any(icf => icf(l, c)),
             ct);
 
@@ -263,7 +272,7 @@ public sealed class Ripper
         // Step 4: Render markdown with looking up metadata context.
         var renderedMarkdownBody = new StringBuilder();
         await markdownBodyTree.RenderAsync(
-            (text, _) => { renderedMarkdownBody.Append(text); return default; }, mc, ct).
+            text => renderedMarkdownBody.Append(text), mc, ct).
             ConfigureAwait(false);
 
         // Step 5: Parse renderred markdown to AST (MarkDig)
@@ -290,7 +299,7 @@ public sealed class Ripper
         // Step 10: Render markdown from layout AST with overall metadata.
         var overallHtmlContent = new StringBuilder();
         await layoutNode.RenderAsync(
-            (text, _) => { overallHtmlContent.Append(text); return default; }, mc, ct).
+            text => overallHtmlContent.Append(text), mc, ct).
             ConfigureAwait(false);
 
         // Step 11: Replace all contains if required.

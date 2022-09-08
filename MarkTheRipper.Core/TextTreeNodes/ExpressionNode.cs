@@ -24,7 +24,7 @@ internal sealed class ExpressionNode : ITextTreeNode
         this.expression = expression;
 
     public async ValueTask RenderAsync(
-        Func<string, CancellationToken, ValueTask> writer,
+        Action<string> writer,
         MetadataContext metadata,
         CancellationToken ct)
     {
@@ -35,12 +35,9 @@ internal sealed class ExpressionNode : ITextTreeNode
             if (metadata.Lookup("htmlContents") is ValueExpression(Dictionary<string, string> htmlContents))
             {
                 var idString = $"@@{Guid.NewGuid().ToString("N")}@@";
-
                 htmlContents.Add(idString, content);
 
-                await writer(idString, ct).
-                    ConfigureAwait(false);
-
+                writer(idString);
                 return;
             }
         }
@@ -48,8 +45,7 @@ internal sealed class ExpressionNode : ITextTreeNode
         var reducedString = await MetadataUtilities.FormatValueAsync(
             reduced, metadata, ct).
             ConfigureAwait(false);
-        await writer(reducedString, ct).
-            ConfigureAwait(false);
+        writer(reducedString);
     }
 
     public override string ToString() =>

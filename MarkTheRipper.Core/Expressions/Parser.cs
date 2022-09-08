@@ -13,7 +13,6 @@ using MarkTheRipper.TextTreeNodes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -306,7 +305,7 @@ public static class Parser
 
     internal static async ValueTask<RootTextNode> ParseTextTreeAsync(
         PathEntry textPathHint,
-        TextReader textReader,
+        Func<CancellationToken, ValueTask<string?>> textReader,
         Func<int, int, bool> inCodeFragment,
         CancellationToken ct)
     {
@@ -319,8 +318,7 @@ public static class Parser
 
         while (true)
         {
-            var line = await textReader.ReadLineAsync().
-                WithCancellation(ct).
+            var line = await textReader(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -482,14 +480,13 @@ public static class Parser
 
     internal static async ValueTask<Dictionary<string, IExpression>> ParseMarkdownHeaderAsync(
         PathEntry relativeContentPathHint,
-        TextReader markdownReader,
+        Func<CancellationToken, ValueTask<string?>> markdownReader,
         CancellationToken ct)
     {
         // `---`
         while (true)
         {
-            var line = await markdownReader.ReadLineAsync().
-                WithCancellation(ct).
+            var line = await markdownReader(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -511,8 +508,7 @@ public static class Parser
         // `title: Hello world`
         while (true)
         {
-            var line = await markdownReader.ReadLineAsync().
-                WithCancellation(ct).
+            var line = await markdownReader(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -555,9 +551,9 @@ public static class Parser
     }
 
     internal static async ValueTask ParseAndAppendMarkdownHeaderAsync(
-        TextReader markdownReader,
+        Func<CancellationToken, ValueTask<string?>> markdownReader,
         IReadOnlyDictionary<string, string> values,
-        TextWriter markdownWriter,
+        Func<string, CancellationToken, ValueTask> markdownWriter,
         CancellationToken ct)
     {
         // Writer is overlapped.
@@ -568,8 +564,7 @@ public static class Parser
             // `---`
             while (true)
             {
-                var line = await markdownReader.ReadLineAsync().
-                    WithCancellation(ct).
+                var line = await markdownReader(ct).
                     ConfigureAwait(false);
                 if (line == null)
                 {
@@ -579,8 +574,7 @@ public static class Parser
                 await writingTask.
                     ConfigureAwait(false);
 
-                writingTask = markdownWriter.WriteLineAsync(line).
-                    WithCancellation(ct);
+                writingTask = markdownWriter(line, ct);
 
                 if (!string.IsNullOrWhiteSpace(line))
                 {
@@ -594,8 +588,7 @@ public static class Parser
             // `title: Hello world`
             while (true)
             {
-                var line = await markdownReader.ReadLineAsync().
-                    WithCancellation(ct).
+                var line = await markdownReader(ct).
                     ConfigureAwait(false);
                 if (line == null)
                 {
@@ -615,13 +608,11 @@ public static class Parser
 
                             foreach (var entry in values)
                             {
-                                await markdownWriter.WriteLineAsync($"{entry.Key}: {entry.Value}").
-                                    WithCancellation(ct).
+                                await markdownWriter($"{entry.Key}: {entry.Value}", ct).
                                     ConfigureAwait(false);
                             }
 
-                            writingTask = markdownWriter.WriteLineAsync(line).
-                                WithCancellation(ct);
+                            writingTask = markdownWriter(line, ct);
                             break;
                         }
                         else
@@ -634,15 +625,13 @@ public static class Parser
                 await writingTask.
                     ConfigureAwait(false);
 
-                await markdownWriter.WriteLineAsync(line).
-                    WithCancellation(ct).
+                await markdownWriter(line, ct).
                     ConfigureAwait(false);
             }
 
             while (true)
             {
-                var line = await markdownReader.ReadLineAsync().
-                    WithCancellation(ct).
+                var line = await markdownReader(ct).
                     ConfigureAwait(false);
 
                 // EOF
@@ -654,8 +643,7 @@ public static class Parser
                 await writingTask.
                     ConfigureAwait(false);
 
-                writingTask = markdownWriter.WriteLineAsync(line).
-                    WithCancellation(ct);
+                writingTask = markdownWriter(line, ct);
             }
         }
         finally
@@ -690,7 +678,7 @@ public static class Parser
 
     internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody, Func<int, int, bool>[] inCodeFragments)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
-        TextReader markdownReader,
+        Func<CancellationToken, ValueTask<string?>> markdownReader,
         CancellationToken ct)
     {
         var markdownMetadata = await ParseMarkdownHeaderAsync(
@@ -702,8 +690,7 @@ public static class Parser
 
         while (true)
         {
-            var line = await markdownReader.ReadLineAsync().
-                WithCancellation(ct).
+            var line = await markdownReader(ct).
                 ConfigureAwait(false);
             if (line == null)
             {
@@ -792,8 +779,7 @@ public static class Parser
                     markdownBody.AppendLine(line);
                     lineIndex++;
 
-                    line = await markdownReader.ReadLineAsync().
-                        WithCancellation(ct).
+                    line = await markdownReader(ct).
                         ConfigureAwait(false);
 
                     // EOF

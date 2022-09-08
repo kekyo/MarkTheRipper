@@ -17,7 +17,7 @@ namespace MarkTheRipper.TextTreeNodes;
 public interface ITextTreeNode
 {
     ValueTask RenderAsync(
-        Func<string, CancellationToken, ValueTask> writer,
+        Action<string> writer,
         MetadataContext metadata,
         CancellationToken ct);
 }

@@ -42,7 +42,7 @@ public sealed class RootTextNode :
         };
 
     public async ValueTask RenderAsync(
-        Func<string, CancellationToken, ValueTask> writer,
+        Action<string> writer,
         MetadataContext metadata,
         CancellationToken ct)
     {

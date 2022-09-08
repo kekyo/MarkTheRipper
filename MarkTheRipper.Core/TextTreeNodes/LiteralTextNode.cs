@@ -22,10 +22,13 @@ internal sealed class LiteralTextNode : ITextTreeNode
         this.text = text;
 
     public ValueTask RenderAsync(
-        Func<string, CancellationToken, ValueTask> writer,
+        Action<string> writer,
         MetadataContext metadata,
-        CancellationToken ct) =>
-        writer(text, ct);
+        CancellationToken ct)
+    {
+        writer(text);
+        return default;
+    }
 
     public override string ToString() =>
         $"LiteralText: \"{text}\"";

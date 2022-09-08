@@ -32,7 +32,7 @@ internal sealed class ForEachNode : ITextTreeNode
     }
 
     public async ValueTask RenderAsync(
-        Func<string, CancellationToken, ValueTask> writer,
+        Action<string> writer,
         MetadataContext metadata,
         CancellationToken ct)
     {
@@ -45,7 +45,7 @@ internal sealed class ForEachNode : ITextTreeNode
 
             var boundName =
                 this.parameters.ElementAtOrDefault(1)?.PrettyPrint ??
-            "item";
+                "item";
 
             var count = enumerable switch
             {
