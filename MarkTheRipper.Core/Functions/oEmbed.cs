@@ -7,16 +7,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using AngleSharp.Css.Dom;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -144,21 +141,24 @@ internal static class oEmbed
 
         foreach (var targetEndPoint in targetEndPoints)
         {
-            var requestUrlString = $"{targetEndPoint}?url={permaLinkString}&width=auto&height=auto";
+            var requestUrlString = $"{targetEndPoint}?url={permaLinkString}";
             try
             {
                 var requestUrl = new Uri(requestUrlString, UriKind.Absolute);
                 var metadataJson = await Utilities.FetchJsonAsync(requestUrl, ct).
                     ConfigureAwait(false);
 
+                // oEmbed metadata produces `html` data.
                 if (metadataJson.GetValue<string>("html") is { } htmlString &&
                     !string.IsNullOrWhiteSpace(htmlString))
                 {
+                    // Accept with sanitized HTML.
                     var sanitizedHtmlString = await Sanitize_oEmbedBodySizeAsync(htmlString).
                         ConfigureAwait(false);
-
                     return new HtmlContentExpression(sanitizedHtmlString);
                 }
+
+                // TODO: Render with oEmbed metadata and layout.
             }
             catch (Exception ex)
             {
@@ -167,9 +167,10 @@ internal static class oEmbed
             }
         }
 
-        // TODO: HTML metadata (OGP)
+        // TODO: Fetch HTML and render OGP metadata.
+        // TODO: Render with layout.
 
         return new HtmlContentExpression(
-            $"<a class='oEmbed-link' href='{permaLinkString}'>{permaLinkString}</a>");
+            $"<div class='oEmbed-outer'><a class='oEmbed-link' href='{permaLinkString}'>{permaLinkString}</a></div>");
     }
 }
