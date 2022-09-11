@@ -95,8 +95,8 @@ internal static class oEmbed
             }
         }
 
-        var ratioString = width >= 0 && height >= 0 ?
-            $"padding-top:{(height / (double)width):P3};" :
+        var ratioString = width >= 1 && height >= 1 ?
+            $" padding-top:{(height / (double)width):P3};" :
             string.Empty;
 
         return $"<div class='oEmbed-outer'><div style='position:relative; width:100%;{ratioString}'>{html.Body!.InnerHtml}</div></div>";
