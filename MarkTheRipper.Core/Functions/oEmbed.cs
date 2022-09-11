@@ -124,6 +124,7 @@ internal static class oEmbed
                 $"Invalid oEmbed function argument: URL={permaLinkString}");
         }
 
+        // TODO: cache system
         var providersJson = await Utilities.FetchJsonAsync(oEmbedProviderListUrl, ct).
             ConfigureAwait(false);
 

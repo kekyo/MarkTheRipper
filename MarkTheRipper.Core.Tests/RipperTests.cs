@@ -1400,8 +1400,37 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed 'https://www.youtube.com/watch?v=1La4QzGeaaQ'}
+    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
+{contentBody}</body>
+</html>
+");
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbed2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+{oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
 {contentBody}</body>
 </html>
 ");
