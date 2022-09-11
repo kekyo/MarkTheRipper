@@ -35,7 +35,7 @@ internal static class EntryAggregator
                     Select(tag => (tag, markdownEntry)).
                     Where(entry => !string.IsNullOrWhiteSpace(entry.tag.Name)).
                     ToArray() :
-                Utilities.Empty<(PartialTagEntry tag, MarkdownEntry markdownEntry)>())).
+                InternalUtilities.Empty<(PartialTagEntry tag, MarkdownEntry markdownEntry)>())).
             ConfigureAwait(false)).
             SelectMany(entries => entries).
             GroupBy(entry => entry.tag.Name).
@@ -46,7 +46,7 @@ internal static class EntryAggregator
                     g.Select(entry => entry.markdownEntry).
                     OrderBy(
                         markdownEntry => markdownEntry,
-                        (lhs, rhs) => GetDate(lhs).CompareTo(GetDate(rhs))).
+                        new DelegatedComparer<MarkdownEntry?>((lhs, rhs) => GetDate(lhs).CompareTo(GetDate(rhs)))).
                     ToArray()));
 
     private static async ValueTask<CategoryEntry> AggregateCategoryAsync(
@@ -63,7 +63,7 @@ internal static class EntryAggregator
                     await markdownEntry.GetPropertyValueAsync("category", metadata, ct).
                         ConfigureAwait(false) is PartialCategoryEntry entry ?
                     entry.Unfold(e => e.Parent).Reverse().Skip(1).ToArray() :
-                    Utilities.Empty<PartialCategoryEntry>()))).
+                    InternalUtilities.Empty<PartialCategoryEntry>()))).
             ConfigureAwait(false);
 
         var childCategoryEntries = (await Task.WhenAll(categoryLists.

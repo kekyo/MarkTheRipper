@@ -41,7 +41,7 @@ internal sealed class IteratorEntry :
             {
                 "index" => new(this.Index),
                 "count" => new(this.Count),
-                _ => Utilities.NullAsync,
+                _ => InternalUtilities.NullAsync,
             };
 
     public override string ToString() =>

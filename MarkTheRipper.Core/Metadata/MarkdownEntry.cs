@@ -96,7 +96,7 @@ public sealed class MarkdownEntry :
         string keyName, MetadataContext metadata, CancellationToken ct) =>
         this.metadata.TryGetValue(keyName, out var valueExpression) ?
             valueExpression.ReduceExpressionAsync(metadata, ct) :
-            Utilities.NullAsync;
+            InternalUtilities.NullAsync;
 
     public bool Equals(MarkdownEntry? other) =>
         other is { } rhs &&

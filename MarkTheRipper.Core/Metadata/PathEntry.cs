@@ -44,7 +44,7 @@ public sealed class PathEntry :
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, MetadataContext metadata, CancellationToken ct) =>
-        Utilities.NullAsync;
+        InternalUtilities.NullAsync;
 
     public bool Equals(PathEntry? other) =>
         other is { } rhs &&

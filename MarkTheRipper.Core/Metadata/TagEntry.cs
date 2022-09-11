@@ -20,7 +20,7 @@ public sealed class TagEntry :
     public readonly MarkdownEntry[] Entries;
 
     public TagEntry(string name) :
-        this(name, Utilities.Empty<MarkdownEntry>())
+        this(name, InternalUtilities.Empty<MarkdownEntry>())
     {
     }
 
@@ -41,7 +41,7 @@ public sealed class TagEntry :
         {
             "name" => new(this.Name),
             "entries" => new(this.Entries),
-            _ => Utilities.NullAsync,
+            _ => InternalUtilities.NullAsync,
         };
 
     public override string ToString() =>

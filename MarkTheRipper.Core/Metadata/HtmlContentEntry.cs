@@ -27,7 +27,7 @@ public sealed class HtmlContentEntry :
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, MetadataContext metadata, CancellationToken ct) =>
-        Utilities.NullAsync;
+        InternalUtilities.NullAsync;
 
     public void Deconstruct(out string content) =>
         content = this.Content;

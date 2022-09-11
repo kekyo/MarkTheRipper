@@ -38,7 +38,7 @@ public sealed class RootTextNode :
         keyName switch
         {
             "name" => new(this.Path),
-            _ => Utilities.NullAsync,
+            _ => InternalUtilities.NullAsync,
         };
 
     public async ValueTask RenderAsync(

@@ -84,7 +84,7 @@ internal sealed class PartialDateEntry :
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, MetadataContext metadata, CancellationToken ct) =>
-        Utilities.NullAsync;
+        InternalUtilities.NullAsync;
 
     public override string ToString() =>
         this.Date.ToString();

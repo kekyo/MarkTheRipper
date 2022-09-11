@@ -7,32 +7,16 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
-internal static class Utilities
+internal static class InternalUtilities
 {
-    public static readonly char[] PathSeparators = new[]
-    {
-        Path.DirectorySeparatorChar,
-        Path.AltDirectorySeparatorChar,
-    };
-
-    public static readonly Encoding UTF8 =
-        new UTF8Encoding(false);   // No BOM
-
-    ///////////////////////////////////////////////////////////////////////////////////
-
     public static int IndexOfNot(this string str, char separator, int start)
     {
         var index = start;
@@ -74,31 +58,13 @@ internal static class Utilities
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static JsonSerializer GetDefaultJsonSerializer()
-    {
-        var defaultNamingStrategy = new CamelCaseNamingStrategy();
-        var serializer = new JsonSerializer
-        {
-            DateFormatHandling = DateFormatHandling.IsoDateFormat,
-            DateParseHandling = DateParseHandling.DateTimeOffset,
-            DateTimeZoneHandling = DateTimeZoneHandling.Local,
-            NullValueHandling = NullValueHandling.Include,
-            ObjectCreationHandling = ObjectCreationHandling.Replace,
-            ContractResolver = new DefaultContractResolver { NamingStrategy = defaultNamingStrategy, },
-        };
-        serializer.Converters.Add(new StringEnumConverter(defaultNamingStrategy));
-        return serializer;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////
-
-    private static class EmtyArray<T>
+    private static class EmptyArray<T>
     {
         public static readonly T[] Empty = new T[0];
     }
 
     public static T[] Empty<T>() =>
-        EmtyArray<T>.Empty;
+        EmptyArray<T>.Empty;
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -127,25 +93,7 @@ internal static class Utilities
         }
     }
 
-    private sealed class Comparer<T> : IComparer<T>
-    {
-        private readonly Func<T, T, int> comparer;
-
-        public Comparer(Func<T, T, int> comparer) =>
-            this.comparer = comparer;
-
-        public int Compare(T? x, T? y) =>
-            this.comparer(x!, y!);
-
-    }
-
-    public static IOrderedEnumerable<T> OrderBy<T, TKey>(
-        this IEnumerable<T> enumerable,
-        Func<T, TKey> selector,
-        Func<TKey, TKey, int> comparer) =>
-        enumerable.OrderBy(selector, new Comparer<TKey>(comparer));
-
-    public static IEnumerable<(T first, T? second)> Overlapped<T>(
+    public static IEnumerable<(T first, T? second)> OverlappedPair<T>(
         this IEnumerable<T> enumerable)
     {
         using var enumerator = enumerable.GetEnumerator();

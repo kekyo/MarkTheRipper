@@ -36,8 +36,8 @@ public static class Parser
         new[] { ' ' },       // List
         new[] { ',', ' ' },  // StrictArray
         new[] { ',', ' ' },  // Array
-        Utilities.Empty<char>(),  // Value
-        Utilities.Empty<char>(),  // SingleValue
+        InternalUtilities.Empty<char>(),  // Value
+        InternalUtilities.Empty<char>(),  // SingleValue
     };
     private static readonly char[][] skipDetectionSeparators = new[]
     {
@@ -296,7 +296,7 @@ public static class Parser
                             await element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
                                 ConfigureAwait(false)))).
                         ConfigureAwait(false) :
-                    Utilities.Empty<PartialTagEntry>()),
+                    InternalUtilities.Empty<PartialTagEntry>()),
             "date" => ParseExpression(expressionString, ListTypes.SingleValue),
             _ => ParseExpression(expressionString, ListTypes.Array),
         };

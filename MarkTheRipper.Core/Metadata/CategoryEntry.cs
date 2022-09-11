@@ -68,7 +68,7 @@ public sealed class CategoryEntry :
             "entries" => new(this.Entries),
             "parent" => new(this.parent),
             "breadcrumbs" => new(this.Breadcrumbs),
-            _ => Utilities.NullAsync,
+            _ => InternalUtilities.NullAsync,
         };
 
     public override string ToString() =>

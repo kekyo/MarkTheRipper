@@ -45,6 +45,7 @@ public static class MetadataUtilities
         metadata.SetValue("mul", FunctionFactory.CastTo(Formula.MultipleAsync));
         metadata.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
         metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
+        metadata.SetValue("oEmbed", FunctionFactory.CastTo(oEmbed.oEmbedAsync));
     }
 
     /////////////////////////////////////////////////////////////////////
