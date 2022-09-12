@@ -9,7 +9,7 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
-using MarkTheRipper.Internal;
+using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -127,7 +127,7 @@ public static class MetadataUtilities
                     fp :
                     new CultureInfo(await FormatValueAsync(langValue, metadata, ct).
                         ConfigureAwait(false)) :
-                CultureInfo.InvariantCulture;
+            CultureInfo.InvariantCulture;
 
     /////////////////////////////////////////////////////////////////////
 
@@ -196,4 +196,64 @@ public static class MetadataUtilities
             IEnumerable enumerable => enumerable.Cast<object?>(),
             _ => new[] { value },
         };
+
+    /////////////////////////////////////////////////////////////////////
+
+    public static async ValueTask<RootTextNode> GetLayoutAsync(
+        string layoutName, string fallbackName,
+        MetadataContext metadata, CancellationToken ct)
+    {
+        if (metadata.Lookup("layoutList") is { } layoutListExpression &&
+            await Reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
+            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> tl)
+        {
+            if (tl.TryGetValue(layoutName, out var layout))
+            {
+                return layout;
+            }
+            else if (tl.TryGetValue(fallbackName, out layout))
+            {
+                return layout;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Layout `{layoutName}` and fallback `{fallbackName}` were not found.");
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "Layout list was not found.");
+        }
+    }
+
+    public static async ValueTask<RootTextNode> GetLayoutAsync(
+        MetadataContext metadata, CancellationToken ct)
+    {
+        if (metadata.Lookup("layout") is { } layoutExpression &&
+            await Reducer.ReduceExpressionAsync(layoutExpression, metadata, ct).
+                ConfigureAwait(false) is { } layoutValue)
+        {
+            if (layoutValue is RootTextNode layout)
+            {
+                return layout;
+            }
+            else if (layoutValue is PartialLayoutEntry entry)
+            {
+                return await GetLayoutAsync(entry.Name, "page", metadata, ct).
+                    ConfigureAwait(false);
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Invalid layout object. Value={layoutValue.GetType().Name}");
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "Layout not defined.");
+        }
+    }
 }

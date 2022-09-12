@@ -24,10 +24,30 @@ namespace MarkTheRipper;
 [TestFixture]
 public sealed class RipperTests
 {
+    private sealed class RipOffBaseMetadata
+    {
+        public readonly (string key, object? value)[] BaseMetadata;
+
+        public RipOffBaseMetadata(params (string key, object? value)[] baseMetadata) =>
+            this.BaseMetadata = baseMetadata;
+    }
+
+    private sealed class RipOffLayouts
+    {
+        public readonly (string layoutName, string layoutText)[] Layouts;
+
+        public RipOffLayouts(params (string layoutName, string)[] layouts) =>
+            this.Layouts = layouts;
+    }
+
     private static async ValueTask<string> RipOffContentAsync(
         string markdownText, string layoutName, string layoutText,
-        params (string keyName, object? value)[] baseMetadata)
+        RipOffBaseMetadata? baseMetadata = default,
+        RipOffLayouts? layouts = default)
     {
+        baseMetadata ??= new();
+        layouts ??= new();
+
         var metadata = new MetadataContext();
         MetadataUtilities.SetDefaults(metadata);
 
@@ -37,16 +57,29 @@ public sealed class RipperTests
             _ => new ValueTask<string?>(tr.ReadLineAsync()),
             (_, _) => false,
             default);
+
         var layoutList = new Dictionary<string, RootTextNode>
         {
             { layoutName, layout }
         };
+
+        foreach (var entry in layouts.Layouts)
+        {
+            var tr2 = new StringReader(entry.layoutText);
+            var entryLayout = await Parser.ParseTextTreeAsync(
+                new PathEntry(entry.layoutName),
+                _ => new ValueTask<string?>(tr2.ReadLineAsync()),
+                (_, _) => false,
+                default);
+            layoutList.Add(entry.layoutName, entryLayout);
+        }
+
         metadata.SetValue("layout", new PartialLayoutEntry(layoutName));
         metadata.SetValue("layoutList", layoutList);
 
-        foreach (var entry in baseMetadata)
+        foreach (var entry in baseMetadata.BaseMetadata)
         {
-            metadata.SetValue(entry.keyName, entry.value);
+            metadata.SetValue(entry.key, entry.value);
         }
 
         var ripper = new Ripper();
@@ -152,7 +185,7 @@ This is test contents.
 {contentBody}</body>
 </html>
 ",
-("date", date));
+new(("date", date)));
 
         await Verifier.Verify(actual);
     }
@@ -184,7 +217,7 @@ This is test contents.
 {contentBody}</body>
 </html>
 ",
-("date", date));
+new(("date", date)));
 
         await Verifier.Verify(actual);
     }
@@ -355,8 +388,8 @@ This is test contents.
   </body>
 </html>
 ",
-("main", "MAIN CATEGORY"),
-("sub", "SUB CATEGORY"));
+new(("main", "MAIN CATEGORY")),
+new(("sub", "SUB CATEGORY")));
 
         await Verifier.Verify(actual);
     }
@@ -578,13 +611,13 @@ This is test contents.
   </body>
 </html>
 ",
-("test", FunctionFactory.CastTo(
+new(("test", FunctionFactory.CastTo(
     async (parameters, metadata, ct) =>
     {
         var name = await parameters[0].ReduceExpressionAndFormatAsync(metadata, ct);
         var arg1 = await parameters[1].ReduceExpressionAndFormatAsync(metadata, ct);
         return new ValueExpression(name + arg1);
-    })));
+    }))));
         await Verifier.Verify(actual);
     }
 
@@ -616,13 +649,13 @@ This is test contents.
   </body>
 </html>
 ",
-("test", FunctionFactory.CastTo(
+new(("test", FunctionFactory.CastTo(
     (parameters, metadata, fp, ct) =>
     {
         var name = parameters[0]?.ToString();
         var arg1 = parameters[1]?.ToString();
         return Task.FromResult((object?)(name + arg1));
-    })));
+    }))));
         await Verifier.Verify(actual);
     }
 
@@ -1404,7 +1437,9 @@ This is test contents.
 
 {contentBody}</body>
 </html>
-");
+",
+default,
+new(("oEmbed-html", "<div class='oEmbed-outer'>{contentBody}</div>")));
         await Verifier.Verify(actual);
     }
 
@@ -1433,7 +1468,9 @@ This is test contents.
   <body>
 {contentBody}</body>
 </html>
-");
+",
+default,
+new(("oEmbed-html", "<div class='oEmbed-outer'>{contentBody}</div>")));
         await Verifier.Verify(actual);
     }
 }

@@ -164,56 +164,6 @@ public sealed class Ripper
         return new(metadata, contentsBasePath);
     }
 
-    private static async ValueTask<RootTextNode> GetLayoutAsync(
-        MetadataContext metadata, CancellationToken ct)
-    {
-        if (metadata.Lookup("layoutList") is { } layoutListExpression &&
-            await Reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
-            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> tl)
-        {
-            if (metadata.Lookup("layout") is { } layoutExpression &&
-                await Reducer.ReduceExpressionAsync(layoutExpression, metadata, ct).
-                    ConfigureAwait(false) is { } layoutValue)
-            {
-                if (layoutValue is RootTextNode layout)
-                {
-                    return layout;
-                }
-                else if (layoutValue is PartialLayoutEntry entry)
-                {
-                    if (tl.TryGetValue(entry.Name, out layout!))
-                    {
-                        return layout;
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException(
-                            $"Layout `{entry.Name}` was not found.");
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        $"Invalid layout object. Value={layoutValue.GetType().Name}");
-                }
-            }
-            else if (tl.TryGetValue("page", out var layout))
-            {
-                return layout;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    "Layout `page` was not found.");
-            }
-        }
-        else
-        {
-            throw new InvalidOperationException(
-                "Layout list was not found.");
-        }
-    }
-
     private static MetadataContext SpawnWithAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
         MetadataContext parentMetadata,
@@ -289,7 +239,7 @@ public sealed class Ripper
         mc.SetValue("contentBody", contentBodyWriter.ToString());
 
         // Step 8: Get layout AST (ITextTreeNode).
-        var layoutNode = await GetLayoutAsync(metadata, ct).
+        var layoutNode = await MetadataUtilities.GetLayoutAsync(metadata, ct).
             ConfigureAwait(false);
 
         // Step 9: Setup HTML content dictionary (will be added by HtmlContentExpression)
