@@ -15,6 +15,7 @@ using MarkTheRipper.Metadata;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -96,7 +97,7 @@ internal static class oEmbed
         }
 
         var ratioString = width >= 1 && height >= 1 ?
-            $" padding-top:{(height / (double)width):P3};" :
+            $" padding-top:{(height * 100.0 / width).ToString("F3", CultureInfo.InvariantCulture)}%;" :
             string.Empty;
 
         return $"<div class='oEmbed-outer'><div style='position:relative; width:100%;{ratioString}'>{html.Body!.InnerHtml}</div></div>";
