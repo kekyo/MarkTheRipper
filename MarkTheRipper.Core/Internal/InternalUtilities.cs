@@ -7,9 +7,12 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Metadata;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,6 +20,11 @@ namespace MarkTheRipper.Internal;
 
 internal static class InternalUtilities
 {
+    public static readonly JsonSerializer DefaultJsonSerializer =
+        Utilities.GetDefaultJsonSerializer();
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     public static int IndexOfNot(this string str, char separator, int start)
     {
         var index = start;

@@ -8,25 +8,22 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using AngleSharp.Dom;
-using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
+using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace MarkTheRipper.Functions;
 
@@ -35,11 +32,6 @@ namespace MarkTheRipper.Functions;
 
 internal static class oEmbed
 {
-    private static readonly Uri oEmbedProviderListUrl =
-        new("https://oembed.com/providers.json");
-
-    //////////////////////////////////////////////////////////////////////////////
-
     private sealed class oEmbedEndPoint : IMetadataEntry
     {
         public readonly string url;
@@ -54,9 +46,14 @@ internal static class oEmbed
             this.matchers = schemes?.
                 Select<string?, Func<string, bool>>(scheme =>
                 {
-                    if (scheme is { } s)
+                    if (scheme != null)
                     {
-                        var r = new Regex(s.Replace("*", ".*"), RegexOptions.Compiled);
+                        var sb = new StringBuilder(scheme);
+                        sb.Replace(".", "\\.");
+                        sb.Replace("?", "\\?");
+                        sb.Replace("+", "\\+");
+                        sb.Replace("*", ".*");
+                        var r = new Regex(sb.ToString(), RegexOptions.Compiled);
                         return r.IsMatch;
                     }
                     else
@@ -119,6 +116,11 @@ internal static class oEmbed
         public override string ToString() =>
             $"{this.provider_name}, Url={this.provider_url}, EndPoints={this.endpoints.Length}";
     }
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    private static readonly Uri oEmbedProviderListUrl =
+        new("https://oembed.com/providers.json");
 
     //////////////////////////////////////////////////////////////////////////////
 
@@ -219,9 +221,9 @@ internal static class oEmbed
             metadata, providerName, endPointUrl, oEmbedMetadataJson);
 
         // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-*.html` ==> `layout-oEmbed-default.html`
+        // `layout-oEmbed-*.html` ==> `layout-oEmbed-html.html`
         var layoutNode = await MetadataUtilities.GetLayoutAsync(
-            $"oEmbed-{providerName}", "oEmbed-default", metadata, ct).
+            $"oEmbed-{providerName}", "oEmbed-html", metadata, ct).
             ConfigureAwait(false);
 
         // Render with layout AST with overall metadata.
@@ -236,12 +238,13 @@ internal static class oEmbed
     //////////////////////////////////////////////////////////////////////////////
 
     private static async ValueTask<IExpression?> Render_oEmbedAsync(
+        IHttpAccessor httpAccessor,
         MetadataContext metadata,
         string oEmbedTargetUrl,
         CancellationToken ct)
     {
         // TODO: cache system
-        var providersJson = await Utilities.FetchJsonAsync(oEmbedProviderListUrl, ct).
+        var providersJson = await httpAccessor.FetchJsonAsync(oEmbedProviderListUrl, ct).
             ConfigureAwait(false);
 
         var targetEntries = (await Task.WhenAll(
@@ -274,7 +277,7 @@ internal static class oEmbed
                 var requestUrl = new Uri(requestUrlString, UriKind.Absolute);
 
                 // TODO: cache system
-                var metadataJson = await Utilities.FetchJsonAsync(requestUrl, ct).
+                var metadataJson = await httpAccessor.FetchJsonAsync(requestUrl, ct).
                     ConfigureAwait(false);
 
                 if (metadataJson is JObject obj)
@@ -334,6 +337,7 @@ internal static class oEmbed
     }
 
     private static async ValueTask<IExpression?> Render_oEmbedDiscoveryAsync(
+        IHttpAccessor httpAccessor,
         MetadataContext metadata,
         string oEmbedEndPointUrlString,
         CancellationToken ct)
@@ -343,7 +347,7 @@ internal static class oEmbed
             var requestUrl = new Uri(oEmbedEndPointUrlString, UriKind.Absolute);
 
             // TODO: cache system
-            var metadataJson = await Utilities.FetchJsonAsync(requestUrl, ct).
+            var metadataJson = await httpAccessor.FetchJsonAsync(requestUrl, ct).
                 ConfigureAwait(false);
 
             if (metadataJson is JObject obj)
@@ -408,6 +412,10 @@ internal static class oEmbed
                 $"Invalid oEmbed function argument: URL={permaLinkString}");
         }
 
+        var httpAccessor = (await metadata.GetValueAsync(
+            "httpAccessor", HttpAccessor.Instance, ct).
+            ConfigureAwait(false))!;
+
         var mc = metadata.Spawn();
         mc.SetValue("permaLink", permaLink);
 
@@ -415,7 +423,7 @@ internal static class oEmbed
         // Step 1. Automatic resolve using global oEmbed provider list.
 
         // Render oEmbed from perma link.
-        if (await Render_oEmbedAsync(mc, permaLinkString, ct).
+        if (await Render_oEmbedAsync(httpAccessor, mc, permaLinkString, ct).
             ConfigureAwait(false) is { } result1)
         {
             // Done.
@@ -430,12 +438,20 @@ internal static class oEmbed
             var requestUrl = new Uri(permaLinkString, UriKind.Absolute);
 
             // TODO: cache system
-            var html = await Utilities.FetchHtmlAsync(requestUrl, ct).
+            var html = await httpAccessor.FetchHtmlAsync(requestUrl, ct).
                 ConfigureAwait(false);
 
             //////////////////////////////////////////////////////////////////
             // Step 3. Retreive meta tags from HTML.
 
+            if (html.Head?.QuerySelector("title") is { } title &&
+                title.TextContent.Trim() is { } t &&
+                !string.IsNullOrWhiteSpace(t))
+            {
+                mc.SetValue("title", t);
+            }
+
+            var foundOGP = false;
             foreach (var element in html.Head?.
                 QuerySelectorAll("meta").AsEnumerable() ??
                 InternalUtilities.Empty<IElement>())
@@ -449,21 +465,16 @@ internal static class oEmbed
                         !string.IsNullOrWhiteSpace(p))
                     {
                         mc.SetValue(p, c);
+                        foundOGP |= p.StartsWith("og:");
                     }
                     else if (element.GetAttribute("name") is { } name &&
                         name.Trim() is { } n &&
                         !string.IsNullOrWhiteSpace(n))
                     {
                         mc.SetValue(n, c);
+                        foundOGP |= n.StartsWith("og:");
                     }
                 }
-            }
-
-            if (html.Head?.QuerySelector("title") is { } title &&
-                title.TextContent.Trim() is { } t &&
-                !string.IsNullOrWhiteSpace(t))
-            {
-                mc.SetValue("title", t);
             }
 
             //////////////////////////////////////////////////////////////////
@@ -476,7 +487,7 @@ internal static class oEmbed
                 Uri.TryCreate(hs, UriKind.Absolute, out var href))
             {
                 // Render oEmbed from discovered perma link.
-                if (await Render_oEmbedDiscoveryAsync(mc, hs, ct).
+                if (await Render_oEmbedDiscoveryAsync(httpAccessor, mc, hs, ct).
                     ConfigureAwait(false) is { } result2)
                 {
                     // Done.
@@ -489,10 +500,14 @@ internal static class oEmbed
 
             // Render with layout.
             // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-fallback-meta.html` ==> `layout-oEmbed-fallback-simple.html`
-            var layoutNode = await MetadataUtilities.GetLayoutAsync(
-                $"oEmbed-fallback-meta", "oEmbed-fallback-simple", mc, ct).
-                ConfigureAwait(false);
+            // `layout-oEmbed-ogp.html` ==> `layout-oEmbed-metatags.html`
+            var layoutNode = foundOGP ?
+                await MetadataUtilities.GetLayoutAsync(
+                    $"oEmbed-ogp", "oEmbed-metatags", mc, ct).
+                    ConfigureAwait(false) :
+                await MetadataUtilities.GetLayoutAsync(
+                    $"oEmbed-metatags", null, mc, ct).
+                    ConfigureAwait(false);
 
             // Render with layout AST with overall metadata.
             var overallHtmlContent = new StringBuilder();
@@ -515,9 +530,9 @@ internal static class oEmbed
         {
             // Render with layout.
             // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-fallback-meta.html`
+            // `layout-oEmbed-fallback.html`
             var layoutNode = await MetadataUtilities.GetLayoutAsync(
-                $"oEmbed-fallback-simple", null, mc, ct).
+                $"oEmbed-fallback", null, mc, ct).
                 ConfigureAwait(false);
 
             // Render with layout AST with overall metadata.

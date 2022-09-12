@@ -101,6 +101,186 @@
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>ParserTests.cs</DependentUpon>
     </None>
+    <None Update="oEmbedTests.RipOffAdd.received.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffAdd1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffAdd2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffAdd3.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExamination1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExamination2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExaminationOnCodeBlock1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExaminationOnCodeBlock2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExaminationOnCodeBlock3.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExaminationOnCodeBlock4.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExaminationOnCodeSpan1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffBodyExaminationOnCodeSpan2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffCategoryIterationWithProperties.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffCategoryLookup1.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffCategoryLookup2.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffDateFormatting2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffDiv1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffDiv2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffDiv3.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffFormulaComplex.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffFormulaComplex2.received.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffFormulaWithStringNumeric.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffFunction1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffFunction2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffIndexIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffIterator.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffIteratorCount.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffMod1.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffMod2.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffMod3.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffMul1.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffMul2.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffMul3.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffNestedIterator.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffNestedLookup.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffoEmbed1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffoEmbed1.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffoEmbed2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffoEmbed2.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffSub1.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffSub2.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffSub3.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffTagIterationWithProperties.received.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffThroughBracketLeft.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
+    <None Update="oEmbedTests.RipOffWithExplicitLayout.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>oEmbedTests.cs</DependentUpon>
+    </None>
     <None Update="TagsTests.AggregateTags6.verified.txt">
       <DependentUpon>TagsTests.cs</DependentUpon>
     </None>

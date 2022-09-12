@@ -164,8 +164,7 @@ public static class Driver
 
         //////////////////////////////////////////////////////////////
 
-        var rootMetadata = new MetadataContext();
-        MetadataUtilities.SetDefaults(rootMetadata);
+        var rootMetadata = MetadataUtilities.CreateWithDefaults();
 
         rootMetadata.SetValue("layoutList", layoutList);
 

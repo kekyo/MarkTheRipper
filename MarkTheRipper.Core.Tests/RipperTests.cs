@@ -7,14 +7,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
+using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using VerifyNUnit;
 using static NUnit.Framework.Assert;
@@ -48,8 +54,7 @@ public sealed class RipperTests
         baseMetadata ??= new();
         layouts ??= new();
 
-        var metadata = new MetadataContext();
-        MetadataUtilities.SetDefaults(metadata);
+        var metadata = MetadataUtilities.CreateWithDefaults();
 
         var tr = new StringReader(layoutText);
         var layout = await Parser.ParseTextTreeAsync(
@@ -1406,71 +1411,6 @@ This is test contents.
   </body>
 </html>
 ");
-        await Verifier.Verify(actual);
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-
-    [Test]
-    public async Task RipOffoEmbed1()
-    {
-        var actual = await RipOffContentAsync(
-@"
----
-title: hoehoe
-tags: foo,bar
----
-
-Hello MarkTheRipper!
-This is test contents.
-",
-"page",
-@"<!DOCTYPE html>
-<html>
-  <head>
-    <title>{title}</title>
-    <meta name=""keywords"" content=""{tags}"" />
-  </head>
-  <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
-
-{contentBody}</body>
-</html>
-",
-default,
-new(("oEmbed-html", "<div class='oEmbed-outer'>{contentBody}</div>")));
-        await Verifier.Verify(actual);
-    }
-
-    [Test]
-    public async Task RipOffoEmbed2()
-    {
-        var actual = await RipOffContentAsync(
-@"
----
-title: hoehoe
-tags: foo,bar
----
-
-{oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
-
-Hello MarkTheRipper!
-This is test contents.
-",
-"page",
-@"<!DOCTYPE html>
-<html>
-  <head>
-    <title>{title}</title>
-    <meta name=""keywords"" content=""{tags}"" />
-  </head>
-  <body>
-{contentBody}</body>
-</html>
-",
-default,
-new(("oEmbed-html", "<div class='oEmbed-outer'>{contentBody}</div>")));
         await Verifier.Verify(actual);
     }
 }

@@ -9,6 +9,7 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
+using MarkTheRipper.IO;
 using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -29,8 +30,12 @@ public static class MetadataUtilities
 
     /////////////////////////////////////////////////////////////////////
 
-    public static void SetDefaults(MetadataContext metadata)
+    public static MetadataContext CreateWithDefaults()
     {
+        var metadata = new MetadataContext();
+
+        metadata.SetValue("httpAccessor", HttpAccessor.Instance);
+
         metadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
         metadata.SetValue("generated", DateTimeOffset.Now);
         metadata.SetValue("lang", CultureInfo.CurrentCulture);
@@ -45,7 +50,10 @@ public static class MetadataUtilities
         metadata.SetValue("mul", FunctionFactory.CastTo(Formula.MultipleAsync));
         metadata.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
         metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
+
         metadata.SetValue("oEmbed", FunctionFactory.CastTo(oEmbed.oEmbedAsync));
+
+        return metadata;
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -196,6 +204,13 @@ public static class MetadataUtilities
             IEnumerable enumerable => enumerable.Cast<object?>(),
             _ => new[] { value },
         };
+
+    public static async ValueTask<TValue> GetValueAsync<TValue>(
+        this MetadataContext metadata, string keyName, TValue defaultValue, CancellationToken ct) =>
+        metadata.Lookup(keyName) is { } expression &&
+        await Reducer.ReduceExpressionAsync(expression, metadata, ct).
+            ConfigureAwait(false) is TValue value ?
+            value : defaultValue;
 
     /////////////////////////////////////////////////////////////////////
 

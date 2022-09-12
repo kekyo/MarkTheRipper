@@ -7,17 +7,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
 using MarkTheRipper.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,7 +60,7 @@ public static class Utilities
     public static IEnumerable<TValue> EnumerateArray<TValue>(
         this JToken token, JsonSerializer? serializer = default)
     {
-        serializer ??= defaultJsonSerializer;
+        serializer ??= InternalUtilities.DefaultJsonSerializer;
 
         if (token is JArray array)
         {
@@ -79,7 +75,7 @@ public static class Utilities
         this JToken token, string memberName, TValue defaultValue = default!,
         JsonSerializer? serializer = default)
     {
-        serializer ??= defaultJsonSerializer;
+        serializer ??= InternalUtilities.DefaultJsonSerializer;
 
         if (token is JObject obj)
         {
@@ -91,34 +87,5 @@ public static class Utilities
         }
 
         return defaultValue;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////
-
-    private static readonly Lazy<HttpClient> httpClientFactory =
-        new(() => new HttpClient());
-    internal static readonly JsonSerializer defaultJsonSerializer =
-        GetDefaultJsonSerializer();
-
-    public static async ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct)
-    {
-        using var stream = await httpClientFactory.Value.GetStreamAsync(url).
-            WithCancellation(ct).
-            ConfigureAwait(false);
-
-        return await defaultJsonSerializer.DeserializeJsonAsync(stream, ct).
-            ConfigureAwait(false);
-    }
-
-    public static async ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct)
-    {
-        var parser = new HtmlParser();
-
-        using var stream = await httpClientFactory.Value.GetStreamAsync(url).
-            WithCancellation(ct).
-            ConfigureAwait(false);
-
-        return await parser.ParseDocumentAsync(stream, ct).
-            ConfigureAwait(false);
     }
 }

@@ -27,8 +27,7 @@ public sealed class BulkRipperTests
         string[] categoryNames, string markdownText, string layoutName, string layoutText,
         params (string keyName, object? value)[] baseMetadata)
     {
-        var metadata = new MetadataContext();
-        MetadataUtilities.SetDefaults(metadata);
+        var metadata = MetadataUtilities.CreateWithDefaults();
 
         var tr = new StringReader(layoutText);
         var layout = await Parser.ParseTextTreeAsync(

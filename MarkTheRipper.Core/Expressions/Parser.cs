@@ -67,7 +67,8 @@ public static class Parser
             for (var index = 1; index < text.Length; index++)
             {
                 var ch = text[index];
-                if (!(IsVariableChars0(ch) || char.IsDigit(ch) || ch == '.'))
+                if (!(IsVariableChars0(ch) || char.IsDigit(ch) ||
+                    ch == '.' || ch == ':' || ch == '-'))
                 {
                     return false;
                 }
