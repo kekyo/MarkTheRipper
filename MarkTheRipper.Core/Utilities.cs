@@ -7,6 +7,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
 using MarkTheRipper.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -105,6 +107,18 @@ public static class Utilities
             ConfigureAwait(false);
 
         return await defaultJsonSerializer.DeserializeJsonAsync(stream, ct).
+            ConfigureAwait(false);
+    }
+
+    public static async ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct)
+    {
+        var parser = new HtmlParser();
+
+        using var stream = await httpClientFactory.Value.GetStreamAsync(url).
+            WithCancellation(ct).
+            ConfigureAwait(false);
+
+        return await parser.ParseDocumentAsync(stream, ct).
             ConfigureAwait(false);
     }
 }

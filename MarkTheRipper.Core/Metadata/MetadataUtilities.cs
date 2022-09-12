@@ -200,7 +200,7 @@ public static class MetadataUtilities
     /////////////////////////////////////////////////////////////////////
 
     public static async ValueTask<RootTextNode> GetLayoutAsync(
-        string layoutName, string fallbackName,
+        string layoutName, string? fallbackName,
         MetadataContext metadata, CancellationToken ct)
     {
         if (metadata.Lookup("layoutList") is { } layoutListExpression &&
@@ -211,14 +211,22 @@ public static class MetadataUtilities
             {
                 return layout;
             }
-            else if (tl.TryGetValue(fallbackName, out layout))
+            else if (fallbackName != null)
             {
-                return layout;
+                if (tl.TryGetValue(fallbackName, out layout))
+                {
+                    return layout;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Layout `{layoutName}` and fallback `{fallbackName}` were not found.");
+                }
             }
             else
             {
                 throw new InvalidOperationException(
-                    $"Layout `{layoutName}` and fallback `{fallbackName}` were not found.");
+                    $"Layout `{layoutName}` are not found.");
             }
         }
         else
