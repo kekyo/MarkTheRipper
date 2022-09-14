@@ -325,7 +325,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-YouTube", "<div class='oEmbed-outer'>{title}: {author_name}</div>")),
+new(("oEmbed-metatags", "<div class='oEmbed-outer'>{title}: {author}</div>")),
 new(("https://oembed.com/providers.json",
     @"[
     {
@@ -392,7 +392,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-html", "<div class='oEmbed-outer'>{title}: {author_name}</div>")),
+new(("oEmbed-metatags", "<div class='oEmbed-outer'>{title}: {author}</div>")),
 new(("https://oembed.com/providers.json",
     @"[
     {
@@ -459,13 +459,13 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-ogp", "<div class='oEmbed-outer'>{og:title}: {og:author}</div>")),
+new(("oEmbed-metatags", "<div class='oEmbed-outer'>{title}: {description}</div>")),
 new(("https://oembed.com/providers.json",
     @"[]"),
     ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
-    <meta property=""og:author"" content=""Jacob + Katie Schwarz"" />
+    <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
     </head><body /></html>")));
         await Verifier.Verify(actual);
     }
@@ -497,13 +497,13 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-metatags", "<div class='oEmbed-outer'>{title}: {author}</div>")),
+new(("oEmbed-metatags", "<div class='oEmbed-outer'>{title}: {description}</div>")),
 new(("https://oembed.com/providers.json",
     @"[]"),
     ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <title>Peru 8K HDR 60FPS (FUHD)</title>
-    <meta property=""author"" content=""Jacob + Katie Schwarz"" />
+    <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
     </head><body /></html>")));
         await Verifier.Verify(actual);
     }
@@ -540,6 +540,111 @@ new(("https://oembed.com/providers.json",
     @"[]"),
     ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedDiscovery()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("oEmbed-metatags", "<div class='oEmbed-outer'>{title}: {author}</div>")),
+new(("https://oembed.com/providers.json",
+    @"[]"),
+    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <link type=""application/json+oembed"" href=""https://www.example.com/"" />
+    </head><body /></html>"),
+    ("https://www.example.com/",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedDiscoveryWithHtml()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("oEmbed-html", "<div class='oEmbed-outer'>{contentBody}</div>")),
+new(("https://oembed.com/providers.json",
+    @"[]"),
+    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <link type=""application/json+oembed"" href=""https://www.example.com/"" />
+    </head><body /></html>"),
+    ("https://www.example.com/",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"",
+    ""html"": ""\u003ciframe width=\u0022200\u0022 height=\u0022113\u0022 src=\u0022https://www.youtube.com/embed/1La4QzGeaaQ?feature=oembed\u0022 frameborder=\u00220\u0022 allow=\u0022accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\u0022 allowfullscreen title=\u0022Peru 8K HDR 60FPS (FUHD)\u0022\u003e\u003c/iframe\u003e""
+}")));
         await Verifier.Verify(actual);
     }
 }
