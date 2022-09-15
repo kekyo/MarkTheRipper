@@ -7,19 +7,13 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
 using MarkTheRipper.Expressions;
-using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using VerifyNUnit;
 
@@ -27,76 +21,8 @@ using static NUnit.Framework.Assert;
 
 namespace MarkTheRipper;
 
-internal sealed class DummyHttpAccessor : IHttpAccessor
-{
-    private readonly Queue<(Uri url, string content)> queue = new();
-
-    public DummyHttpAccessor(params (string url, string content)[] entries)
-    {
-        foreach (var entry in entries)
-        {
-            this.queue.Enqueue(
-                (new Uri(entry.url, UriKind.RelativeOrAbsolute), entry.content));
-        }
-    }
-
-    private (Uri url, string content) Dequeue()
-    {
-        lock (this.queue)
-        {
-            AreNotEqual(0, this.queue.Count);
-            return this.queue.Dequeue();
-        }
-    }
-
-    public void AssertEmpty()
-    {
-        lock (this.queue)
-        {
-            AreEqual(0, this.queue.Count);
-        }
-    }
-
-    public ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct)
-    {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
-
-        var parser = new HtmlParser();
-        return new ValueTask<IHtmlDocument>(parser.ParseDocumentAsync(c));
-    }
-
-    public ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct)
-    {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
-
-        var tr = new StringReader(c);
-        var jr = new JsonTextReader(tr);
-        return new ValueTask<JToken>(JToken.ReadFrom(jr));
-    }
-}
-
-internal sealed class RipOffBaseMetadata
-{
-    public readonly (string key, object? value)[] BaseMetadata;
-
-    public RipOffBaseMetadata(params (string key, object? value)[] baseMetadata) =>
-        this.BaseMetadata = baseMetadata;
-}
-
-internal sealed class RipOffLayouts
-{
-    public readonly (string layoutName, string layoutText)[] Layouts;
-
-    public RipOffLayouts(params (string layoutName, string)[] layouts) =>
-        this.Layouts = layouts;
-}
-
-///////////////////////////////////////////////////////////////////////////////////
-
 [TestFixture]
-public sealed class oEmbedTests
+public sealed class CardTest
 {
     private static async ValueTask<string> RipOffContentAsync(
         string markdownText, string layoutName, string layoutText,
@@ -185,13 +111,13 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
 ",
 default,
-new(("oEmbed-html-YouTube", @"<ul>
+new(("oEmbed-card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -200,8 +126,7 @@ new(("oEmbed-html-YouTube", @"<ul>
 <li>description: {description}</li>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
-</ul>
-<div>contentBody: {contentBody}</div>")),
+</ul>")),
 new(("https://oembed.com/providers.json",
     @"[
     {
@@ -252,7 +177,7 @@ title: hoehoe
 tags: foo,bar
 ---
 
-{oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+{card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 Hello MarkTheRipper!
 This is test contents.
@@ -269,7 +194,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-html-YouTube", @"<ul>
+new(("oEmbed-card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -278,8 +203,7 @@ new(("oEmbed-html-YouTube", @"<ul>
 <li>description: {description}</li>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
-</ul>
-<div>contentBody: {contentBody}</div>")),
+</ul>")),
 new(("https://oembed.com/providers.json",
     @"[
     {
@@ -341,7 +265,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -417,7 +341,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -493,7 +417,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -543,7 +467,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -593,7 +517,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -644,7 +568,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -688,7 +612,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -749,13 +673,13 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {card https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
 ",
 default,
-new(("oEmbed-html-YouTube", @"<ul>
+new(("oEmbed-card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -764,8 +688,7 @@ new(("oEmbed-html-YouTube", @"<ul>
 <li>description: {description}</li>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
-</ul>
-<div>contentBody: {contentBody}</div>")),
+</ul>")),
 new(("https://oembed.com/providers.json",
     @"[]"),
     ("https://www.youtube.com/watch?v=1La4QzGeaaQ",

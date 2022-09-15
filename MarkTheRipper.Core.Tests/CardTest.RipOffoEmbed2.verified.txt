@@ -5,18 +5,16 @@
     <meta name="keywords" content="foo,bar" />
   </head>
   <body>
-    <ul>
+<ul>
 <li>permaLink: https://www.youtube.com/watch?v=1La4QzGeaaQ</li>
-<li>siteName: </li>
-<li>title: </li>
+<li>siteName: YouTube</li>
+<li>title: Peru 8K HDR 60FPS (FUHD)</li>
 <li>altTitle: </li>
-<li>author: </li>
+<li>author: Jacob + Katie Schwarz</li>
 <li>description: </li>
-<li>type: </li>
-<li>imageUrl: </li>
+<li>type: video</li>
+<li>imageUrl: https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg</li>
 </ul>
-
-
 <p>Hello MarkTheRipper!
 This is test contents.</p>
 </body>

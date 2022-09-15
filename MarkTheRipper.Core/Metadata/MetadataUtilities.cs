@@ -52,6 +52,7 @@ public static class MetadataUtilities
         metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
 
         metadata.SetValue("oEmbed", FunctionFactory.CastTo(oEmbed.oEmbedAsync));
+        metadata.SetValue("card", FunctionFactory.CastTo(oEmbed.CardAsync));
 
         return metadata;
     }

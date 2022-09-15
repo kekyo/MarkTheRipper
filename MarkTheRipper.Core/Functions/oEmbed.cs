@@ -13,6 +13,7 @@ using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
+using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,22 @@ internal static class oEmbed
 {
     public static readonly Uri oEmbedProviderListUrl =
         new("https://oembed.com/providers.json");
+
+    private static async ValueTask<RootTextNode> GetLayoutAsync(
+        MetadataContext metadata,
+        oEmbedUtilities.HtmlMetadata htmlMetadata,
+        string infix,
+        CancellationToken ct) =>
+        // Get layout AST (ITextTreeNode).
+        htmlMetadata.SiteName is { } siteName ?
+            // `layout-oEmbed-{infix}-{siteName}.html` ==> `layout-oEmbed-{infix}.html`
+            await MetadataUtilities.GetLayoutAsync(
+                $"oEmbed-{infix}-{siteName}", $"oEmbed-{infix}", metadata, ct).
+                ConfigureAwait(false) :
+            // `layout-oEmbed-{infix}.html`
+            await MetadataUtilities.GetLayoutAsync(
+                $"oEmbed-{infix}", null, metadata, ct).
+                ConfigureAwait(false);
 
     //////////////////////////////////////////////////////////////////////////////
 
@@ -90,14 +107,10 @@ internal static class oEmbed
         metadata.SetValue("contentBody", contentBodyString);
 
         // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-*.html` ==> `layout-oEmbed-html.html`
-        var layoutNode = htmlMetadata.SiteName is { } sn ?
-            await MetadataUtilities.GetLayoutAsync(
-                $"oEmbed-{sn}", "oEmbed-html", metadata, ct).
-                ConfigureAwait(false) :
-            await MetadataUtilities.GetLayoutAsync(
-                $"oEmbed-html", null, metadata, ct).
-                ConfigureAwait(false);
+        // `layout-oEmbed-html-{siteName}.html` ==> `layout-oEmbed-html.html`
+        var layoutNode = await GetLayoutAsync(
+            metadata, htmlMetadata, "html", ct).
+            ConfigureAwait(false);
 
         // Render with layout AST with overall metadata.
         var overallHtmlContent = new StringBuilder();
@@ -110,7 +123,7 @@ internal static class oEmbed
 
     //////////////////////////////////////////////////////////////////////////////
 
-    private static async ValueTask<string> Render_oEmbedMetadataAsync(
+    private static async ValueTask<string> Render_oEmbedCardAsync(
         MetadataContext metadata,
         string? siteName,
         JObject oEmbedMetadataJson,
@@ -123,9 +136,9 @@ internal static class oEmbed
             metadata, htmlMetadata);
 
         // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-metatags.html`
-        var layoutNode = await MetadataUtilities.GetLayoutAsync(
-            $"oEmbed-metatags", null, metadata, ct).
+        // `layout-oEmbed-card-{siteName}.html` ==> `layout-oEmbed-card.html`
+        var layoutNode = await GetLayoutAsync(
+            metadata, htmlMetadata, "card", ct).
             ConfigureAwait(false);
 
         // Render with layout AST with overall metadata.
@@ -142,13 +155,15 @@ internal static class oEmbed
     private static async ValueTask<IExpression?> Render_oEmbedAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
-        string oEmbedTargetUrlString,
+        Uri permaLink,
+        bool useInlineHtml,
         CancellationToken ct)
     {
         // TODO: cache system
         var providersJson = await httpAccessor.FetchJsonAsync(oEmbedProviderListUrl, ct).
             ConfigureAwait(false);
 
+        var permaLinkString = permaLink.ToString();
         var targetEntries = (await Task.WhenAll(
             providersJson.
                 EnumerateArray<oEmbedUtilities.oEmbedProvider>().
@@ -159,7 +174,7 @@ internal static class oEmbed
                 Select(provider =>
                     Task.Run(() => provider.endpoints.
                         Select(endPoint => endPoint.matchers.
-                            Any(matcher => matcher(oEmbedTargetUrlString)) ?
+                            Any(matcher => matcher(permaLinkString)) ?
                                 new { provider, endPoint } : null!).
                         Where(targetEntry =>
                             targetEntry != null &&
@@ -173,7 +188,7 @@ internal static class oEmbed
         var secondResults = new List<(string providerName, string endPointUrl, JObject metadataJson)>();
         foreach (var targetEntry in targetEntries)
         {
-            var requestUrlString = $"{targetEntry.endPoint.url.Trim()}?url={oEmbedTargetUrlString}";
+            var requestUrlString = $"{targetEntry.endPoint.url.Trim()}?url={permaLink}";
             try
             {
                 var requestUrl = new Uri(requestUrlString, UriKind.Absolute);
@@ -185,7 +200,8 @@ internal static class oEmbed
                 if (metadataJson is JObject metadataJsonObj)
                 {
                     // oEmbed metadata produces `html` data.
-                    if (metadataJsonObj.GetValue<string>("html") is { } htmlString &&
+                    if (useInlineHtml &&
+                        metadataJsonObj.GetValue<string>("html") is { } htmlString &&
                         !string.IsNullOrWhiteSpace(htmlString))
                     {
                         // Accept with sanitized HTML.
@@ -215,10 +231,10 @@ internal static class oEmbed
         // Render with oEmbed metadata and layout when produce one or more oEmbed metadata.
         foreach (var (providerName, endPointUrl, metadataJsonObj) in secondResults)
         {
-            var requestUrlString = $"{endPointUrl}?url={oEmbedTargetUrlString}";
+            var requestUrlString = $"{endPointUrl}?url={permaLink}";
             try
             {
-                var overallHtmlContentString = await Render_oEmbedMetadataAsync(
+                var overallHtmlContentString = await Render_oEmbedCardAsync(
                     metadata,
                     providerName,
                     metadataJsonObj,
@@ -239,21 +255,21 @@ internal static class oEmbed
     private static async ValueTask<IExpression?> Render_oEmbedDiscoveryAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
-        string oEmbedEndPointUrlString,
+        Uri permaLink,
+        bool useInlineHtml,
         CancellationToken ct)
     {
         try
         {
-            var requestUrl = new Uri(oEmbedEndPointUrlString, UriKind.Absolute);
-
             // TODO: cache system
-            var metadataJson = await httpAccessor.FetchJsonAsync(requestUrl, ct).
+            var metadataJson = await httpAccessor.FetchJsonAsync(permaLink, ct).
                 ConfigureAwait(false);
 
             if (metadataJson is JObject metadataJsonObj)
             {
                 // oEmbed metadata produces `html` data.
-                if (metadataJsonObj.GetValue<string>("html") is { } htmlString &&
+                if (useInlineHtml &&
+                    metadataJsonObj.GetValue<string>("html") is { } htmlString &&
                     !string.IsNullOrWhiteSpace(htmlString))
                 {
                     // Accept with sanitized HTML.
@@ -269,7 +285,7 @@ internal static class oEmbed
                 else
                 {
                     // Render with oEmbed metadata and layout when produce oEmbed metadata.
-                    var overallHtmlContentString = await Render_oEmbedMetadataAsync(
+                    var overallHtmlContentString = await Render_oEmbedCardAsync(
                         metadata,
                         null,
                         metadataJsonObj,
@@ -282,10 +298,116 @@ internal static class oEmbed
         catch (Exception ex)
         {
             Trace.WriteLine(
-                $"Could not fetch from oEmbed discovery end point: Url={oEmbedEndPointUrlString}, Message={ex.Message}");
+                $"Could not fetch from oEmbed discovery end point: Url={permaLink}, Message={ex.Message}");
         }
 
         return null;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    private static async ValueTask<IExpression> Internal_oEmbedAsync(
+        Uri permaLink,
+        MetadataContext metadata,
+        bool useInlineHtml,
+        CancellationToken ct)
+    {
+        var httpAccessor = (await metadata.GetValueAsync(
+            "httpAccessor", HttpAccessor.Instance, ct).
+            ConfigureAwait(false))!;
+
+        var mc = metadata.Spawn();
+        mc.SetValue("permaLink", permaLink);
+
+        //////////////////////////////////////////////////////////////////
+        // Step 1. Automatic resolve using global oEmbed provider list.
+
+        // Render oEmbed from perma link.
+        if (await Render_oEmbedAsync(
+            httpAccessor, mc, permaLink, useInlineHtml, ct).
+            ConfigureAwait(false) is { } result1)
+        {
+            // Done.
+            return result1;
+        }
+
+        //////////////////////////////////////////////////////////////////
+        // Step 2. Fetch HTML from perma link directly.
+
+        try
+        {
+            // TODO: cache system
+            var html = await httpAccessor.FetchHtmlAsync(
+                permaLink, ct).
+                ConfigureAwait(false);
+
+            //////////////////////////////////////////////////////////////////
+            // Step 3. Resolve by oEmbed discover meta tag link.
+
+            // Contains oEmbed meta tags.
+            if (html.Head?.QuerySelector("link[type='application/json+oembed']") is { } oEmbedLinkElement &&
+                oEmbedLinkElement.GetAttribute("href") is { } hrefString &&
+                hrefString.Trim() is { } hs &&
+                Uri.TryCreate(hs, UriKind.Absolute, out var href))
+            {
+                // Render oEmbed from discovered perma link.
+                if (await Render_oEmbedDiscoveryAsync(
+                    httpAccessor, mc, href, useInlineHtml, ct).
+                    ConfigureAwait(false) is { } result2)
+                {
+                    // Done.
+                    return result2;
+                }
+            }
+
+            //////////////////////////////////////////////////////////////////
+            // Step 4. Give up oEmbed resolving, retreive meta tags from HTML.
+
+            var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
+                html, permaLink);
+            oEmbedUtilities.SetHtmlMetadata(mc, htmlMetadata);
+
+            // Get layout AST (ITextTreeNode).
+            // `layout-oEmbed-card-{siteName}.html` ==> `layout-oEmbed-card.html`
+            var layoutNode = await GetLayoutAsync(
+                metadata, htmlMetadata, "card", ct).
+                ConfigureAwait(false);
+
+            // Render with layout AST with overall metadata.
+            var overallHtmlContent = new StringBuilder();
+            await layoutNode.RenderAsync(
+                text => overallHtmlContent.Append(text), mc, ct).
+                ConfigureAwait(false);
+
+            // Done.
+            return new HtmlContentExpression(overallHtmlContent.ToString());
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine(
+                $"Could not fetch perma link content: Url={permaLink}, Message={ex.Message}");
+        }
+
+        //////////////////////////////////////////////////////////////////
+        // Step 6. Could not fetch any information.
+
+        {
+            // Render with layout.
+            // Get layout AST (ITextTreeNode).
+            // `layout-oEmbed-card.html`
+            var layoutNode = await MetadataUtilities.GetLayoutAsync(
+                $"oEmbed-card", null, mc, ct).
+                ConfigureAwait(false);
+
+            // Render with layout AST with overall metadata.
+            var overallHtmlContent = new StringBuilder();
+            await layoutNode.RenderAsync(
+                text => overallHtmlContent.Append(text), mc, ct).
+                ConfigureAwait(false);
+
+            // Done.
+            return new HtmlContentExpression(overallHtmlContent.ToString());
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -301,7 +423,8 @@ internal static class oEmbed
                 $"Invalid oEmbed function arguments: Count={parameters.Length}");
         }
 
-        var permaLinkString = (await parameters[0].ReduceExpressionAndFormatAsync(metadata, ct).
+        var permaLinkString = (await parameters[0].
+            ReduceExpressionAndFormatAsync(metadata, ct).
             ConfigureAwait(false)).
             Trim();
         if (!Uri.TryCreate(permaLinkString, UriKind.Absolute, out var permaLink))
@@ -310,104 +433,35 @@ internal static class oEmbed
                 $"Invalid oEmbed function argument: URL={permaLinkString}");
         }
 
-        var httpAccessor = (await metadata.GetValueAsync(
-            "httpAccessor", HttpAccessor.Instance, ct).
-            ConfigureAwait(false))!;
+        return await Internal_oEmbedAsync(
+            permaLink, metadata, true, ct).
+            ConfigureAwait(false);
+    }
 
-        var mc = metadata.Spawn();
-        mc.SetValue("permaLink", permaLink);
 
-        //////////////////////////////////////////////////////////////////
-        // Step 1. Automatic resolve using global oEmbed provider list.
-
-        // Render oEmbed from perma link.
-        if (await Render_oEmbedAsync(
-            httpAccessor, mc, permaLinkString, ct).
-            ConfigureAwait(false) is { } result1)
+    public static async ValueTask<IExpression> CardAsync(
+        IExpression[] parameters,
+        MetadataContext metadata,
+        CancellationToken ct)
+    {
+        if (parameters.Length != 1)
         {
-            // Done.
-            return result1;
+            throw new ArgumentException(
+                $"Invalid card function arguments: Count={parameters.Length}");
         }
 
-        //////////////////////////////////////////////////////////////////
-        // Step 2. Fetch HTML from perma link directly.
-
-        try
+        var permaLinkString = (await parameters[0].
+            ReduceExpressionAndFormatAsync(metadata, ct).
+            ConfigureAwait(false)).
+            Trim();
+        if (!Uri.TryCreate(permaLinkString, UriKind.Absolute, out var permaLink))
         {
-            var requestUrl = new Uri(permaLinkString, UriKind.Absolute);
-
-            // TODO: cache system
-            var html = await httpAccessor.FetchHtmlAsync(
-                requestUrl, ct).
-                ConfigureAwait(false);
-
-            //////////////////////////////////////////////////////////////////
-            // Step 3. Resolve by oEmbed discover meta tag link.
-
-            // Contains oEmbed meta tags.
-            if (html.Head?.QuerySelector("link[type='application/json+oembed']") is { } oEmbedLinkElement &&
-                oEmbedLinkElement.GetAttribute("href") is { } hrefString &&
-                hrefString.Trim() is { } hs &&
-                Uri.TryCreate(hs, UriKind.Absolute, out var href))
-            {
-                // Render oEmbed from discovered perma link.
-                if (await Render_oEmbedDiscoveryAsync(
-                    httpAccessor, mc, hs, ct).
-                    ConfigureAwait(false) is { } result2)
-                {
-                    // Done.
-                    return result2;
-                }
-            }
-
-            //////////////////////////////////////////////////////////////////
-            // Step 4. Give up oEmbed resolving, retreive meta tags from HTML.
-
-            var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
-                html, requestUrl);
-            oEmbedUtilities.SetHtmlMetadata(mc, htmlMetadata);
-
-            // Render with layout.
-            // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-metatags.html`
-            var layoutNode = await MetadataUtilities.GetLayoutAsync(
-                $"oEmbed-metatags", null, mc, ct).
-                ConfigureAwait(false);
-
-            // Render with layout AST with overall metadata.
-            var overallHtmlContent = new StringBuilder();
-            await layoutNode.RenderAsync(
-                text => overallHtmlContent.Append(text), mc, ct).
-                ConfigureAwait(false);
-
-            // Done.
-            return new HtmlContentExpression(overallHtmlContent.ToString());
-        }
-        catch (Exception ex)
-        {
-            Trace.WriteLine(
-                $"Could not fetch perma link content: Url={permaLinkString}, Message={ex.Message}");
+            throw new ArgumentException(
+                $"Invalid card function argument: URL={permaLinkString}");
         }
 
-        //////////////////////////////////////////////////////////////////
-        // Step 6. Could not fetch any information.
-
-        {
-            // Render with layout.
-            // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-fallback.html`
-            var layoutNode = await MetadataUtilities.GetLayoutAsync(
-                $"oEmbed-fallback", null, mc, ct).
-                ConfigureAwait(false);
-
-            // Render with layout AST with overall metadata.
-            var overallHtmlContent = new StringBuilder();
-            await layoutNode.RenderAsync(
-                text => overallHtmlContent.Append(text), mc, ct).
-                ConfigureAwait(false);
-
-            // Done.
-            return new HtmlContentExpression(overallHtmlContent.ToString());
-        }
+        return await Internal_oEmbedAsync(
+            permaLink, metadata, false, ct).
+            ConfigureAwait(false);
     }
 }

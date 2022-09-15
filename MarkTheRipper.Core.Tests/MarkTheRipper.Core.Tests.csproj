@@ -17,6 +17,78 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="CardTest.RipOffoEmbed1.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbed1.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbed2.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbed2.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedDiscovery.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedDiscovery.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedDiscoveryWithHtml.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedDiscoveryWithHtml.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedFallback.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedFallback.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedNotIncludeHtml.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedNotIncludeHtml.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedNotIncludeHtmlToDefault.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedNotIncludeHtmlToDefault.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedOnlyHtmlTags.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedOnlyHtmlTags.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedOnlyHtmlTitle.verified.txt">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
+    <None Update="CardTest.RipOffoEmbedOnlyHtmlTitle.verified.txt.bak">
+      <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
+      <DependentUpon>CardTest.cs</DependentUpon>
+    </None>
     <None Update="ParserTests.AggregateTags1.verified.txt">
       <ParentFile>$([System.String]::Copy('%(FileName)').Split('.')[0])</ParentFile>
       <DependentUpon>ParserTests.cs</DependentUpon>
