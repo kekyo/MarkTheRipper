@@ -10,12 +10,10 @@
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
-using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -25,15 +23,6 @@ namespace MarkTheRipper.Functions.Internal;
 
 internal static class oEmbedUtilities
 {
-    // HELP: Appending other entries...
-    private static readonly Dictionary<string, string> amazonEmbeddingQueries = new()
-    {
-        { "www.amazon.com", "https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id={0}&language=en_US&marketplace=amazon&region=US&asins={1}&show_border=false&link_opens_in_new_window=true" },
-        { "www.amazon.co.jp", "https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t={0}&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins={1}" },
-    };
-
-    //////////////////////////////////////////////////////////////////////////////
-
     public static HtmlMetadata CreateHtmlMetadata(
         JObject oEmbedMetadataJson, string? siteName) =>
         new HtmlMetadata
@@ -131,31 +120,6 @@ internal static class oEmbedUtilities
         metadata.SetValue("type", htmlMetadata.Type);
         metadata.SetValue("imageUrl", htmlMetadata.ImageUrl);
     }
-
-    //////////////////////////////////////////////////////////////////////////////
-    public static async ValueTask<string?> GetAmazonEmbeddedBlockAsync(
-    Uri permaLink, MetadataContext metadata, CancellationToken ct)
-    {
-        if (permaLink.HostNameType == UriHostNameType.Dns &&
-            amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var queryUrlFormat) &&
-            permaLink.PathAndQuery.Split('/') is { } pathElements &&
-            pathElements.Reverse().
-                // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
-                FirstOrDefault(e => e.Length >= 10 && e.All(char.IsLetterOrDigit)) is { } asin)
-        {
-            if (metadata.Lookup("amazonTrackingId") is { } trackingIdExpression &&
-                await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).
-                ConfigureAwait(false) is { } trackingId &&
-                !string.IsNullOrWhiteSpace(trackingId))
-            {
-                return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(queryUrlFormat, trackingId, asin)}'></iframe>";
-            }
-        }
-
-        return null;
-    }
-
-    // TODO: PAAPI
 
     //////////////////////////////////////////////////////////////////////////////
 

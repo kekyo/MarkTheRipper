@@ -124,40 +124,6 @@ internal static class oEmbedRenderrer
 
     //////////////////////////////////////////////////////////////////////////////
 
-    private static async ValueTask<string> RenderAmazonResponsiveBlockAsync(
-        MetadataContext metadata,
-        string iFrameHtmlString,
-        CancellationToken ct)
-    {
-        // Will transfer MarkTheRipper metadata from oEmbed metadata.
-        var htmlMetadata = new HtmlMetadata
-        {
-            SiteName = "Amazon",
-            Type = "rich",
-        };
-        oEmbedUtilities.SetHtmlMetadata(
-            metadata, htmlMetadata);
-
-        // Set patched HTML into metadata context.
-        metadata.SetValue("contentBody", iFrameHtmlString);
-
-        // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-html-{siteName}.html` ==> `layout-oEmbed-html.html`
-        var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-            htmlMetadata, "html", ct).
-            ConfigureAwait(false);
-
-        // Render with layout AST with overall metadata.
-        var overallHtmlContent = new StringBuilder();
-        await layoutNode.RenderAsync(
-            text => overallHtmlContent.Append(text), metadata, ct).
-            ConfigureAwait(false);
-
-        return overallHtmlContent.ToString();
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-
     public static async ValueTask<IExpression?> Render_oEmbedAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
@@ -165,13 +131,13 @@ internal static class oEmbedRenderrer
         bool useInlineHtml,
         CancellationToken ct)
     {
-        // Is it in amazon product page URL?
-        if (await oEmbedUtilities.GetAmazonEmbeddedBlockAsync(
-            permaLink, metadata, ct).
+        // Special case: Is it in amazon product page URL?
+        if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
+            metadata, permaLink, useInlineHtml, ct).
             ConfigureAwait(false) is { } amazonHtmlString)
         {
             // Accept with sanitized HTML.
-            var sanitizedHtmlString = await RenderAmazonResponsiveBlockAsync(
+            var sanitizedHtmlString = await AmazonRenderrer.RenderAmazonResponsiveBlockAsync(
                 metadata,
                 amazonHtmlString,
                 ct).
