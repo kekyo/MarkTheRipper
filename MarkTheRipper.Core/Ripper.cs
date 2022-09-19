@@ -239,7 +239,7 @@ public sealed class Ripper
         mc.SetValue("contentBody", contentBodyWriter.ToString());
 
         // Step 8: Get layout AST (ITextTreeNode).
-        var layoutNode = await MetadataUtilities.GetLayoutAsync(metadata, ct).
+        var layoutNode = await metadata.GetLayoutAsync(ct).
             ConfigureAwait(false);
 
         // Step 9: Setup HTML content dictionary (will be added by HtmlContentExpression)

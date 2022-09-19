@@ -148,7 +148,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -225,7 +225,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -302,7 +302,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -378,7 +378,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",

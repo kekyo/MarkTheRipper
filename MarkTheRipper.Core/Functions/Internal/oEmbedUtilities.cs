@@ -9,120 +9,28 @@
 
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.Functions;
+namespace MarkTheRipper.Functions.Internal;
 
 internal static class oEmbedUtilities
 {
-    public sealed class oEmbedEndPoint : IMetadataEntry
+    // HELP: Appending other entries...
+    private static readonly Dictionary<string, string> amazonEmbeddingQueries = new()
     {
-        public readonly string url;
-        public readonly Func<string, bool>[] matchers;
-
-        [JsonConstructor]
-        public oEmbedEndPoint(
-            string? url,
-            string?[]? schemes)
-        {
-            this.url = url?.Trim() ?? string.Empty;
-            this.matchers = schemes?.
-                Select<string?, Func<string, bool>>(scheme =>
-                {
-                    if (scheme != null)
-                    {
-                        var sb = new StringBuilder(scheme);
-                        sb.Replace(".", "\\.");
-                        sb.Replace("?", "\\?");
-                        sb.Replace("+", "\\+");
-                        sb.Replace("*", ".*");
-                        var r = new Regex(sb.ToString(), RegexOptions.Compiled);
-                        return r.IsMatch;
-                    }
-                    else
-                    {
-                        return _ => false;
-                    }
-                }).
-                ToArray() ??
-                InternalUtilities.Empty<Func<string, bool>>();
-        }
-
-        public ValueTask<object?> GetImplicitValueAsync(
-            MetadataContext metadata, CancellationToken ct) =>
-            new(url);
-
-        public ValueTask<object?> GetPropertyValueAsync(
-            string keyName, MetadataContext context, CancellationToken ct) =>
-            new(keyName switch
-            {
-                "url" => this.url,
-                _ => null,
-            });
-
-        public override string ToString() =>
-            $"{this.url ?? "(Unknown url)"}, Schemes={this.matchers.Length}";
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-
-    public sealed class oEmbedProvider : IMetadataEntry
-    {
-        public readonly string provider_name;
-        public readonly Uri provider_url;
-        public readonly oEmbedEndPoint[] endpoints;
-
-        [JsonConstructor]
-        public oEmbedProvider(
-            string? provider_name,
-            string? provider_url,
-            oEmbedEndPoint[]? endpoints)
-        {
-            this.provider_name = provider_name!;
-            this.provider_url = provider_url is { } pus &&
-                Uri.TryCreate(pus.Trim(), UriKind.Absolute, out var pu) ?
-                    pu : null!;
-            this.endpoints = endpoints ?? InternalUtilities.Empty<oEmbedEndPoint>();
-        }
-
-        public ValueTask<object?> GetImplicitValueAsync(
-            MetadataContext metadata, CancellationToken ct) =>
-            new(provider_name);
-
-        public ValueTask<object?> GetPropertyValueAsync(
-            string keyName, MetadataContext context, CancellationToken ct) =>
-            new(keyName switch
-            {
-                "name" => this.provider_name,
-                "url" => this.provider_url,
-                _ => null,
-            });
-
-        public override string ToString() =>
-            $"{this.provider_name}, Url={this.provider_url}, EndPoints={this.endpoints.Length}";
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-
-    public sealed class HtmlMetadata
-    {
-        public string? SiteName;
-        public string? Title;
-        public string? AltTitle;
-        public string? Author;
-        public string? Description;
-        public string? Type;
-        public Uri? ImageUrl;
-    }
+        { "www.amazon.com", "https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id={0}&language=en_US&marketplace=amazon&region=US&asins={1}&show_border=false&link_opens_in_new_window=true" },
+        { "www.amazon.co.jp", "https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t={0}&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins={1}" },
+    };
 
     //////////////////////////////////////////////////////////////////////////////
 
@@ -222,5 +130,77 @@ internal static class oEmbedUtilities
         metadata.SetValue("description", htmlMetadata.Description);
         metadata.SetValue("type", htmlMetadata.Type);
         metadata.SetValue("imageUrl", htmlMetadata.ImageUrl);
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    public static async ValueTask<string?> GetAmazonEmbeddedBlockAsync(
+    Uri permaLink, MetadataContext metadata, CancellationToken ct)
+    {
+        if (permaLink.HostNameType == UriHostNameType.Dns &&
+            amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var queryUrlFormat) &&
+            permaLink.PathAndQuery.Split('/') is { } pathElements &&
+            pathElements.Reverse().
+                // Likes ASIN
+                FirstOrDefault(e => e.All(char.IsLetterOrDigit)) is { } asin)
+        {
+            if (metadata.Lookup("amazonTrackingId") is { } trackingIdExpression &&
+                await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).
+                ConfigureAwait(false) is { } trackingId &&
+                !string.IsNullOrWhiteSpace(trackingId))
+            {
+                return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(queryUrlFormat, trackingId, asin)}'></iframe>";
+            }
+        }
+
+        return null;
+    }
+
+    // TODO: PAAPI
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    public static async ValueTask<string> ConvertToResponsiveBlockAsync(
+        string iFrameHtmlString,
+        CancellationToken ct)
+    {
+        // Sanitize non HTTPS links.
+        var sanitizedHtmlString = iFrameHtmlString.Replace("http:", "https");
+
+        // Parse oEmbed metadata `html` value.
+        var parser = new HtmlParser();
+        var html = await parser.ParseDocumentAsync(sanitizedHtmlString, ct).
+            ConfigureAwait(false);
+
+        // Will patch HTML attributes because makes helping responsive design.
+        var width = -1;
+        var height = -1;
+        foreach (var element in
+            html.Body!.Children.AsEnumerable() ?? InternalUtilities.Empty<IElement>())
+        {
+            var styleString = element.GetAttribute("style") ?? string.Empty;
+            styleString += "position:absolute !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important;";
+            element.SetAttribute("style", styleString);
+
+            if (element.GetAttribute("width") is { } ws &&
+                int.TryParse(ws, out var w))
+            {
+                element.RemoveAttribute("width");
+                width = w;
+            }
+            if (element.GetAttribute("height") is { } hs &&
+                int.TryParse(hs, out var h))
+            {
+                element.RemoveAttribute("height");
+                height = h;
+            }
+        }
+
+        // Makes original aspect ratio.
+        var ratioString = width >= 1 && height >= 1 ?
+            $" padding-top:{(height * 100.0 / width).ToString("F3", CultureInfo.InvariantCulture)}%;" :
+            string.Empty;
+
+        // Render final patched HTML.
+       return $"<div style='position:relative; width:100%;{ratioString}'>{html.Body!.InnerHtml}</div>";
     }
 }

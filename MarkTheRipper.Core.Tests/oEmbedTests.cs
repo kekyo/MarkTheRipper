@@ -223,7 +223,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -301,7 +301,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -378,7 +378,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -454,7 +454,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -788,6 +788,90 @@ new(("https://oembed.com/providers.json",
     ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"",
     ""html"": ""\u003ciframe width=\u0022200\u0022 height=\u0022113\u0022 src=\u0022https://www.youtube.com/embed/1La4QzGeaaQ?feature=oembed\u0022 frameborder=\u00220\u0022 allow=\u0022accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\u0022 allowfullscreen title=\u0022Peru 8K HDR 60FPS (FUHD)\u0022\u003e\u003c/iframe\u003e""
 }")));
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonCom()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {oEmbed https://www.amazon.com/gp/product/B07X5FPP4P/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId", "abcde1-1")),
+new(("oEmbed-html-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonCoJp()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {oEmbed https://www.amazon.co.jp/dp/B07KQ25738/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId", "abcde1-1")),
+new(("oEmbed-html-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")));
         await Verifier.Verify(actual);
     }
 }

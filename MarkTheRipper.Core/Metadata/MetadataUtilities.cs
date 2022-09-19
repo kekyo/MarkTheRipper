@@ -216,8 +216,8 @@ public static class MetadataUtilities
     /////////////////////////////////////////////////////////////////////
 
     public static async ValueTask<RootTextNode> GetLayoutAsync(
-        string layoutName, string? fallbackName,
-        MetadataContext metadata, CancellationToken ct)
+        this MetadataContext metadata, string layoutName,
+        string? fallbackName, CancellationToken ct)
     {
         if (metadata.Lookup("layoutList") is { } layoutListExpression &&
             await Reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
@@ -253,7 +253,7 @@ public static class MetadataUtilities
     }
 
     public static async ValueTask<RootTextNode> GetLayoutAsync(
-        MetadataContext metadata, CancellationToken ct)
+        this MetadataContext metadata, CancellationToken ct)
     {
         if (metadata.Lookup("layout") is { } layoutExpression &&
             await Reducer.ReduceExpressionAsync(layoutExpression, metadata, ct).
@@ -265,7 +265,7 @@ public static class MetadataUtilities
             }
             else if (layoutValue is PartialLayoutEntry entry)
             {
-                return await GetLayoutAsync(entry.Name, "page", metadata, ct).
+                return await metadata.GetLayoutAsync(entry.Name, "page", ct).
                     ConfigureAwait(false);
             }
             else
