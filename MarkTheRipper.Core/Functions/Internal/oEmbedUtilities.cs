@@ -140,8 +140,8 @@ internal static class oEmbedUtilities
             amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var queryUrlFormat) &&
             permaLink.PathAndQuery.Split('/') is { } pathElements &&
             pathElements.Reverse().
-                // Likes ASIN
-                FirstOrDefault(e => e.All(char.IsLetterOrDigit)) is { } asin)
+                // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
+                FirstOrDefault(e => e.Length >= 10 && e.All(char.IsLetterOrDigit)) is { } asin)
         {
             if (metadata.Lookup("amazonTrackingId") is { } trackingIdExpression &&
                 await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).

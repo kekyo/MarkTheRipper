@@ -15,7 +15,7 @@
 <li>type: rich</li>
 <li>imageUrl: </li>
 </ul>
-<div>contentBody: <iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t=abcde1-1&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins='></iframe></div>
+<div>contentBody: <iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t=abcde1-1&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins=B07KQ25738'></iframe></div>
 
 
 <p>Hello MarkTheRipper!

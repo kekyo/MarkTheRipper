@@ -166,7 +166,8 @@ internal static class oEmbedRenderrer
         CancellationToken ct)
     {
         // Is it in amazon product page URL?
-        if (await oEmbedUtilities.GetAmazonEmbeddedBlockAsync(permaLink, metadata, ct).
+        if (await oEmbedUtilities.GetAmazonEmbeddedBlockAsync(
+            permaLink, metadata, ct).
             ConfigureAwait(false) is { } amazonHtmlString)
         {
             // Accept with sanitized HTML.
