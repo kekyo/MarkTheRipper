@@ -21,10 +21,10 @@ namespace MarkTheRipper.Functions.Internal;
 internal static class AmazonRenderrer
 {
     // HELP: Appending other entries...
-    private static readonly Dictionary<string, string> amazonEmbeddingQueries = new()
+    private static readonly Dictionary<string, (string region, string url)> amazonEmbeddingQueries = new()
     {
-        { "www.amazon.com", "https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id={0}&language=en_US&marketplace=amazon&region=US&asins={1}&show_border=false&link_opens_in_new_window=true" },
-        { "www.amazon.co.jp", "https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t={0}&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins={1}" },
+        { "www.amazon.com", ("us", "https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id={0}&language=en_US&marketplace=amazon&region=US&asins={1}&show_border=false&link_opens_in_new_window=true") },
+        { "www.amazon.co.jp", ("jp", "https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t={0}&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins={1}") },
     };
 
     //////////////////////////////////////////////////////////////////////////////
@@ -36,25 +36,29 @@ internal static class AmazonRenderrer
         CancellationToken ct)
     {
         if (permaLink.HostNameType == UriHostNameType.Dns &&
-            amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var queryUrlFormat) &&
+            amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var query) &&
             permaLink.PathAndQuery.Split('/') is { } pathElements &&
             pathElements.Reverse().
                 // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
                 FirstOrDefault(e => e.Length >= 10 && e.All(char.IsLetterOrDigit)) is { } asin)
         {
-            if (metadata.Lookup("amazonTrackingId") is { } trackingIdExpression &&
+            if (metadata.Lookup($"amazonTrackingId-{query.region}") is { } trackingIdExpression &&
                 await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).
-                ConfigureAwait(false) is { } trackingId &&
+                    ConfigureAwait(false) is { } trackingId &&
                 !string.IsNullOrWhiteSpace(trackingId))
             {
                 if (useInlineHtml)
                 {
-                    return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(queryUrlFormat, trackingId, asin)}'></iframe>";
+                    return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(query.url, trackingId, asin)}'></iframe>";
                 }
-                else
-                {
-                    // TODO: PAAPI
-                }
+
+                // TODO: PAAPI
+                //if (metadata.Lookup("amazonTrackingId") is { } trackingIdExpression &&
+                //    await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).
+                //        ConfigureAwait(false) is { } trackingId &&
+                //    !string.IsNullOrWhiteSpace(trackingId))
+                //{
+                //}
             }
         }
 

@@ -819,7 +819,7 @@ This is test contents.
 {contentBody}</body>
 </html>
 ",
-new(("amazonTrackingId", "abcde1-1")),
+new(("amazonTrackingId-us", "abcde1-1")),
 new(("oEmbed-html-Amazon", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
@@ -860,7 +860,7 @@ This is test contents.
 {contentBody}</body>
 </html>
 ",
-new(("amazonTrackingId", "abcde1-1")),
+new(("amazonTrackingId-jp", "abcde1-1")),
 new(("oEmbed-html-Amazon", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
