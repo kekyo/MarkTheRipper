@@ -35,30 +35,32 @@ internal static class AmazonRenderrer
         bool useInlineHtml,
         CancellationToken ct)
     {
-        if (permaLink.HostNameType == UriHostNameType.Dns &&
-            amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var query) &&
+        if (amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var query) &&
             permaLink.PathAndQuery.Split('/') is { } pathElements &&
             pathElements.Reverse().
                 // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
-                FirstOrDefault(e => e.Length >= 10 && e.All(char.IsLetterOrDigit)) is { } asin)
+                FirstOrDefault(e => e.Length == 10 && e.All(ch => char.IsUpper(ch) || char.IsDigit(ch))) is { } asin &&
+            await metadata.LookupValueAsync(
+                $"amazonTrackingId-{query.region}", default(string), ct).
+                ConfigureAwait(false) is { } trackingId &&
+            !string.IsNullOrWhiteSpace(trackingId))
         {
-            if (metadata.Lookup($"amazonTrackingId-{query.region}") is { } trackingIdExpression &&
-                await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).
-                    ConfigureAwait(false) is { } trackingId &&
-                !string.IsNullOrWhiteSpace(trackingId))
+            if (useInlineHtml)
             {
-                if (useInlineHtml)
-                {
-                    return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(query.url, trackingId, asin)}'></iframe>";
-                }
+                return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(query.url, trackingId, asin)}'></iframe>";
+            }
 
-                // TODO: PAAPI
-                //if (metadata.Lookup("amazonTrackingId") is { } trackingIdExpression &&
-                //    await trackingIdExpression.ReduceExpressionAndFormatAsync(metadata, ct).
-                //        ConfigureAwait(false) is { } trackingId &&
-                //    !string.IsNullOrWhiteSpace(trackingId))
-                //{
-                //}
+            // Uses PAAPI
+            if (await metadata.LookupValueAsync(
+                $"amazonAccessKey-{query.region}", default(string), ct).
+                ConfigureAwait(false) is { } accessKey &&
+                !string.IsNullOrWhiteSpace(accessKey) &&
+                await metadata.LookupValueAsync(
+                $"amazonSecretKey-{query.region}", default(string), ct).
+                ConfigureAwait(false) is { } secretKey &&
+                !string.IsNullOrWhiteSpace(secretKey))
+            {
+
             }
         }
 

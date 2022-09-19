@@ -32,7 +32,7 @@ internal static class oEmbed
         bool useInlineHtml,
         CancellationToken ct)
     {
-        var httpAccessor = (await metadata.GetValueAsync(
+        var httpAccessor = (await metadata.LookupValueAsync(
             "httpAccessor", HttpAccessor.Instance, ct).
             ConfigureAwait(false))!;
 

@@ -206,7 +206,7 @@ public static class MetadataUtilities
             _ => new[] { value },
         };
 
-    public static async ValueTask<TValue> GetValueAsync<TValue>(
+    public static async ValueTask<TValue> LookupValueAsync<TValue>(
         this MetadataContext metadata, string keyName, TValue defaultValue, CancellationToken ct) =>
         metadata.Lookup(keyName) is { } expression &&
         await Reducer.ReduceExpressionAsync(expression, metadata, ct).
