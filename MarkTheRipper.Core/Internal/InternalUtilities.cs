@@ -7,12 +7,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Metadata;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,8 +18,28 @@ namespace MarkTheRipper.Internal;
 
 internal static class InternalUtilities
 {
+    private static readonly Uri defaultUrl = new Uri("https://example.com/");
+
     public static readonly JsonSerializer DefaultJsonSerializer =
         Utilities.GetDefaultJsonSerializer();
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static CultureInfo GetLocale(string localeString)
+    {
+        try
+        {
+            return new CultureInfo(localeString);
+        }
+        catch
+        {
+            return CultureInfo.InvariantCulture;
+        }
+    }
+
+    public static Uri GetUrl(string urlString) =>
+        Uri.TryCreate(urlString, UriKind.Absolute, out var url) ? url :
+        defaultUrl;
 
     ///////////////////////////////////////////////////////////////////////////////////
 

@@ -45,12 +45,13 @@ internal static class AmazonRenderrer
                 ConfigureAwait(false) is { } trackingId &&
             !string.IsNullOrWhiteSpace(trackingId))
         {
+            // Embeddable product badge.
             if (useInlineHtml)
             {
                 return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(query.url, trackingId, asin)}'></iframe>";
             }
 
-            // Uses PAAPI
+            // Uses PAAPI v5
             if (await metadata.LookupValueAsync(
                 $"amazonAccessKey-{query.region}", default(string), ct).
                 ConfigureAwait(false) is { } accessKey &&

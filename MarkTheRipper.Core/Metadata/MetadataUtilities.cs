@@ -9,6 +9,7 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
+using MarkTheRipper.Internal;
 using MarkTheRipper.IO;
 using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json;
@@ -125,7 +126,7 @@ public static class MetadataUtilities
             Reducer.UnsafeReduceExpression(langExpression, metadata) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
-                    new CultureInfo(UnsafeFormatValue(langValue, metadata)) :
+                    InternalUtilities.GetLocale(UnsafeFormatValue(langValue, metadata)) :
                 CultureInfo.InvariantCulture;
 
     public static async ValueTask<IFormatProvider> GetFormatProviderAsync(
@@ -134,7 +135,7 @@ public static class MetadataUtilities
             await langExpression.ReduceExpressionAsync(metadata, ct) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
-                    new CultureInfo(await FormatValueAsync(langValue, metadata, ct).
+                    InternalUtilities.GetLocale(await FormatValueAsync(langValue, metadata, ct).
                         ConfigureAwait(false)) :
             CultureInfo.InvariantCulture;
 

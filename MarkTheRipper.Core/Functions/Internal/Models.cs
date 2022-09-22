@@ -11,7 +11,9 @@ using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using Newtonsoft.Json;
 using System;
+using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -117,4 +119,206 @@ internal sealed class HtmlMetadata
     public string? Description;
     public string? Type;
     public Uri? ImageUrl;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+// https://webservices.amazon.com/paapi5/documentation/get-items.html
+internal sealed class AmazonPAAPIGetItemsRequest
+{
+    public readonly string[] ItemIds;
+    public readonly string ItemIdType;
+    public readonly string[] LanguagesOfPreference;
+    public readonly string Marketplace;
+    public readonly string PartnerTag;
+    public readonly string PartnerType;
+    public readonly string[] Resources;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsRequest(
+        string[] ItemIds, string ItemIdType, string[] LanguagesOfPreference,
+        string Marketplace, string PartnerTag, string PartnerType,
+        string[] Resources)
+    {
+        this.ItemIds = ItemIds;
+        this.ItemIdType = ItemIdType;
+        this.LanguagesOfPreference = LanguagesOfPreference;
+        this.Marketplace = Marketplace;
+        this.PartnerTag = PartnerTag;
+        this.PartnerType = PartnerType;
+        this.Resources = Resources;
+    }
+}
+
+internal readonly struct AmazonPAAPIGetItemsError
+{
+    public readonly string __type;
+    public readonly string Code;
+    public readonly string Message;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsError(
+        string __type, string Code, string Message)
+    {
+        this.__type = __type;
+        this.Code = Code;
+        this.Message = Message;
+    }
+}
+
+internal sealed class AmazonPAAPIGetItemsItemImageDetail
+{
+    public readonly int Height;
+    public readonly Uri URL;
+    public readonly int Width;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsItemImageDetail(
+        int Height,
+        string URL,
+        int Width)
+    {
+        this.Height = Height;
+        this.URL = InternalUtilities.GetUrl(URL);
+        this.Width = Width;
+    }
+}
+
+internal sealed class AmazonPAAPIGetItemsItemImage
+{
+    public readonly AmazonPAAPIGetItemsItemImageDetail? Small;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsItemImage(AmazonPAAPIGetItemsItemImageDetail? Small) =>
+        this.Small = Small;
+}
+
+internal sealed class AmazonPAAPIGetItemsItemImages
+{
+    public readonly AmazonPAAPIGetItemsItemImage? Primary;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsItemImages(AmazonPAAPIGetItemsItemImage? Primary) =>
+        this.Primary = Primary;
+}
+
+internal sealed class AmazonPAAPILabelMetadata
+{
+    public readonly string DisplayValue;
+    public readonly string Label;
+    public readonly CultureInfo Locale;
+    public readonly string? Value;
+
+    [JsonConstructor]
+    public AmazonPAAPILabelMetadata(
+        string DisplayValue, string Label, string Locale, string? Value)
+    {
+        this.DisplayValue = DisplayValue;
+        this.Label = Label;
+        this.Locale = InternalUtilities.GetLocale(Locale);
+        this.Value = Value;
+    }
+}
+
+internal sealed class AmazonPAAPIGetItemsItemInfo
+{
+    public readonly AmazonPAAPILabelMetadata? Title;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsItemInfo(
+        AmazonPAAPILabelMetadata? Title) =>
+        this.Title = Title;
+}
+
+internal sealed class AmazonPAAPIGetItemsPrice
+{
+    public readonly double Amount;
+    public readonly string Currency;
+    public readonly string DisplayAmount;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsPrice(
+        double Amount, string Currency, string DisplayAmount)
+    {
+        this.Amount = Amount;
+        this.Currency = Currency;
+        this.DisplayAmount = DisplayAmount;
+    }
+}
+
+internal readonly struct AmazonPAAPIGetItemsSummary
+{
+    public readonly AmazonPAAPILabelMetadata? Condition;
+    public readonly AmazonPAAPIGetItemsPrice? HighestPrice;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsSummary(
+        AmazonPAAPILabelMetadata? Condition,
+        AmazonPAAPIGetItemsPrice? HighestPrice)
+    {
+        this.Condition = Condition;
+        this.HighestPrice = HighestPrice;
+    }
+}
+
+internal sealed class AmazonPAAPIGetItemsOffers
+{
+    public readonly AmazonPAAPIGetItemsSummary[] Summaries;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsOffers(
+        AmazonPAAPIGetItemsSummary[] Summaries) =>
+        this.Summaries = Summaries;
+}
+
+internal readonly struct AmazonPAAPIGetItemsItemResult
+{
+    public readonly string? ASIN;
+    public readonly Uri? DetailPageURL;
+    public readonly AmazonPAAPIGetItemsItemImages? Images;
+    public readonly AmazonPAAPIGetItemsItemInfo? ItemInfo;
+    public readonly AmazonPAAPIGetItemsOffers? Offers;
+    public readonly string? ParentASIN;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsItemResult(
+        string? ASIN,
+        Uri? DetailPageURL,
+        AmazonPAAPIGetItemsItemImages? Images,
+        AmazonPAAPIGetItemsItemInfo? ItemInfo,
+        AmazonPAAPIGetItemsOffers? Offers,
+        string? ParentASIN)
+    {
+        this.ASIN = ASIN;
+        this.DetailPageURL = DetailPageURL;
+        this.Images = Images;
+        this.ItemInfo = ItemInfo;
+        this.Offers = Offers;
+        this.ParentASIN = ParentASIN;
+    }
+}
+
+internal sealed class AmazonPAAPIGetItemsItemResults
+{
+    public readonly AmazonPAAPIGetItemsItemResult[] Items;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsItemResults(
+        AmazonPAAPIGetItemsItemResult[] Items) =>
+        this.Items = Items;
+}
+
+internal sealed class AmazonPAAPIGetItemsResponse
+{
+    public readonly AmazonPAAPIGetItemsError[] Errors;
+    public readonly AmazonPAAPIGetItemsItemResults? ItemResults;
+
+    [JsonConstructor]
+    public AmazonPAAPIGetItemsResponse(
+        AmazonPAAPIGetItemsError[] Errors,
+        AmazonPAAPIGetItemsItemResults? ItemResults)
+    {
+        this.Errors = Errors;
+        this.ItemResults = ItemResults;
+    }
 }
