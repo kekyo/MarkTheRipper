@@ -10,14 +10,33 @@
 using AngleSharp.Html.Dom;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MarkTheRipper.IO
+namespace MarkTheRipper.IO;
+
+public interface IHttpAccessor
 {
-    public interface IHttpAccessor
+    ValueTask<JToken> FetchJsonAsync(
+        Uri url, CancellationToken ct);
+    ValueTask<JToken> PostJsonAsync(
+        Uri url, JToken requestJson, IReadOnlyDictionary<string, string> headers,
+        CancellationToken ct);
+
+    ValueTask<IHtmlDocument> FetchHtmlAsync(
+        Uri url, CancellationToken ct);
+}
+
+public static class HttpAccessorExtension
+{
+    public static async ValueTask<T> PostJsonAsync<T>(
+        this IHttpAccessor httpAccess,
+        Uri url, JToken requestJson, IReadOnlyDictionary<string, string> headers,
+        CancellationToken ct)
     {
-        ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct);
-        ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct);
+        var jt = await httpAccess.PostJsonAsync(url, requestJson, headers, ct).
+            ConfigureAwait(false);
+        return jt.ToObject<T>()!;
     }
 }

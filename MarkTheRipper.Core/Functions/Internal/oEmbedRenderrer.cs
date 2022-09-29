@@ -133,7 +133,7 @@ internal static class oEmbedRenderrer
     {
         // Special case: Is it in amazon product page URL?
         if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
-            metadata, permaLink, useInlineHtml, ct).
+            httpAccessor, metadata, permaLink, useInlineHtml, ct).
             ConfigureAwait(false) is { } amazonHtmlString)
         {
             // Accept with sanitized HTML.

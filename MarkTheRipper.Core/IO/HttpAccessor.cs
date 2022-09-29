@@ -12,6 +12,8 @@ using AngleSharp.Html.Parser;
 using MarkTheRipper.Internal;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +32,8 @@ public sealed class HttpAccessor : IHttpAccessor
     {
     }
 
-    public async ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct)
+    public async ValueTask<JToken> FetchJsonAsync(
+        Uri url, CancellationToken ct)
     {
         using var stream = await httpClientFactory.Value.GetStreamAsync(url).
             WithCancellation(ct).
@@ -40,7 +43,53 @@ public sealed class HttpAccessor : IHttpAccessor
             ConfigureAwait(false);
     }
 
-    public async ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct)
+    public async ValueTask<JToken> PostJsonAsync(
+        Uri url, JToken requestJson,
+        IReadOnlyDictionary<string, string> headers,
+        CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post, url);
+
+        var content = new StringContent(
+            requestJson.ToString(),
+            Utilities.UTF8,
+            "application/json");
+        request.Content = content;
+
+        foreach (var entry in headers)
+        {
+            if (!content.Headers.TryAddWithoutValidation(entry.Key, entry.Value))
+            {
+                request.Headers.Add(entry.Key, entry.Value);
+            }
+        }
+
+        using var response = await httpClientFactory.Value.
+            SendAsync(request, ct).
+            ConfigureAwait(false);
+
+        using var contentStream = await response.Content.ReadAsStreamAsync().
+            WithCancellation(ct).
+            ConfigureAwait(false);
+#if DEBUG
+        var stream = new MemoryStream();
+        await contentStream.CopyToAsync(stream);
+        stream.Position = 0;
+
+        var jsonString = new StreamReader(stream).ReadToEnd();
+        stream.Position = 0;
+#else
+        var stream = contentStream;
+#endif
+
+        return await InternalUtilities.DefaultJsonSerializer.
+            DeserializeJsonAsync(stream, ct).
+            ConfigureAwait(false);
+    }
+
+    public async ValueTask<IHtmlDocument> FetchHtmlAsync(
+        Uri url, CancellationToken ct)
     {
         var parser = new HtmlParser();
 

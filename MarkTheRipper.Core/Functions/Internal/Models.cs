@@ -13,7 +13,6 @@ using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -186,20 +185,21 @@ internal sealed class AmazonPAAPIGetItemsItemImageDetail
 
 internal sealed class AmazonPAAPIGetItemsItemImage
 {
-    public readonly AmazonPAAPIGetItemsItemImageDetail? Small;
+    public readonly AmazonPAAPIGetItemsItemImageDetail? Large;
 
     [JsonConstructor]
-    public AmazonPAAPIGetItemsItemImage(AmazonPAAPIGetItemsItemImageDetail? Small) =>
-        this.Small = Small;
+    public AmazonPAAPIGetItemsItemImage(AmazonPAAPIGetItemsItemImageDetail? Large) =>
+        this.Large = Large;
 }
 
 internal sealed class AmazonPAAPIGetItemsItemImages
 {
     public readonly AmazonPAAPIGetItemsItemImage? Primary;
+    public readonly AmazonPAAPIGetItemsItemImage? Variants;
 
     [JsonConstructor]
-    public AmazonPAAPIGetItemsItemImages(AmazonPAAPIGetItemsItemImage? Primary) =>
-        this.Primary = Primary;
+    public AmazonPAAPIGetItemsItemImages(AmazonPAAPIGetItemsItemImage? Variants) =>
+        this.Variants = Variants;
 }
 
 internal sealed class AmazonPAAPILabelMetadata
@@ -223,11 +223,16 @@ internal sealed class AmazonPAAPILabelMetadata
 internal sealed class AmazonPAAPIGetItemsItemInfo
 {
     public readonly AmazonPAAPILabelMetadata? Title;
+    public readonly AmazonPAAPILabelMetadata? Features;
 
     [JsonConstructor]
     public AmazonPAAPIGetItemsItemInfo(
-        AmazonPAAPILabelMetadata? Title) =>
+        AmazonPAAPILabelMetadata? Title,
+        AmazonPAAPILabelMetadata? Features)
+    {
         this.Title = Title;
+        this.Features = Features;
+    }
 }
 
 internal sealed class AmazonPAAPIGetItemsPrice
@@ -250,14 +255,17 @@ internal readonly struct AmazonPAAPIGetItemsSummary
 {
     public readonly AmazonPAAPILabelMetadata? Condition;
     public readonly AmazonPAAPIGetItemsPrice? HighestPrice;
+    public readonly AmazonPAAPIGetItemsPrice? LowestPrice;
 
     [JsonConstructor]
     public AmazonPAAPIGetItemsSummary(
         AmazonPAAPILabelMetadata? Condition,
-        AmazonPAAPIGetItemsPrice? HighestPrice)
+        AmazonPAAPIGetItemsPrice? HighestPrice,
+        AmazonPAAPIGetItemsPrice? LowestPrice)
     {
         this.Condition = Condition;
         this.HighestPrice = HighestPrice;
+        this.LowestPrice = LowestPrice;
     }
 }
 

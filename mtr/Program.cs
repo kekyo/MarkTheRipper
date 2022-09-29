@@ -9,12 +9,10 @@
 
 using Mono.Options;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper;
@@ -44,38 +42,30 @@ public static class Program
         var dc = new SafeDirectoryCreator();
 
         var baseName = "MarkTheRipper.embeds." + sampleName;
-#if DEBUG
-        foreach (var resourceName in
-            typeof(Program).Assembly.GetManifestResourceNames().
-            Where(resourceName => resourceName.StartsWith(baseName)))
-        {
-            var pathElements = resourceName.
-                Substring(baseName.Length + 1).
-                Split('.');
-            var path = string.Join(
-                Path.DirectorySeparatorChar.ToString(),
-                pathElements.
-                    Take(pathElements.Length - 3 - 1)) +
-                    $".{pathElements.Last()}";
-            await ExtractSampleContentAsync(
-                dc, resourceName, path);
-        }
-#else
-        await Task.WhenAll(
-            typeof(Program).Assembly.GetManifestResourceNames().
+        var candidates = typeof(Program).Assembly.GetManifestResourceNames().
             Where(resourceName => resourceName.StartsWith(baseName)).
-            Select(resourceName => {
+            Select(resourceName =>
+            {
                 var pathElements = resourceName.
                     Substring(baseName.Length + 1).
                     Split('.');
                 var path = string.Join(
                     Path.DirectorySeparatorChar.ToString(),
                     pathElements.
-                        Take(pathElements.Length - 3 - 1)) +
-                        $".{pathElements.Last()}";
-                return ExtractSampleContentAsync(
-                    dc, resourceName, path);
-            }));
+                        Take(pathElements.Length - 1)) +
+                    $".{pathElements.Last()}";
+                return (resourceName, path);
+            });
+#if DEBUG
+        foreach (var candidate in candidates)
+        {
+            await ExtractSampleContentAsync(
+                dc, candidate.resourceName, candidate.path);
+        }
+#else
+        await Task.WhenAll(candidates.
+            Select(candidate => ExtractSampleContentAsync(
+                dc, candidate.resourceName, candidate.path)));
 #endif
 
         Console.Out.WriteLine($"Extracted sample files: {sampleName}");
