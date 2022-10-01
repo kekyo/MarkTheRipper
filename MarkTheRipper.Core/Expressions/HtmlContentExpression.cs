@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Metadata;
 using System;
 
 namespace MarkTheRipper.Expressions;
@@ -21,10 +22,7 @@ public sealed class HtmlContentExpression : IExpression
     string IExpression.PrettyPrint =>
         this.Content;
     object? IExpression.ImplicitValue =>
-        this.Content;
-
-    public string Type =>
-        "String";
+        new HtmlContentEntry(this.Content);
 
     public bool Equals(HtmlContentExpression rhs) =>
         this.Content.Equals(rhs.Content);
@@ -40,8 +38,8 @@ public sealed class HtmlContentExpression : IExpression
     public override int GetHashCode() =>
         this.Content.GetHashCode();
 
-    public void Deconstruct(out string content) =>
-        content = this.Content;
+    public void Deconstruct(out HtmlContentEntry content) =>
+        content = new HtmlContentEntry(this.Content);
 
     public override string ToString() =>
         $"\"{this.Content}\"";

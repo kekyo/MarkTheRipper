@@ -31,12 +31,12 @@ internal sealed class ExpressionNode : ITextTreeNode
     {
         var reduced = await expression.ReduceExpressionAsync(metadata, ct).
             ConfigureAwait(false);
-        if (reduced is HtmlContentEntry(var content))
+        if (reduced is HtmlContentEntry(var contentString))
         {
             if (metadata.Lookup("htmlContents") is ValueExpression(Dictionary<string, string> htmlContents))
             {
                 var idString = $"@@{Guid.NewGuid().ToString("N")}@@";
-                htmlContents.Add(idString, content);
+                htmlContents.Add(idString, contentString);
 
                 writer(idString);
                 return;
@@ -53,9 +53,9 @@ internal sealed class ExpressionNode : ITextTreeNode
             Replace("<", "&lt;").
             Replace(">", "&gt;").
             Replace("\"", "&quot;").
-            Replace("'", "&#39;").
-            Replace(" ", "&nbsp;");
-        writer(reducedString);
+            Replace("'", "&#39;");
+
+        writer(sanitizedString.ToString());
     }
 
     public override string ToString() =>

@@ -94,13 +94,11 @@ internal static class oEmbed
                 ConfigureAwait(false);
 
             // Render with layout AST with overall metadata.
-            var overallHtmlContent = new StringBuilder();
-            await layoutNode.RenderAsync(
-                text => overallHtmlContent.Append(text), mc, ct).
+            var overallHtmlContent = await layoutNode.RenderOverallAsync(mc, ct).
                 ConfigureAwait(false);
 
             // Done.
-            return new HtmlContentExpression(overallHtmlContent.ToString());
+            return new HtmlContentExpression(overallHtmlContent);
         }
         catch (Exception ex)
         {
@@ -120,13 +118,11 @@ internal static class oEmbed
                 ConfigureAwait(false);
 
             // Render with layout AST with overall metadata.
-            var overallHtmlContent = new StringBuilder();
-            await layoutNode.RenderAsync(
-                text => overallHtmlContent.Append(text), mc, ct).
+            var overallHtmlContent = await layoutNode.RenderOverallAsync(mc, ct).
                 ConfigureAwait(false);
 
             // Done.
-            return new HtmlContentExpression(overallHtmlContent.ToString());
+            return new HtmlContentExpression(overallHtmlContent);
         }
     }
 

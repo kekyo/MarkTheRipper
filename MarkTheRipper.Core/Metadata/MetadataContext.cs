@@ -8,7 +8,9 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace MarkTheRipper.Metadata;
 
@@ -26,6 +28,11 @@ public sealed class MetadataContext
 
     public void Set(string keyName, IExpression expression) =>
         this.metadata[keyName] = expression;
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete("Invalid usage, use Set() instead.", true)]
+    public void SetValue(string keyName, IExpression expression) =>
+        throw new InvalidOperationException("Invalid usage, use Set() instead.");
 
     public void SetValue(string keyName, object? value) =>
         this.metadata[keyName] = new ValueExpression(value);

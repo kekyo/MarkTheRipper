@@ -7,20 +7,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
-using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using VerifyNUnit;
 using static NUnit.Framework.Assert;

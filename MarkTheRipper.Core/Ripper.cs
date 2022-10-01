@@ -220,14 +220,13 @@ public sealed class Ripper
             markdownPath);
 
         // Step 4: Render markdown with looking up metadata context.
-        var renderedMarkdownBody = new StringBuilder();
-        await markdownBodyTree.RenderAsync(
-            text => renderedMarkdownBody.Append(text), mc, ct).
+        var renderedMarkdownBody = await markdownBodyTree.RenderOverallAsync(
+            mc, ct).
             ConfigureAwait(false);
 
         // Step 5: Parse renderred markdown to AST (MarkDig)
         var markdownDocument = MarkdownParser.Parse(
-            renderedMarkdownBody.ToString());
+            renderedMarkdownBody);
 
         // Step 6: Render HTML from AST.
         var contentBodyWriter = new StringWriter();
@@ -236,29 +235,19 @@ public sealed class Ripper
         renderer.Render(markdownDocument);
 
         // Step 7: Set renderred HTML into metadata context.
-        mc.SetValue("contentBody", contentBodyWriter.ToString());
+        mc.Set("contentBody",
+            new HtmlContentExpression(contentBodyWriter.ToString()));
 
         // Step 8: Get layout AST (ITextTreeNode).
-        var layoutNode = await metadata.GetLayoutAsync(ct).
+        var layoutNode = await mc.GetLayoutAsync(ct).
             ConfigureAwait(false);
 
-        // Step 9: Setup HTML content dictionary (will be added by HtmlContentExpression)
-        var htmlContents = new Dictionary<string, string>();
-        mc.SetValue("htmlContents", htmlContents);
-
-        // Step 10: Render markdown from layout AST with overall metadata.
-        var overallHtmlContent = new StringBuilder();
-        await layoutNode.RenderAsync(
-            text => overallHtmlContent.Append(text), mc, ct).
+        // Step 9: Render markdown from layout AST with overall metadata.
+        var overallHtmlContent = await layoutNode.RenderOverallAsync(
+            mc, ct).
             ConfigureAwait(false);
 
-        // Step 11: Replace all contains if required.
-        foreach (var entry in htmlContents)
-        {
-            overallHtmlContent.Replace(entry.Key, entry.Value);
-        }
-
-        // Step 12: Final output.
+        // Step 10: Final output.
         await outputHtmlWriter.WriteAsync(overallHtmlContent.ToString()).
             WithCancellation(ct).
             ConfigureAwait(false);

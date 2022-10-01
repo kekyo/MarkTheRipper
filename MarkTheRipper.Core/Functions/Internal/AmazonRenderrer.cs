@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
@@ -64,7 +65,8 @@ internal static class AmazonRenderrer
             metadata, htmlMetadata);
 
         // Set patched HTML into metadata context.
-        metadata.SetValue("contentBody", contentBody);
+        metadata.Set("contentBody",
+            new HtmlContentExpression(contentBody));
 
         // Get layout AST (ITextTreeNode).
         // `layout-oEmbed-html-Amazon.html` ==> `layout-oEmbed-html.html`
@@ -73,12 +75,8 @@ internal static class AmazonRenderrer
             ConfigureAwait(false);
 
         // Render with layout AST with overall metadata.
-        var overallHtmlContent = new StringBuilder();
-        await layoutNode.RenderAsync(
-            text => overallHtmlContent.Append(text), metadata, ct).
+        return await layoutNode.RenderOverallAsync(metadata, ct).
             ConfigureAwait(false);
-
-        return overallHtmlContent.ToString();
     }
 
     private static async ValueTask<string?> RenderPAAPIAsync(
@@ -178,13 +176,8 @@ internal static class AmazonRenderrer
                     ConfigureAwait(false);
 
                 // Render with layout AST with overall metadata.
-                var overallHtmlContent = new StringBuilder();
-                await layoutNode.RenderAsync(
-                    text => overallHtmlContent.Append(text), metadata, ct).
+                return await layoutNode.RenderOverallAsync(metadata, ct).
                     ConfigureAwait(false);
-
-                // Done.
-                return overallHtmlContent.ToString();
             }
         }
 
@@ -247,13 +240,8 @@ internal static class AmazonRenderrer
                 ConfigureAwait(false);
 
             // Render with layout AST with overall metadata.
-            var overallHtmlContent = new StringBuilder();
-            await layoutNode.RenderAsync(
-                text => overallHtmlContent.Append(text), metadata, ct).
+            return await layoutNode.RenderOverallAsync(metadata, ct).
                 ConfigureAwait(false);
-
-            // Done.
-            return overallHtmlContent.ToString();
         }
 
         return null;

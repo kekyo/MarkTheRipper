@@ -10,6 +10,8 @@
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -51,6 +53,31 @@ public sealed class RootTextNode :
             await node.RenderAsync(writer, metadata, ct).
                 ConfigureAwait(false);
         }
+    }
+
+    public async ValueTask<string> RenderOverallAsync(
+        MetadataContext metadata,
+        CancellationToken ct)
+    {
+        var mc = metadata.Spawn();
+
+        // Setup HTML content dictionary (will be added by HtmlContentExpression)
+        var htmlContents = new Dictionary<string, string>();
+        mc.SetValue("htmlContents", htmlContents);
+
+        // Render markdown from layout AST with overall metadata.
+        var overallHtmlContent = new StringBuilder();
+        await this.RenderAsync(
+            text => overallHtmlContent.Append(text), mc, ct).
+            ConfigureAwait(false);
+
+        // Replace all contains if required.
+        foreach (var entry in htmlContents)
+        {
+            overallHtmlContent.Replace(entry.Key, entry.Value);
+        }
+
+        return overallHtmlContent.ToString();
     }
 
     public override string ToString() =>

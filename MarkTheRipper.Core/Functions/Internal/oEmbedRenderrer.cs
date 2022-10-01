@@ -76,7 +76,8 @@ internal static class oEmbedRenderrer
             metadata, htmlMetadata);
 
         // Set patched HTML into metadata context.
-        metadata.SetValue("contentBody", contentBodyString);
+        metadata.Set("contentBody",
+            new HtmlContentExpression(contentBodyString));
 
         // Get layout AST (ITextTreeNode).
         // `layout-oEmbed-html-{siteName}.html` ==> `layout-oEmbed-html.html`
@@ -85,12 +86,8 @@ internal static class oEmbedRenderrer
             ConfigureAwait(false);
 
         // Render with layout AST with overall metadata.
-        var overallHtmlContent = new StringBuilder();
-        await layoutNode.RenderAsync(
-            text => overallHtmlContent.Append(text), metadata, ct).
+        return await layoutNode.RenderOverallAsync(metadata, ct).
             ConfigureAwait(false);
-
-        return overallHtmlContent.ToString();
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -115,11 +112,8 @@ internal static class oEmbedRenderrer
 
         // Render with layout AST with overall metadata.
         var overallHtmlContent = new StringBuilder();
-        await layoutNode.RenderAsync(
-            text => overallHtmlContent.Append(text), metadata, ct).
+        return await layoutNode.RenderOverallAsync(metadata, ct).
             ConfigureAwait(false);
-
-        return overallHtmlContent.ToString();
     }
 
     //////////////////////////////////////////////////////////////////////////////
