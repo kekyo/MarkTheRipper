@@ -20,6 +20,8 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper.Functions.Internal;
 
+//////////////////////////////////////////////////////////////////////////////
+
 internal sealed class oEmbedEndPoint : IMetadataEntry
 {
     public readonly string url;
@@ -195,11 +197,10 @@ internal sealed class AmazonPAAPIGetItemsItemImage
 internal sealed class AmazonPAAPIGetItemsItemImages
 {
     public readonly AmazonPAAPIGetItemsItemImage? Primary;
-    public readonly AmazonPAAPIGetItemsItemImage? Variants;
 
     [JsonConstructor]
-    public AmazonPAAPIGetItemsItemImages(AmazonPAAPIGetItemsItemImage? Variants) =>
-        this.Variants = Variants;
+    public AmazonPAAPIGetItemsItemImages(AmazonPAAPIGetItemsItemImage? Primary) =>
+        this.Primary = Primary;
 }
 
 internal sealed class AmazonPAAPILabelMetadata
@@ -211,7 +212,7 @@ internal sealed class AmazonPAAPILabelMetadata
 
     [JsonConstructor]
     public AmazonPAAPILabelMetadata(
-        string DisplayValue, string Label, string Locale, string? Value)
+        string DisplayValue, string Label, string? Locale, string? Value)
     {
         this.DisplayValue = DisplayValue;
         this.Label = Label;
@@ -223,60 +224,46 @@ internal sealed class AmazonPAAPILabelMetadata
 internal sealed class AmazonPAAPIGetItemsItemInfo
 {
     public readonly AmazonPAAPILabelMetadata? Title;
-    public readonly AmazonPAAPILabelMetadata? Features;
 
     [JsonConstructor]
     public AmazonPAAPIGetItemsItemInfo(
-        AmazonPAAPILabelMetadata? Title,
-        AmazonPAAPILabelMetadata? Features)
-    {
+        AmazonPAAPILabelMetadata? Title) =>
         this.Title = Title;
-        this.Features = Features;
-    }
 }
 
 internal sealed class AmazonPAAPIGetItemsPrice
 {
-    public readonly double Amount;
-    public readonly string Currency;
     public readonly string DisplayAmount;
 
     [JsonConstructor]
     public AmazonPAAPIGetItemsPrice(
-        double Amount, string Currency, string DisplayAmount)
-    {
-        this.Amount = Amount;
-        this.Currency = Currency;
+        string DisplayAmount) =>
         this.DisplayAmount = DisplayAmount;
-    }
 }
 
-internal readonly struct AmazonPAAPIGetItemsSummary
+internal readonly struct AmazonPAAPIGetItemsListing
 {
-    public readonly AmazonPAAPILabelMetadata? Condition;
-    public readonly AmazonPAAPIGetItemsPrice? HighestPrice;
-    public readonly AmazonPAAPIGetItemsPrice? LowestPrice;
+    public readonly string Id;
+    public readonly AmazonPAAPIGetItemsPrice? Price;
 
     [JsonConstructor]
-    public AmazonPAAPIGetItemsSummary(
-        AmazonPAAPILabelMetadata? Condition,
-        AmazonPAAPIGetItemsPrice? HighestPrice,
-        AmazonPAAPIGetItemsPrice? LowestPrice)
+    public AmazonPAAPIGetItemsListing(
+        string Id,
+        AmazonPAAPIGetItemsPrice? Price)
     {
-        this.Condition = Condition;
-        this.HighestPrice = HighestPrice;
-        this.LowestPrice = LowestPrice;
+        this.Id = Id;
+        this.Price = Price;
     }
 }
 
 internal sealed class AmazonPAAPIGetItemsOffers
 {
-    public readonly AmazonPAAPIGetItemsSummary[] Summaries;
+    public readonly AmazonPAAPIGetItemsListing[] Listings;
 
     [JsonConstructor]
     public AmazonPAAPIGetItemsOffers(
-        AmazonPAAPIGetItemsSummary[] Summaries) =>
-        this.Summaries = Summaries;
+        AmazonPAAPIGetItemsListing[] Listings) =>
+        this.Listings = Listings;
 }
 
 internal readonly struct AmazonPAAPIGetItemsItemResult
@@ -286,23 +273,19 @@ internal readonly struct AmazonPAAPIGetItemsItemResult
     public readonly AmazonPAAPIGetItemsItemImages? Images;
     public readonly AmazonPAAPIGetItemsItemInfo? ItemInfo;
     public readonly AmazonPAAPIGetItemsOffers? Offers;
-    public readonly string? ParentASIN;
-
     [JsonConstructor]
     public AmazonPAAPIGetItemsItemResult(
         string? ASIN,
-        Uri? DetailPageURL,
+        string? DetailPageURL,
         AmazonPAAPIGetItemsItemImages? Images,
         AmazonPAAPIGetItemsItemInfo? ItemInfo,
-        AmazonPAAPIGetItemsOffers? Offers,
-        string? ParentASIN)
+        AmazonPAAPIGetItemsOffers? Offers)
     {
         this.ASIN = ASIN;
-        this.DetailPageURL = DetailPageURL;
+        this.DetailPageURL = InternalUtilities.GetUrl(DetailPageURL);
         this.Images = Images;
         this.ItemInfo = ItemInfo;
         this.Offers = Offers;
-        this.ParentASIN = ParentASIN;
     }
 }
 
@@ -328,5 +311,31 @@ internal sealed class AmazonPAAPIGetItemsResponse
     {
         this.Errors = Errors;
         this.ItemResults = ItemResults;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+internal sealed class AmazonEndPoint
+{
+    public readonly string Region;
+    public readonly string AssociateLanguage;
+    public readonly string AssociateEndPointFormat;
+
+    public readonly string PAAPIEndPointRegion;
+    public readonly Uri PAAPIEndPoint;
+
+    public AmazonEndPoint(
+        string region,
+        string associateLanguage,
+        string associateEndPointFormat,
+        string paapiEndPointRegion,
+        Uri paapiEndPoint)
+    {
+        this.Region = region;
+        this.AssociateLanguage = associateLanguage;
+        this.AssociateEndPointFormat = associateEndPointFormat;
+        this.PAAPIEndPointRegion = paapiEndPointRegion;
+        this.PAAPIEndPoint = paapiEndPoint;
     }
 }

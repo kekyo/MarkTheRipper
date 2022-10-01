@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,28 +19,114 @@ namespace MarkTheRipper.Internal;
 
 internal static class InternalUtilities
 {
-    private static readonly Uri defaultUrl = new Uri("https://example.com/");
+    private static readonly Uri defaultUrl =
+        new Uri("https://example.com/");
 
     public static readonly JsonSerializer DefaultJsonSerializer =
         Utilities.GetDefaultJsonSerializer();
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static CultureInfo GetLocale(string localeString)
+    public static CultureInfo GetLocale(string? localeString)
     {
-        try
+        if (!string.IsNullOrWhiteSpace(localeString))
         {
-            return new CultureInfo(localeString);
+            try
+            {
+                return new CultureInfo(localeString);
+            }
+            catch
+            {
+                return CultureInfo.InvariantCulture;
+            }
         }
-        catch
+        else
         {
             return CultureInfo.InvariantCulture;
         }
     }
 
-    public static Uri GetUrl(string urlString) =>
-        Uri.TryCreate(urlString, UriKind.Absolute, out var url) ? url :
-        defaultUrl;
+    public static Uri GetUrl(string? urlString) =>
+        (!string.IsNullOrWhiteSpace(urlString) &&
+         Uri.TryCreate(urlString, UriKind.Absolute, out var url)) ?
+            url :
+            defaultUrl;
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static string UnescapeJavascriptString(string javascriptString)
+    {
+        static string? GetToken(string str, ref int index, int length)
+        {
+            var sb = new StringBuilder();
+            while (length >= 1 && index < str.Length)
+            {
+                var ch = str[index++];
+                sb.Append(ch);
+                length--;
+            }
+            return length == 0 ? sb.ToString() : null;
+        }
+
+        var sb = new StringBuilder(javascriptString.Length);
+        var index = 0;
+        while (index < javascriptString.Length)
+        {
+            var ch = javascriptString[index++];
+            if (ch == '"')
+            {
+                if (index < javascriptString.Length)
+                {
+                    var ch2 = javascriptString[index++];
+                    switch (ch2)
+                    {
+                        case 'b':
+                            sb.Append((char)8);
+                            break;
+                        case 't':
+                            sb.Append((char)9);
+                            break;
+                        case 'n':
+                            sb.Append((char)10);
+                            break;
+                        case 'v':
+                            sb.Append((char)11);
+                            break;
+                        case 'f':
+                            sb.Append((char)12);
+                            break;
+                        case 'r':
+                            sb.Append((char)13);
+                            break;
+                        case 'x':
+                            if (GetToken(javascriptString, ref index, 2) is { } hexString &&
+                                int.TryParse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex))
+                            {
+                                sb.Append((char)hex);
+                            }
+                            break;
+                        case 'u':
+                            if (GetToken(javascriptString, ref index, 4) is { } ucString &&
+                                int.TryParse(ucString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var uc))
+                            {
+                                sb.Append((char)uc);
+                            }
+                            break;
+                        default:
+                            sb.Append(ch2);
+                            break;
+                    };
+
+                    sb.Append(ch);
+                }
+            }
+            else
+            {
+                sb.Append(ch);
+            }
+        }
+        return sb.ToString();
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////
 

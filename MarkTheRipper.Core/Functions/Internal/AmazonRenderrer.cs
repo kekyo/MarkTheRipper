@@ -13,6 +13,8 @@ using MarkTheRipper.Metadata;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -22,30 +24,6 @@ namespace MarkTheRipper.Functions.Internal;
 
 internal static class AmazonRenderrer
 {
-    private sealed class AmazonEndPoint
-    {
-        public readonly string Region;
-        public readonly string AssociateLanguage;
-        public readonly string AssociateEndPointFormat;
-
-        public readonly string PAAPIEndPointRegion;
-        public readonly Uri PAAPIEndPoint;
-
-        public AmazonEndPoint(
-            string region,
-            string associateLanguage,
-            string associateEndPointFormat,
-            string paapiEndPointRegion,
-            Uri paapiEndPoint)
-        {
-            this.Region = region;
-            this.AssociateLanguage = associateLanguage;
-            this.AssociateEndPointFormat = associateEndPointFormat;
-            this.PAAPIEndPointRegion = paapiEndPointRegion;
-            this.PAAPIEndPoint = paapiEndPoint;
-        }
-    }
-
     // HELP: Appending other entries...
     private static readonly Dictionary<string, AmazonEndPoint> amazonEmbeddingQueries = new()
     {
@@ -65,100 +43,17 @@ internal static class AmazonRenderrer
 
     //////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<string?> RenderAmazonHtmlContentAsync(
-        IHttpAccessor httpAccessor,
+    private static async ValueTask<string> RenderEmbeddablePageAsync(
         MetadataContext metadata,
-        Uri permaLink,
-        bool useInlineHtml,
+        AmazonEndPoint endPoint,
+        string trackingId,
+        string asin,
         CancellationToken ct)
     {
-        if (amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var endPoint) &&
-            permaLink.PathAndQuery.Split('/') is { } pathElements &&
-            pathElements.Reverse().
-                // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
-                FirstOrDefault(e => e.Length == 10 && e.All(ch => char.IsUpper(ch) || char.IsDigit(ch))) is { } asin)
-        {
-            // Embeddable product badge.
-            if (useInlineHtml &&
-                await metadata.LookupValueAsync(
-                    $"amazonTrackingId-{endPoint.Region}", default(string), ct).
-                    ConfigureAwait(false) is { } trackingId &&
-                    !string.IsNullOrWhiteSpace(trackingId))
-            {
-                return $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{string.Format(endPoint.AssociateEndPointFormat, trackingId, asin)}'></iframe>";
-            }
+        var sourceUrl = string.Format(
+            endPoint.AssociateEndPointFormat, trackingId, asin);
+        var contentBody = $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{sourceUrl}'></iframe>";
 
-            // Uses PAAPI v5
-            var paapiData = await Task.WhenAll(
-                metadata.LookupValueAsync(
-                    $"amazonPartnerTag-{endPoint.Region}", default(string), ct).AsTask(),
-                metadata.LookupValueAsync(
-                    $"amazonAccessKey-{endPoint.Region}", default(string), ct).AsTask(),
-                metadata.LookupValueAsync(
-                    $"amazonSecretKey-{endPoint.Region}", default(string), ct).AsTask()).
-                ConfigureAwait(false);
-
-            if (paapiData[0] is { } partnerTag &&
-                !string.IsNullOrWhiteSpace(partnerTag) &&
-                paapiData[1] is { } accessKey &&
-                !string.IsNullOrWhiteSpace(accessKey) &&
-                paapiData[2] is { } secretKey &&
-                !string.IsNullOrWhiteSpace(secretKey))
-            {
-                var request = new AmazonPAAPIGetItemsRequest(
-                    new[] { asin },
-                    "ASIN",
-                    new[] { endPoint.AssociateLanguage },
-                    permaLink.Host,
-                    partnerTag,
-                    "Associates",
-                    new[] { "Images.Primary.Large", "Images.Variants.Large",
-                            "ItemInfo.Title", "ItemInfo.Features",
-                            "Offers.Summaries.Condition", "Offers.Summaries.HighestPrice", "Offers.Summaries.LowestPrice" });
-                var requestJson = JToken.FromObject(
-                    request,
-                    InternalUtilities.DefaultJsonSerializer);
-
-                var headers = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    { "Host", endPoint.PAAPIEndPoint.Host },
-                    { "X-Amz-Target", "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems" },
-                    { "Content-Encoding", "amz-1.0" },
-                };
-
-                var date = await metadata.LookupValueAsync(
-                    "generated", DateTimeOffset.Now, ct).
-                    ConfigureAwait(false);
-                var awsv4Auth = new AWSV4Auth.Builder(accessKey, secretKey).
-                    Date(date).
-                    Path(endPoint.PAAPIEndPoint.PathAndQuery).
-                    Region(endPoint.PAAPIEndPointRegion).
-                    Service("ProductAdvertisingAPI").
-                    HttpMethodName("POST").
-                    Headers(headers).
-                    Payload(requestJson.ToString()).
-                    Build();
-
-                var awsv4AuthHeader = awsv4Auth.GetHeaders();
-
-                var paapiResultJson = await httpAccessor.PostJsonAsync<AmazonPAAPIGetItemsResponse>(
-                    endPoint.PAAPIEndPoint, requestJson, awsv4AuthHeader, ct).
-                    ConfigureAwait(false);
-
-                // TODO:
-            }
-        }
-
-        return null;
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-
-    public static async ValueTask<string> RenderAmazonResponsiveBlockAsync(
-        MetadataContext metadata,
-        string iFrameHtmlString,
-        CancellationToken ct)
-    {
         // Will transfer MarkTheRipper metadata from oEmbed metadata.
         var htmlMetadata = new HtmlMetadata
         {
@@ -169,10 +64,10 @@ internal static class AmazonRenderrer
             metadata, htmlMetadata);
 
         // Set patched HTML into metadata context.
-        metadata.SetValue("contentBody", iFrameHtmlString);
+        metadata.SetValue("contentBody", contentBody);
 
         // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-html-{siteName}.html` ==> `layout-oEmbed-html.html`
+        // `layout-oEmbed-html-Amazon.html` ==> `layout-oEmbed-html.html`
         var layoutNode = await metadata.Get_oEmbedLayoutAsync(
             htmlMetadata, "html", ct).
             ConfigureAwait(false);
@@ -184,5 +79,245 @@ internal static class AmazonRenderrer
             ConfigureAwait(false);
 
         return overallHtmlContent.ToString();
+    }
+
+    private static async ValueTask<string?> RenderPAAPIAsync(
+        IHttpAccessor httpAccessor,
+        MetadataContext metadata,
+        Uri permaLink,
+        AmazonEndPoint endPoint,
+        string asin,
+        CancellationToken ct)
+    {
+        var paapiData = await Task.WhenAll(
+            metadata.LookupValueAsync(
+                $"amazonPartnerTag-{endPoint.Region}", default(string), ct).AsTask(),
+            metadata.LookupValueAsync(
+                $"amazonAccessKey-{endPoint.Region}", default(string), ct).AsTask(),
+            metadata.LookupValueAsync(
+                $"amazonSecretKey-{endPoint.Region}", default(string), ct).AsTask()).
+            ConfigureAwait(false);
+
+        if (paapiData[0] is { } partnerTag &&
+            !string.IsNullOrWhiteSpace(partnerTag) &&
+            paapiData[1] is { } accessKey &&
+            !string.IsNullOrWhiteSpace(accessKey) &&
+            paapiData[2] is { } secretKey &&
+            !string.IsNullOrWhiteSpace(secretKey))
+        {
+            var request = new AmazonPAAPIGetItemsRequest(
+                new[] { asin },
+                "ASIN",
+                new[] { endPoint.AssociateLanguage },
+                permaLink.Host,
+                partnerTag,
+                "Associates",
+                new[] {
+                    "Images.Primary.Large",
+                    "ItemInfo.Title",
+                    "Offers.Listings.Price" });
+            var requestJson = JToken.FromObject(
+                request,
+                InternalUtilities.DefaultJsonSerializer);
+
+            var headers = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Host", endPoint.PAAPIEndPoint.Host },
+                { "X-Amz-Target", "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems" },
+                { "Content-Encoding", "amz-1.0" },
+            };
+
+            var date = await metadata.LookupValueAsync(
+                "generated", DateTimeOffset.Now, ct).
+                ConfigureAwait(false);
+            var awsv4Auth = new AWSV4Auth.Builder(accessKey, secretKey).
+                Date(date).
+                Path(endPoint.PAAPIEndPoint.PathAndQuery).
+                Region(endPoint.PAAPIEndPointRegion).
+                Service("ProductAdvertisingAPI").
+                HttpMethodName("POST").
+                Headers(headers).
+                Payload(requestJson.ToString()).
+                Build();
+
+            var awsv4AuthHeader = awsv4Auth.GetHeaders();
+
+            var paapiResultJson = await httpAccessor.PostJsonAsync<AmazonPAAPIGetItemsResponse>(
+                endPoint.PAAPIEndPoint, requestJson, awsv4AuthHeader, ct).
+                ConfigureAwait(false);
+            if (paapiResultJson.Errors.Length >= 1)
+            {
+                Trace.WriteLine(
+                    $"Could not fetch from PAAPI end point: Message={string.Join(",", paapiResultJson.Errors.Select(error => $"{error.Code}: {error.Message}"))}");
+            }
+
+            if (paapiResultJson.ItemResults is { } results &&
+                results.Items.FirstOrDefault() is { } item &&
+                item.ItemInfo?.Title is { } title &&
+                item.Images?.Primary?.Large?.URL is { } imageUrl &&
+                item.Offers?.Listings.
+                    Select(summary => summary.Price).
+                    FirstOrDefault()?.DisplayAmount is { } price)
+            {
+                var paapiResultMetadata = new HtmlMetadata
+                {
+                    SiteName = "Amazon",
+                    Title = title.DisplayValue,
+                    Type = "rich",
+                    ImageUrl = imageUrl,
+                    Description = price,
+                };
+
+                oEmbedUtilities.SetHtmlMetadata(
+                    metadata, paapiResultMetadata);
+
+                // Get layout AST (ITextTreeNode).
+                // `layout-oEmbed-card-Amazon.html` ==> `layout-oEmbed-card.html`
+                var layoutNode = await metadata.Get_oEmbedLayoutAsync(
+                    paapiResultMetadata, "card", ct).
+                    ConfigureAwait(false);
+
+                // Render with layout AST with overall metadata.
+                var overallHtmlContent = new StringBuilder();
+                await layoutNode.RenderAsync(
+                    text => overallHtmlContent.Append(text), metadata, ct).
+                    ConfigureAwait(false);
+
+                // Done.
+                return overallHtmlContent.ToString();
+            }
+        }
+
+        return null;
+    }
+
+    private static readonly char[] eolSplitChars = new[] {
+        '\n', '\r' };
+
+    private static async ValueTask<string?> RenderEmbeddablePageWithParsingAsync(
+        IHttpAccessor httpAccessor,
+        MetadataContext metadata,
+        AmazonEndPoint endPoint,
+        string trackingId,
+        string asin,
+        CancellationToken ct)
+    {
+        // Embeddable product badge (for parsing)
+        var sourceUrl = string.Format(
+            endPoint.AssociateEndPointFormat, trackingId, asin);
+
+        var bodyHtml = await httpAccessor.FetchHtmlAsync(
+            new Uri(sourceUrl), ct).
+            ConfigureAwait(false);
+
+        if (bodyHtml.GetElementsByClassName("amzn-ad-prod-detail") is { } details &&
+            details.FirstOrDefault() is { } detail &&
+            detail.GetElementsByTagName("script") is { } scripts &&
+            scripts.SelectMany(script =>
+                script.InnerHtml.Split(eolSplitChars, StringSplitOptions.RemoveEmptyEntries).
+                Select(line => line.Trim()).
+                Where(line =>
+                    line.StartsWith("encodehtml(\"") &&
+                    line.EndsWith("\");")).
+                Select(line => InternalUtilities.UnescapeJavascriptString(
+                    line.Substring("encodehtml(\"".Length, line.Length - "encodehtml(\"\");".Length)))).
+                FirstOrDefault() is { } title &&
+            bodyHtml.GetElementById("prod-image") is { } prodImage &&
+            prodImage.GetAttribute("src") is { } imageUrlString &&
+            Uri.TryCreate(imageUrlString, UriKind.Absolute, out var imageUrl) &&
+            bodyHtml.GetElementsByClassName("price").
+                Select(price => price.InnerHtml.Replace(" ", string.Empty)).
+                FirstOrDefault() is { } price)
+        {
+            var pbResultMetadata = new HtmlMetadata
+            {
+                SiteName = "Amazon",
+                Title = title,
+                Type = "rich",
+                ImageUrl = imageUrl,
+                Description = price,
+            };
+
+            oEmbedUtilities.SetHtmlMetadata(metadata, pbResultMetadata);
+
+            // Get layout AST (ITextTreeNode).
+            // `layout-oEmbed-card-Amazon.html` ==> `layout-oEmbed-card.html`
+            var layoutNode = await metadata.Get_oEmbedLayoutAsync(
+                pbResultMetadata, "card", ct).
+                ConfigureAwait(false);
+
+            // Render with layout AST with overall metadata.
+            var overallHtmlContent = new StringBuilder();
+            await layoutNode.RenderAsync(
+                text => overallHtmlContent.Append(text), metadata, ct).
+                ConfigureAwait(false);
+
+            // Done.
+            return overallHtmlContent.ToString();
+        }
+
+        return null;
+    }
+
+    public static async ValueTask<string?> RenderAmazonHtmlContentAsync(
+        IHttpAccessor httpAccessor,
+        MetadataContext metadata,
+        Uri permaLink,
+        bool embedPageIfAvailable,
+        CancellationToken ct)
+    {
+        if (amazonEmbeddingQueries.TryGetValue(permaLink.Host, out var endPoint) &&
+            permaLink.PathAndQuery.Split('/') is { } pathElements &&
+            pathElements.
+                // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
+                FirstOrDefault(e => e.Length == 10 && e.All(ch => char.IsUpper(ch) || char.IsDigit(ch))) is { } asin)
+        {
+            // Retreive tracking id when enables embeddable page.
+            string? trackingId = null;
+            if (embedPageIfAvailable)
+            {
+                trackingId = await metadata.LookupValueAsync(
+                    $"amazonTrackingId-{endPoint.Region}", default(string), ct).
+                    ConfigureAwait(false);
+
+                // Tracking id is available.
+                if (!string.IsNullOrWhiteSpace(trackingId))
+                {
+                    // Constructs embeddable page.
+                    return await RenderEmbeddablePageAsync(
+                        metadata, endPoint, trackingId!, asin, ct).
+                        ConfigureAwait(false);
+                }
+            }
+
+            // Try uses PAAPI v5
+            if (await RenderPAAPIAsync(
+                httpAccessor, metadata, permaLink, endPoint, asin, ct).
+                ConfigureAwait(false) is { } paapiResult)
+            {
+                return paapiResult;
+            }
+
+            // Retreive tracking id when did not retreive.
+            if (!embedPageIfAvailable)
+            {
+                trackingId = await metadata.LookupValueAsync(
+                    $"amazonTrackingId-{endPoint.Region}", default(string), ct).
+                    ConfigureAwait(false);
+            }
+
+            // Tracking id is available.
+            if (!string.IsNullOrWhiteSpace(trackingId))
+            {
+                if (await RenderEmbeddablePageWithParsingAsync(
+                    httpAccessor, metadata, endPoint, trackingId!, asin, ct).
+                    ConfigureAwait(false) is { } embeddableResult)
+                {
+                    return embeddableResult;
+                }
+            }
+        }
+
+        return null;
     }
 }

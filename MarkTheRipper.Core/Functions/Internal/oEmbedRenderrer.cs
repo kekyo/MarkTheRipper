@@ -128,21 +128,16 @@ internal static class oEmbedRenderrer
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
         Uri permaLink,
-        bool useInlineHtml,
+        bool embedPageIfAvailable,
         CancellationToken ct)
     {
         // Special case: Is it in amazon product page URL?
         if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
-            httpAccessor, metadata, permaLink, useInlineHtml, ct).
-            ConfigureAwait(false) is { } amazonHtmlString)
+            httpAccessor, metadata, permaLink, embedPageIfAvailable, ct).
+            ConfigureAwait(false) is { } amazonHtmlContentString)
         {
-            // Accept with sanitized HTML.
-            var sanitizedHtmlString = await AmazonRenderrer.RenderAmazonResponsiveBlockAsync(
-                metadata,
-                amazonHtmlString,
-                ct).
-                ConfigureAwait(false);
-            return new HtmlContentExpression(sanitizedHtmlString);
+            // Accept with Amazon HTML.
+            return new HtmlContentExpression(amazonHtmlContentString);
         }
 
         // TODO: cache system
@@ -187,7 +182,7 @@ internal static class oEmbedRenderrer
                 if (metadataJson is JObject metadataJsonObj)
                 {
                     // oEmbed metadata produces `html` data.
-                    if (useInlineHtml &&
+                    if (embedPageIfAvailable &&
                         metadataJsonObj.GetValue<string>("html") is { } htmlString &&
                         !string.IsNullOrWhiteSpace(htmlString))
                     {
@@ -243,7 +238,7 @@ internal static class oEmbedRenderrer
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
         Uri permaLink,
-        bool useInlineHtml,
+        bool embedPageIfAvailable,
         CancellationToken ct)
     {
         try
@@ -255,7 +250,7 @@ internal static class oEmbedRenderrer
             if (metadataJson is JObject metadataJsonObj)
             {
                 // oEmbed metadata produces `html` data.
-                if (useInlineHtml &&
+                if (embedPageIfAvailable &&
                     metadataJsonObj.GetValue<string>("html") is { } htmlString &&
                     !string.IsNullOrWhiteSpace(htmlString))
                 {

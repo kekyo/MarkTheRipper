@@ -29,7 +29,7 @@ internal static class oEmbed
     private static async ValueTask<IExpression> Internal_oEmbedAsync(
         Uri permaLink,
         MetadataContext metadata,
-        bool useInlineHtml,
+        bool embedPageIfAvailable,
         CancellationToken ct)
     {
         var httpAccessor = (await metadata.LookupValueAsync(
@@ -44,7 +44,7 @@ internal static class oEmbed
 
         // Render oEmbed from perma link.
         if (await oEmbedRenderrer.Render_oEmbedAsync(
-            httpAccessor, mc, permaLink, useInlineHtml, ct).
+            httpAccessor, mc, permaLink, embedPageIfAvailable, ct).
             ConfigureAwait(false) is { } result1)
         {
             // Done.
@@ -72,7 +72,7 @@ internal static class oEmbed
             {
                 // Render oEmbed from discovered perma link.
                 if (await oEmbedRenderrer.Render_oEmbedDiscoveryAsync(
-                    httpAccessor, mc, href, useInlineHtml, ct).
+                    httpAccessor, mc, href, embedPageIfAvailable, ct).
                     ConfigureAwait(false) is { } result2)
                 {
                     // Done.
