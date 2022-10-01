@@ -73,7 +73,7 @@ internal static class InternalUtilities
         while (index < javascriptString.Length)
         {
             var ch = javascriptString[index++];
-            if (ch == '"')
+            if (ch == '\\')
             {
                 if (index < javascriptString.Length)
                 {
@@ -116,8 +116,6 @@ internal static class InternalUtilities
                             sb.Append(ch2);
                             break;
                     };
-
-                    sb.Append(ch);
                 }
             }
             else
