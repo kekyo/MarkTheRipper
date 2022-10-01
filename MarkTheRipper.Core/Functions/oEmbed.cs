@@ -128,7 +128,7 @@ internal static class oEmbed
 
     //////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<IExpression> oEmbedAsync(
+    public static async ValueTask<IExpression> EmbedAsync(
         IExpression[] parameters,
         MetadataContext metadata,
         CancellationToken ct)

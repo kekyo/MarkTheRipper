@@ -198,7 +198,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -265,7 +265,7 @@ title: hoehoe
 tags: foo,bar
 ---
 
-{oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+{embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 Hello MarkTheRipper!
 This is test contents.
@@ -354,7 +354,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -430,7 +430,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -506,7 +506,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -556,7 +556,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -606,7 +606,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -657,7 +657,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -701,7 +701,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -762,7 +762,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
 
 {contentBody}</body>
 </html>
@@ -827,7 +827,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.amazon.com/gp/product/B07X5FPP4P/}
+    {embed https://www.amazon.com/gp/product/B07X5FPP4P/}
 
 {contentBody}</body>
 </html>
@@ -868,7 +868,7 @@ This is test contents.
     <meta name=""keywords"" content=""{tags}"" />
   </head>
   <body>
-    {oEmbed https://www.amazon.co.jp/dp/B07KQ25738/}
+    {embed https://www.amazon.co.jp/dp/B07KQ25738/}
 
 {contentBody}</body>
 </html>
