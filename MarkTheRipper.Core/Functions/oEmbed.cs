@@ -13,7 +13,6 @@ using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using System;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -138,7 +137,7 @@ internal static class oEmbed
         if (parameters.Length != 1)
         {
             throw new ArgumentException(
-                $"Invalid oEmbed function arguments: Count={parameters.Length}");
+                $"Invalid embed function arguments: Count={parameters.Length}");
         }
 
         var permaLinkString = (await parameters[0].
@@ -148,7 +147,7 @@ internal static class oEmbed
         if (!Uri.TryCreate(permaLinkString, UriKind.Absolute, out var permaLink))
         {
             throw new ArgumentException(
-                $"Invalid oEmbed function argument: URL={permaLinkString}");
+                $"Invalid embed function argument: URL={permaLinkString}");
         }
 
         return await Internal_oEmbedAsync(
