@@ -23,6 +23,15 @@ namespace MarkTheRipper.Functions.Internal;
 
 internal static class AmazonRenderrer
 {
+    private static readonly char[] eolSplitChars = new[] {
+        '\n', '\r' };
+
+    private static readonly char[] pathSeparateChars = new[] {
+        '/' };
+
+    private static readonly char[] querySeparateChars = new[] {
+        '?', '&' };
+
     // HELP: Appending other entries...
     private static readonly Dictionary<string, AmazonEndPoint> amazonEmbeddingQueries = new()
     {
@@ -170,9 +179,6 @@ internal static class AmazonRenderrer
         return null;
     }
 
-    private static readonly char[] eolSplitChars = new[] {
-        '\n', '\r' };
-
     private static async ValueTask<IExpression?> RenderEmbeddablePageWithParsingAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
@@ -249,18 +255,36 @@ internal static class AmazonRenderrer
         }
 
         if (amazonEmbeddingQueries.TryGetValue(examinedLink.Host, out var endPoint) &&
-            examinedLink.PathAndQuery.Split('/') is { } pathElements &&
+            examinedLink.LocalPath.Split(pathSeparateChars, StringSplitOptions.RemoveEmptyEntries) is { } pathElements &&
             pathElements.
                 // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
                 FirstOrDefault(e => e.Length == 10 && e.All(ch => char.IsUpper(ch) || char.IsDigit(ch))) is { } asin)
         {
-            // Retreive tracking id when enables embeddable page.
+            // Extract queries.
+            var queries = examinedLink.Query.
+                Split(querySeparateChars, StringSplitOptions.RemoveEmptyEntries).
+                Select(query =>
+                    (query.IndexOf('=') is { } index && index >= 0) ?
+                        (key: query.Substring(0, index).Trim(), value: query.Substring(index + 1).Trim()) :
+                        (key: query.Trim(), value: string.Empty)).
+                ToDictionary(kv => kv.key, kv => kv.value);
+
+            // Is contains tracking id tag?
             string? trackingId = null;
+            if (queries.TryGetValue("tag", out var tag))
+            {
+                trackingId = tag;
+            }
+
+            // Retreive tracking id when enables embeddable page.
             if (embedPageIfAvailable)
             {
-                trackingId = await metadata.LookupValueAsync(
-                    $"amazonTrackingId-{endPoint.Region}", default(string), ct).
-                    ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(trackingId))
+                {
+                    trackingId = await metadata.LookupValueAsync(
+                        $"amazonTrackingId-{endPoint.Region}", default(string), ct).
+                        ConfigureAwait(false);
+                }
 
                 // Tracking id is available.
                 if (!string.IsNullOrWhiteSpace(trackingId))
@@ -283,9 +307,12 @@ internal static class AmazonRenderrer
             // Retreive tracking id when did not retreive.
             if (!embedPageIfAvailable)
             {
-                trackingId = await metadata.LookupValueAsync(
-                    $"amazonTrackingId-{endPoint.Region}", default(string), ct).
-                    ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(trackingId))
+                {
+                    trackingId = await metadata.LookupValueAsync(
+                        $"amazonTrackingId-{endPoint.Region}", default(string), ct).
+                        ConfigureAwait(false);
+                }
             }
 
             // Tracking id is available.

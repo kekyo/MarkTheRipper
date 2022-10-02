@@ -111,8 +111,6 @@ public sealed class HttpAccessor : IHttpAccessor
             GetAsync(url, ct).
             ConfigureAwait(false);
 
-        response.EnsureSuccessStatusCode();
-
         return ((int)response.StatusCode / 100) == 3 ?
             response.Headers.Location : null;
     }
