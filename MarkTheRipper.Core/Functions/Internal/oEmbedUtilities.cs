@@ -12,6 +12,7 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
+using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Globalization;
@@ -23,6 +24,34 @@ namespace MarkTheRipper.Functions.Internal;
 
 internal static class oEmbedUtilities
 {
+    public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
+        this MetadataContext metadata,
+        HtmlMetadata htmlMetadata,
+        string layoutInfix,
+        CancellationToken ct) =>
+        // Get layout AST (ITextTreeNode).
+        htmlMetadata.SiteName is { } siteName ?
+            // `layout-oEmbed-{layoutInfix}-{siteName}.html` ==> `layout-oEmbed-{layoutInfix}.html`
+            await metadata.GetLayoutAsync(
+                $"oEmbed-{layoutInfix}-{siteName}", $"oEmbed-{layoutInfix}", ct).
+                ConfigureAwait(false) :
+            // `layout-oEmbed-{layoutInfix}.html`
+            await metadata.GetLayoutAsync(
+                $"oEmbed-{layoutInfix}", null, ct).
+                ConfigureAwait(false);
+
+    public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
+        this MetadataContext metadata,
+        string layoutInfix,
+        CancellationToken ct) =>
+        // Get layout AST (ITextTreeNode).
+        // `layout-oEmbed-{layoutInfix}.html`
+        await metadata.GetLayoutAsync(
+            $"oEmbed-{layoutInfix}", null, ct).
+            ConfigureAwait(false);
+
+    //////////////////////////////////////////////////////////////////////////////
+
     public static HtmlMetadata CreateHtmlMetadata(
         JObject oEmbedMetadataJson, string? siteName) =>
         new HtmlMetadata

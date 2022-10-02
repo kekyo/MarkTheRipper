@@ -15,9 +15,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -44,7 +42,7 @@ internal static class AmazonRenderrer
 
     //////////////////////////////////////////////////////////////////////////////
 
-    private static async ValueTask<string> RenderEmbeddablePageAsync(
+    private static async ValueTask<IExpression> RenderEmbeddablePageAsync(
         MetadataContext metadata,
         AmazonEndPoint endPoint,
         string trackingId,
@@ -55,31 +53,24 @@ internal static class AmazonRenderrer
             endPoint.AssociateEndPointFormat, trackingId, asin);
         var contentBody = $"<iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='{sourceUrl}'></iframe>";
 
+        // Set patched HTML into metadata context.v
+        var mc = metadata.Spawn();
+        mc.Set("contentBody",
+            new ValueExpression(new HtmlContentEntry(contentBody)));
+
         // Will transfer MarkTheRipper metadata from oEmbed metadata.
         var htmlMetadata = new HtmlMetadata
         {
             SiteName = "Amazon",
             Type = "rich",
         };
-        oEmbedUtilities.SetHtmlMetadata(
-            metadata, htmlMetadata);
 
-        // Set patched HTML into metadata context.
-        metadata.Set("contentBody",
-            new ValueExpression(new HtmlContentEntry(contentBody)));
-
-        // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-html-Amazon.html` ==> `layout-oEmbed-html.html`
-        var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-            htmlMetadata, "html", ct).
-            ConfigureAwait(false);
-
-        // Render with layout AST with overall metadata.
-        return await layoutNode.RenderOverallAsync(metadata, ct).
+        return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
+            mc, "html", htmlMetadata, ct).
             ConfigureAwait(false);
     }
 
-    private static async ValueTask<string?> RenderPAAPIAsync(
+    private static async ValueTask<IExpression?> RenderPAAPIAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
         Uri permaLink,
@@ -166,17 +157,8 @@ internal static class AmazonRenderrer
                     Description = price,
                 };
 
-                oEmbedUtilities.SetHtmlMetadata(
-                    metadata, paapiResultMetadata);
-
-                // Get layout AST (ITextTreeNode).
-                // `layout-oEmbed-card-Amazon.html` ==> `layout-oEmbed-card.html`
-                var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-                    paapiResultMetadata, "card", ct).
-                    ConfigureAwait(false);
-
-                // Render with layout AST with overall metadata.
-                return await layoutNode.RenderOverallAsync(metadata, ct).
+                return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
+                    metadata, "html", paapiResultMetadata, ct).
                     ConfigureAwait(false);
             }
         }
@@ -187,7 +169,7 @@ internal static class AmazonRenderrer
     private static readonly char[] eolSplitChars = new[] {
         '\n', '\r' };
 
-    private static async ValueTask<string?> RenderEmbeddablePageWithParsingAsync(
+    private static async ValueTask<IExpression?> RenderEmbeddablePageWithParsingAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
         AmazonEndPoint endPoint,
@@ -231,23 +213,15 @@ internal static class AmazonRenderrer
                 Description = price,
             };
 
-            oEmbedUtilities.SetHtmlMetadata(metadata, pbResultMetadata);
-
-            // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-card-Amazon.html` ==> `layout-oEmbed-card.html`
-            var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-                pbResultMetadata, "card", ct).
-                ConfigureAwait(false);
-
-            // Render with layout AST with overall metadata.
-            return await layoutNode.RenderOverallAsync(metadata, ct).
+            return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
+                metadata, "card", pbResultMetadata, ct).
                 ConfigureAwait(false);
         }
 
         return null;
     }
 
-    public static async ValueTask<string?> RenderAmazonHtmlContentAsync(
+    public static async ValueTask<IExpression?> RenderAmazonHtmlContentAsync(
         IHttpAccessor httpAccessor,
         MetadataContext metadata,
         Uri permaLink,

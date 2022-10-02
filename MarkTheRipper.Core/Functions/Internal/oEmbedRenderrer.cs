@@ -29,35 +29,32 @@ internal static class oEmbedRenderrer
 
     //////////////////////////////////////////////////////////////////////////////
 
-    public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
-        this MetadataContext metadata,
+    public static async ValueTask<IExpression> RenderWithHtmlMetadataAsync(
+        MetadataContext metadata,
+        string layoutInfix,
         HtmlMetadata htmlMetadata,
-        string infix,
-        CancellationToken ct) =>
-        // Get layout AST (ITextTreeNode).
-        htmlMetadata.SiteName is { } siteName ?
-            // `layout-oEmbed-{infix}-{siteName}.html` ==> `layout-oEmbed-{infix}.html`
-            await metadata.GetLayoutAsync(
-                $"oEmbed-{infix}-{siteName}", $"oEmbed-{infix}", ct).
-                ConfigureAwait(false) :
-            // `layout-oEmbed-{infix}.html`
-            await metadata.GetLayoutAsync(
-                $"oEmbed-{infix}", null, ct).
-                ConfigureAwait(false);
+        CancellationToken ct)
+    {
+        oEmbedUtilities.SetHtmlMetadata(metadata, htmlMetadata);
 
-    public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
-        this MetadataContext metadata,
-        string infix,
-        CancellationToken ct) =>
         // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-{infix}.html`
-        await metadata.GetLayoutAsync(
-            $"oEmbed-{infix}", null, ct).
+        // `layout-oEmbed-{layoutInfix}-{siteName}.html` ==> `layout-oEmbed-{layoutInfix}.html`
+        var layoutNode = await metadata.Get_oEmbedLayoutAsync(
+            htmlMetadata, layoutInfix, ct).
             ConfigureAwait(false);
+
+        // Render with layout AST with overall metadata.
+        var overallHtmlContent = await layoutNode.RenderOverallAsync(metadata, ct).
+            ConfigureAwait(false);
+
+        // Done.
+        return new ValueExpression(
+            new HtmlContentEntry(overallHtmlContent));
+    }
 
     //////////////////////////////////////////////////////////////////////////////
 
-    private static async ValueTask<string> RenderResponsiveBlockAsync(
+    private static async ValueTask<IExpression> RenderResponsiveBlockAsync(
         MetadataContext metadata,
         string? siteName,
         JObject oEmbedMetadataJson,
@@ -69,30 +66,23 @@ internal static class oEmbedRenderrer
             iFrameHtmlString, ct).
             ConfigureAwait(false);
 
+        // Set patched HTML into metadata context.
+        var mc = metadata.Spawn();
+        mc.Set("contentBody",
+            new ValueExpression(new HtmlContentEntry(contentBodyString)));
+
         // Will transfer MarkTheRipper metadata from oEmbed metadata.
         var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
             oEmbedMetadataJson, siteName);
-        oEmbedUtilities.SetHtmlMetadata(
-            metadata, htmlMetadata);
 
-        // Set patched HTML into metadata context.
-        metadata.Set("contentBody",
-            new ValueExpression(new HtmlContentEntry(contentBodyString)));
-
-        // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-html-{siteName}.html` ==> `layout-oEmbed-html.html`
-        var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-            htmlMetadata, "html", ct).
-            ConfigureAwait(false);
-
-        // Render with layout AST with overall metadata.
-        return await layoutNode.RenderOverallAsync(metadata, ct).
+        return await RenderWithHtmlMetadataAsync(
+            mc, "html", htmlMetadata, ct).
             ConfigureAwait(false);
     }
 
     //////////////////////////////////////////////////////////////////////////////
 
-    private static async ValueTask<string> Render_oEmbedCardAsync(
+    private static ValueTask<IExpression> Render_oEmbedCardAsync(
         MetadataContext metadata,
         string? siteName,
         JObject oEmbedMetadataJson,
@@ -101,19 +91,9 @@ internal static class oEmbedRenderrer
         // Will transfer MarkTheRipper metadata from oEmbed metadata.
         var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
             oEmbedMetadataJson, siteName);
-        oEmbedUtilities.SetHtmlMetadata(
-            metadata, htmlMetadata);
 
-        // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-card-{siteName}.html` ==> `layout-oEmbed-card.html`
-        var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-            htmlMetadata, "card", ct).
-            ConfigureAwait(false);
-
-        // Render with layout AST with overall metadata.
-        var overallHtmlContent = new StringBuilder();
-        return await layoutNode.RenderOverallAsync(metadata, ct).
-            ConfigureAwait(false);
+        return RenderWithHtmlMetadataAsync(
+            metadata, "card", htmlMetadata, ct);
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -128,11 +108,10 @@ internal static class oEmbedRenderrer
         // Special case: Is it in amazon product page URL?
         if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
             httpAccessor, metadata, permaLink, embedPageIfAvailable, ct).
-            ConfigureAwait(false) is { } amazonHtmlContentString)
+            ConfigureAwait(false) is { } amazonHtmlContent)
         {
             // Accept with Amazon HTML.
-            return new ValueExpression(
-                new HtmlContentEntry(amazonHtmlContentString));
+            return amazonHtmlContent;
         }
 
         // TODO: cache system
@@ -182,15 +161,13 @@ internal static class oEmbedRenderrer
                         !string.IsNullOrWhiteSpace(htmlString))
                     {
                         // Accept with sanitized HTML.
-                        var sanitizedHtmlString = await RenderResponsiveBlockAsync(
+                        return await RenderResponsiveBlockAsync(
                             metadata,
                             targetEntry.provider.provider_name,
                             metadataJsonObj,
                             htmlString,
                             ct).
                             ConfigureAwait(false);
-                        return new ValueExpression(
-                            new HtmlContentEntry(sanitizedHtmlString));
                     }
                     else
                     {
@@ -212,14 +189,12 @@ internal static class oEmbedRenderrer
             var requestUrlString = $"{endPointUrl}?url={permaLink}";
             try
             {
-                var overallHtmlContentString = await Render_oEmbedCardAsync(
+                return await Render_oEmbedCardAsync(
                     metadata,
                     providerName,
                     metadataJsonObj,
                     ct).
                     ConfigureAwait(false);
-                return new ValueExpression(
-                    new HtmlContentEntry(overallHtmlContentString));
             }
             catch (Exception ex)
             {
@@ -252,27 +227,23 @@ internal static class oEmbedRenderrer
                     !string.IsNullOrWhiteSpace(htmlString))
                 {
                     // Accept with sanitized HTML.
-                    var sanitizedHtmlString = await RenderResponsiveBlockAsync(
+                    return await RenderResponsiveBlockAsync(
                         metadata,
                         null,
                         metadataJsonObj,
                         htmlString,
                         ct).
                         ConfigureAwait(false);
-                    return new ValueExpression(
-                        new HtmlContentEntry(sanitizedHtmlString));
                 }
                 else
                 {
                     // Render with oEmbed metadata and layout when produce oEmbed metadata.
-                    var overallHtmlContentString = await Render_oEmbedCardAsync(
+                    return await Render_oEmbedCardAsync(
                         metadata,
                         null,
                         metadataJsonObj,
                         ct).
                         ConfigureAwait(false);
-                    return new ValueExpression(
-                        new HtmlContentEntry(overallHtmlContentString));
                 }
             }
         }
