@@ -87,7 +87,7 @@ internal static class oEmbed
             oEmbedUtilities.SetHtmlMetadata(mc, htmlMetadata);
 
             // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-card-{siteName}.html` ==> `layout-oEmbed-card.html`
+            // `layout-card-{siteName}.html` ==> `layout-card.html`
             var layoutNode = await metadata.Get_oEmbedLayoutAsync(
                 htmlMetadata, "card", ct).
                 ConfigureAwait(false);
@@ -112,7 +112,7 @@ internal static class oEmbed
         {
             // Render with layout.
             // Get layout AST (ITextTreeNode).
-            // `layout-oEmbed-card.html`
+            // `layout-card.html`
             var layoutNode = await mc.Get_oEmbedLayoutAsync(
                 "card", ct).
                 ConfigureAwait(false);

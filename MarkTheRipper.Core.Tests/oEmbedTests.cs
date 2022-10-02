@@ -204,7 +204,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-html-YouTube", @"<ul>
+new(("html-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -282,7 +282,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-html-YouTube", @"<ul>
+new(("html-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -360,7 +360,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -436,7 +436,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -512,7 +512,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -562,7 +562,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -612,7 +612,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -663,7 +663,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card", @"<ul>
+new(("card", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -707,7 +707,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -768,7 +768,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-html-YouTube", @"<ul>
+new(("html-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -833,7 +833,7 @@ This is test contents.
 </html>
 ",
 new(("amazonTrackingId-us", "abcde1-1")),
-new(("oEmbed-html-Amazon", @"<ul>
+new(("html-Amazon", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -874,7 +874,7 @@ This is test contents.
 </html>
 ",
 new(("amazonTrackingId-jp", "abcde1-1")),
-new(("oEmbed-html-Amazon", @"<ul>
+new(("html-Amazon", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>

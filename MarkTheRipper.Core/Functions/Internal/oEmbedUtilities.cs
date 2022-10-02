@@ -31,13 +31,13 @@ internal static class oEmbedUtilities
         CancellationToken ct) =>
         // Get layout AST (ITextTreeNode).
         htmlMetadata.SiteName is { } siteName ?
-            // `layout-oEmbed-{layoutInfix}-{siteName}.html` ==> `layout-oEmbed-{layoutInfix}.html`
+            // `layout-{layoutInfix}-{siteName}.html` ==> `layout-{layoutInfix}.html`
             await metadata.GetLayoutAsync(
-                $"oEmbed-{layoutInfix}-{siteName}", $"oEmbed-{layoutInfix}", ct).
+                $"{layoutInfix}-{siteName}", $"{layoutInfix}", ct).
                 ConfigureAwait(false) :
-            // `layout-oEmbed-{layoutInfix}.html`
+            // `layout-{layoutInfix}.html`
             await metadata.GetLayoutAsync(
-                $"oEmbed-{layoutInfix}", null, ct).
+                layoutInfix, null, ct).
                 ConfigureAwait(false);
 
     public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
@@ -45,9 +45,9 @@ internal static class oEmbedUtilities
         string layoutInfix,
         CancellationToken ct) =>
         // Get layout AST (ITextTreeNode).
-        // `layout-oEmbed-{layoutInfix}.html`
+        // `layout-{layoutInfix}.html`
         await metadata.GetLayoutAsync(
-            $"oEmbed-{layoutInfix}", null, ct).
+            layoutInfix, null, ct).
             ConfigureAwait(false);
 
     //////////////////////////////////////////////////////////////////////////////

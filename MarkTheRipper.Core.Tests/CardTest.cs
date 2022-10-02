@@ -117,7 +117,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -194,7 +194,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -271,7 +271,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -347,7 +347,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -423,7 +423,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -473,7 +473,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -523,7 +523,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -574,7 +574,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card", @"<ul>
+new(("card", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -618,7 +618,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -679,7 +679,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("oEmbed-card-YouTube", @"<ul>
+new(("card-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
