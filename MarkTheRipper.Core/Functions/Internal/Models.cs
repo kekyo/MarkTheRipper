@@ -216,7 +216,7 @@ internal sealed class AmazonPAAPILabelMetadata
     {
         this.DisplayValue = DisplayValue;
         this.Label = Label;
-        this.Locale = InternalUtilities.GetLocale(Locale);
+        this.Locale = Utilities.GetLocale(Locale);
         this.Value = Value;
     }
 }

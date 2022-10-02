@@ -126,7 +126,7 @@ public static class MetadataUtilities
             Reducer.UnsafeReduceExpression(langExpression, metadata) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
-                    InternalUtilities.GetLocale(UnsafeFormatValue(langValue, metadata)) :
+                    Utilities.GetLocale(UnsafeFormatValue(langValue, metadata)) :
                 CultureInfo.InvariantCulture;
 
     public static async ValueTask<IFormatProvider> GetFormatProviderAsync(
@@ -135,7 +135,7 @@ public static class MetadataUtilities
             await langExpression.ReduceExpressionAsync(metadata, ct) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
-                    InternalUtilities.GetLocale(await FormatValueAsync(langValue, metadata, ct).
+                    Utilities.GetLocale(await FormatValueAsync(langValue, metadata, ct).
                         ConfigureAwait(false)) :
             CultureInfo.InvariantCulture;
 

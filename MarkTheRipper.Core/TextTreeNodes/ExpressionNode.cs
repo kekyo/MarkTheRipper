@@ -11,7 +11,6 @@ using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,15 +46,9 @@ internal sealed class ExpressionNode : ITextTreeNode
             reduced, metadata, ct).
             ConfigureAwait(false);
 
-        var sanitizedString = new StringBuilder(reducedString);
-        sanitizedString.
-            Replace("&", "&amp;").
-            Replace("<", "&lt;").
-            Replace(">", "&gt;").
-            Replace("\"", "&quot;").
-            Replace("'", "&#39;");
+        var escapedString = Utilities.EscapeHtmlString(reducedString);
 
-        writer(sanitizedString.ToString());
+        writer(escapedString);
     }
 
     public override string ToString() =>

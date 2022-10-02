@@ -212,7 +212,7 @@ internal static class AmazonRenderrer
                 Where(line =>
                     line.StartsWith("encodehtml(\"") &&
                     line.EndsWith("\");")).
-                Select(line => InternalUtilities.UnescapeJavascriptString(
+                Select(line => Utilities.UnescapeJavascriptString(
                     line.Substring("encodehtml(\"".Length, line.Length - "encodehtml(\"\");".Length)))).
                 FirstOrDefault() is { } title &&
             bodyHtml.GetElementById("prod-image") is { } prodImage &&
