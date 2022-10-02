@@ -887,4 +887,86 @@ new(("embed-Amazon", @"<ul>
 <div>contentBody: {contentBody}</div>")));
         await Verifier.Verify(actual);
     }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonComInCard()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {card https://www.amazon.com/gp/product/B07X5FPP4P/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-us", "abcde1-1")),
+new(("card-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonCoJpInCard()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {card https://www.amazon.co.jp/dp/B07KQ25738/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-jp", "abcde1-1")),
+new(("card-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")));
+        await Verifier.Verify(actual);
+    }
 }

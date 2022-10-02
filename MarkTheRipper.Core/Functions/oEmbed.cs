@@ -84,21 +84,13 @@ internal static class oEmbed
 
             var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
                 html, permaLink);
-            oEmbedUtilities.SetHtmlMetadata(mc, htmlMetadata);
 
-            // Get layout AST (ITextTreeNode).
-            // `layout-card-{siteName}.html` ==> `layout-card.html`
-            var layoutNode = await metadata.Get_oEmbedLayoutAsync(
-                htmlMetadata, "card", ct).
+            // Removed parent content body.
+            mc.SetValue("contentBody", string.Empty);
+
+            return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
+                mc, "card", htmlMetadata, ct).
                 ConfigureAwait(false);
-
-            // Render with layout AST with overall metadata.
-            var overallHtmlContent = await layoutNode.RenderOverallAsync(mc, ct).
-                ConfigureAwait(false);
-
-            // Done.
-            return new ValueExpression(
-                new HtmlContentEntry(overallHtmlContent));
         }
         catch (Exception ex)
         {
@@ -110,6 +102,9 @@ internal static class oEmbed
         // Step 6. Could not fetch any information.
 
         {
+            // Removed parent content body.
+            mc.SetValue("contentBody", string.Empty);
+
             // Render with layout.
             // Get layout AST (ITextTreeNode).
             // `layout-card.html`

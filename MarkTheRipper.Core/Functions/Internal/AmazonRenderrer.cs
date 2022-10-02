@@ -148,6 +148,10 @@ internal static class AmazonRenderrer
                     Select(summary => summary.Price).
                     FirstOrDefault()?.DisplayAmount is { } price)
             {
+                // Removed parent content body.
+                var mc = metadata.Spawn();
+                mc.SetValue("contentBody", string.Empty);
+
                 var paapiResultMetadata = new HtmlMetadata
                 {
                     SiteName = "Amazon",
@@ -158,7 +162,7 @@ internal static class AmazonRenderrer
                 };
 
                 return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
-                    metadata, "card", paapiResultMetadata, ct).
+                    mc, "card", paapiResultMetadata, ct).
                     ConfigureAwait(false);
             }
         }
@@ -204,6 +208,10 @@ internal static class AmazonRenderrer
                 Select(price => price.InnerHtml.Replace(" ", string.Empty)).
                 FirstOrDefault() is { } price)
         {
+            // Removed parent content body.
+            var mc = metadata.Spawn();
+            mc.SetValue("contentBody", string.Empty);
+
             var pbResultMetadata = new HtmlMetadata
             {
                 SiteName = "Amazon",
@@ -214,7 +222,7 @@ internal static class AmazonRenderrer
             };
 
             return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
-                metadata, "card", pbResultMetadata, ct).
+                mc, "card", pbResultMetadata, ct).
                 ConfigureAwait(false);
         }
 

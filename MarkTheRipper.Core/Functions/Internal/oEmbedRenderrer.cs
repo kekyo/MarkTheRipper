@@ -88,12 +88,16 @@ internal static class oEmbedRenderrer
         JObject oEmbedMetadataJson,
         CancellationToken ct)
     {
+        // Removed parent content body.
+        var mc = metadata.Spawn();
+        mc.SetValue("contentBody", string.Empty);
+
         // Will transfer MarkTheRipper metadata from oEmbed metadata.
         var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
             oEmbedMetadataJson, siteName);
 
         return RenderWithHtmlMetadataAsync(
-            metadata, "card", htmlMetadata, ct);
+            mc, "card", htmlMetadata, ct);
     }
 
     //////////////////////////////////////////////////////////////////////////////
