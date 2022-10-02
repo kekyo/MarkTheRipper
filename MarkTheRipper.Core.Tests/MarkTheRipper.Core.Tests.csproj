@@ -6,6 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\RipOffoEmbedInAmazonComInCard.html" />
+    <None Remove="RipOffoEmbedInAmazonCoJpInCard.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\RipOffoEmbedInAmazonComInCard.html" />
+    <EmbeddedResource Include="Resources\RipOffoEmbedInAmazonCoJpInCard.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="NUnit" Version="3.13.3" />
     <packagereference Include="NUnit3TestAdapter" Version="4.2.1" PrivateAssets="All" />

@@ -31,9 +31,14 @@ internal static class oEmbed
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
-        var httpAccessor = await metadata.LookupValueAsync(
-            "httpAccessor", HttpAccessor.Instance, ct).
+        var httpAccessor = await metadata.LookupValueAsync<IHttpAccessor?>(
+            "httpAccessor", null, ct).
             ConfigureAwait(false);
+        if (httpAccessor == null)
+        {
+            throw new InvalidOperationException(
+                "Could not find any HTTP accessor.");
+        }
 
         var mc = metadata.Spawn();
         mc.SetValue("permaLink", permaLink);

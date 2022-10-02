@@ -49,6 +49,7 @@ public sealed class RipperTests
         layouts ??= new();
 
         var metadata = MetadataUtilities.CreateWithDefaults();
+        metadata.SetValue("httpAccessor", new DummyHttpAccessor());
 
         var tr = new StringReader(layoutText);
         var layout = await Parser.ParseTextTreeAsync(

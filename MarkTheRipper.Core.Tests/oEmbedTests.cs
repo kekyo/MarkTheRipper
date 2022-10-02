@@ -7,99 +7,19 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using AngleSharp.Html.Dom;
-using AngleSharp.Html.Parser;
 using MarkTheRipper.Expressions;
-using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using VerifyNUnit;
 
 using static NUnit.Framework.Assert;
 
 namespace MarkTheRipper;
-
-internal sealed class DummyHttpAccessor : IHttpAccessor
-{
-    private readonly Queue<(Uri url, string content)> queue = new();
-
-    public DummyHttpAccessor(params (string url, string content)[] entries)
-    {
-        foreach (var entry in entries)
-        {
-            this.queue.Enqueue(
-                (new Uri(entry.url, UriKind.RelativeOrAbsolute), entry.content));
-        }
-    }
-
-    private (Uri url, string content) Dequeue()
-    {
-        lock (this.queue)
-        {
-            AreNotEqual(0, this.queue.Count);
-            return this.queue.Dequeue();
-        }
-    }
-
-    public void AssertEmpty()
-    {
-        lock (this.queue)
-        {
-            AreEqual(0, this.queue.Count);
-        }
-    }
-
-    public ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct)
-    {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
-
-        var parser = new HtmlParser();
-        return new ValueTask<IHtmlDocument>(parser.ParseDocumentAsync(c));
-    }
-
-    public ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct)
-    {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
-
-        var tr = new StringReader(c);
-        var jr = new JsonTextReader(tr);
-        return new ValueTask<JToken>(JToken.ReadFrom(jr));
-    }
-
-    public ValueTask<JToken> PostJsonAsync(
-        Uri url, JToken requestJson,
-        IReadOnlyDictionary<string, string> headers,
-        CancellationToken ct)
-    {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
-
-        var tr = new StringReader(c);
-        var jr = new JsonTextReader(tr);
-        return new ValueTask<JToken>(JToken.ReadFrom(jr));
-    }
-
-    public ValueTask<Uri?> ExamineShortUrlAsync(
-        Uri url, CancellationToken ct)
-    {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
-
-        return new ValueTask<Uri?>(
-            Uri.TryCreate(c, UriKind.RelativeOrAbsolute, out var examined) ?
-                examined : null);
-    }
-}
 
 internal sealed class RipOffBaseMetadata
 {
@@ -132,10 +52,7 @@ public sealed class oEmbedTests
         layouts ??= new();
 
         var metadata = MetadataUtilities.CreateWithDefaults();
-        if (httpAccessor != null)
-        {
-            metadata.SetValue("httpAccessor", httpAccessor);
-        }
+        metadata.SetValue("httpAccessor", httpAccessor ?? new());
 
         var tr = new StringReader(layoutText);
         var layout = await Parser.ParseTextTreeAsync(
@@ -936,7 +853,9 @@ new(("card-Amazon", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>
-<div>contentBody: {contentBody}</div>")));
+<div>contentBody: {contentBody}</div>")),
+new(("https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id=abcde1-1&language=en_US&marketplace=amazon&region=US&asins=B07X5FPP4P&show_border=false&link_opens_in_new_window=true",
+    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonComInCard.html")!).ReadToEnd())));
         await Verifier.Verify(actual);
     }
 
@@ -977,7 +896,52 @@ new(("card-Amazon", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>
-<div>contentBody: {contentBody}</div>")));
+<div>contentBody: {contentBody}</div>")),
+new(("https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t=abcde1-1&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins=B07KQ25738",
+    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonCoJpInCard.html")!).ReadToEnd())));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonComInShortLink()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://amzn.to/3CpBGAX}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-us", "abcde1-1")),
+new(("embed-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(("https://amzn.to/3CpBGAX",
+    @"https://www.amazon.com/gp/product/B07X5FPP4P/")));
         await Verifier.Verify(actual);
     }
 }

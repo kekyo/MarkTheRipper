@@ -236,19 +236,20 @@ internal static class AmazonRenderrer
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
-        var interpretedLink = permaLink;
+        // Examine short url.
+        var examinedLink = permaLink;
         if (permaLink.Host == "amzn.to")
         {
             if (await httpAccessor.ExamineShortUrlAsync(
                 permaLink, ct).
                 ConfigureAwait(false) is { } url)
             {
-                interpretedLink = url;
+                examinedLink = url;
             }
         }
 
-        if (amazonEmbeddingQueries.TryGetValue(interpretedLink.Host, out var endPoint) &&
-            interpretedLink.PathAndQuery.Split('/') is { } pathElements &&
+        if (amazonEmbeddingQueries.TryGetValue(examinedLink.Host, out var endPoint) &&
+            examinedLink.PathAndQuery.Split('/') is { } pathElements &&
             pathElements.
                 // Likes ASIN (https://en.wikipedia.org/wiki/Amazon_Standard_Identification_Number)
                 FirstOrDefault(e => e.Length == 10 && e.All(ch => char.IsUpper(ch) || char.IsDigit(ch))) is { } asin)
@@ -273,7 +274,7 @@ internal static class AmazonRenderrer
 
             // Try uses PAAPI v5
             if (await RenderPAAPIAsync(
-                httpAccessor, metadata, interpretedLink, endPoint, asin, ct).
+                httpAccessor, metadata, examinedLink, endPoint, asin, ct).
                 ConfigureAwait(false) is { } paapiResult)
             {
                 return paapiResult;
