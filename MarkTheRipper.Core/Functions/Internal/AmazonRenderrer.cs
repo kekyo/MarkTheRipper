@@ -66,7 +66,7 @@ internal static class AmazonRenderrer
         };
 
         return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
-            mc, "html", htmlMetadata, ct).
+            mc, "embed", htmlMetadata, ct).
             ConfigureAwait(false);
     }
 
@@ -158,7 +158,7 @@ internal static class AmazonRenderrer
                 };
 
                 return await oEmbedRenderrer.RenderWithHtmlMetadataAsync(
-                    metadata, "html", paapiResultMetadata, ct).
+                    metadata, "card", paapiResultMetadata, ct).
                     ConfigureAwait(false);
             }
         }

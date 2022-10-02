@@ -76,7 +76,7 @@ internal static class oEmbedRenderrer
             oEmbedMetadataJson, siteName);
 
         return await RenderWithHtmlMetadataAsync(
-            mc, "html", htmlMetadata, ct).
+            mc, "embed", htmlMetadata, ct).
             ConfigureAwait(false);
     }
 
@@ -155,7 +155,7 @@ internal static class oEmbedRenderrer
 
                 if (metadataJson is JObject metadataJsonObj)
                 {
-                    // oEmbed metadata produces `html` data.
+                    // oEmbed metadata produces `html` embeddable data.
                     if (embedPageIfAvailable &&
                         metadataJsonObj.GetValue<string>("html") is { } htmlString &&
                         !string.IsNullOrWhiteSpace(htmlString))
@@ -221,7 +221,7 @@ internal static class oEmbedRenderrer
 
             if (metadataJson is JObject metadataJsonObj)
             {
-                // oEmbed metadata produces `html` data.
+                // oEmbed metadata produces `html` embeddable data.
                 if (embedPageIfAvailable &&
                     metadataJsonObj.GetValue<string>("html") is { } htmlString &&
                     !string.IsNullOrWhiteSpace(htmlString))

@@ -204,7 +204,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("html-YouTube", @"<ul>
+new(("embed-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -282,7 +282,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("html-YouTube", @"<ul>
+new(("embed-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -768,7 +768,7 @@ This is test contents.
 </html>
 ",
 default,
-new(("html-YouTube", @"<ul>
+new(("embed-YouTube", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -833,7 +833,7 @@ This is test contents.
 </html>
 ",
 new(("amazonTrackingId-us", "abcde1-1")),
-new(("html-Amazon", @"<ul>
+new(("embed-Amazon", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
@@ -874,7 +874,7 @@ This is test contents.
 </html>
 ",
 new(("amazonTrackingId-jp", "abcde1-1")),
-new(("html-Amazon", @"<ul>
+new(("embed-Amazon", @"<ul>
 <li>permaLink: {permaLink}</li>
 <li>siteName: {siteName}</li>
 <li>title: {title}</li>
