@@ -88,6 +88,17 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
         var jr = new JsonTextReader(tr);
         return new ValueTask<JToken>(JToken.ReadFrom(jr));
     }
+
+    public ValueTask<Uri?> ExamineShortUrlAsync(
+        Uri url, CancellationToken ct)
+    {
+        var (u, c) = this.Dequeue();
+        AreEqual(u, url);
+
+        return new ValueTask<Uri?>(
+            Uri.TryCreate(c, UriKind.RelativeOrAbsolute, out var examined) ?
+                examined : null);
+    }
 }
 
 internal sealed class RipOffBaseMetadata

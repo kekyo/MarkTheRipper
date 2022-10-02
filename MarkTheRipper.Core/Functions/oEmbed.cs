@@ -25,21 +25,32 @@ internal static class oEmbed
 {
     //////////////////////////////////////////////////////////////////////////////
 
-    private static async ValueTask<IExpression> Internal_oEmbedAsync(
-        Uri permaLink,
+    private static async ValueTask<IExpression> ProcessPermaLinkAsync(
         MetadataContext metadata,
+        Uri permaLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
-        var httpAccessor = (await metadata.LookupValueAsync(
+        var httpAccessor = await metadata.LookupValueAsync(
             "httpAccessor", HttpAccessor.Instance, ct).
-            ConfigureAwait(false))!;
+            ConfigureAwait(false);
 
         var mc = metadata.Spawn();
         mc.SetValue("permaLink", permaLink);
 
         //////////////////////////////////////////////////////////////////
-        // Step 1. Automatic resolve using global oEmbed provider list.
+        // Step 1. Is it in amazon product page URL?
+
+        if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
+            httpAccessor, mc, permaLink, embedPageIfAvailable, ct).
+            ConfigureAwait(false) is { } amazonHtmlContent)
+        {
+            // Accept with Amazon HTML.
+            return amazonHtmlContent;
+        }
+
+        //////////////////////////////////////////////////////////////////
+        // Step 2. Automatic resolve using global oEmbed provider list.
 
         // Render oEmbed from perma link.
         if (await oEmbedRenderrer.Render_oEmbedAsync(
@@ -51,7 +62,7 @@ internal static class oEmbed
         }
 
         //////////////////////////////////////////////////////////////////
-        // Step 2. Fetch HTML from perma link directly.
+        // Step 3. Fetch HTML from perma link directly.
 
         try
         {
@@ -61,7 +72,7 @@ internal static class oEmbed
                 ConfigureAwait(false);
 
             //////////////////////////////////////////////////////////////////
-            // Step 3. Resolve by oEmbed discover meta tag link.
+            // Step 4. Resolve by oEmbed discover meta tag link.
 
             // Contains oEmbed meta tags.
             if (html.Head?.QuerySelector("link[type='application/json+oembed']") is { } oEmbedLinkElement &&
@@ -80,7 +91,7 @@ internal static class oEmbed
             }
 
             //////////////////////////////////////////////////////////////////
-            // Step 4. Give up oEmbed resolving, retreive meta tags from HTML.
+            // Step 5. Give up oEmbed resolving, retreive meta tags from HTML.
 
             var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
                 html, permaLink);
@@ -145,8 +156,8 @@ internal static class oEmbed
                 $"Invalid embed function argument: URL={permaLinkString}");
         }
 
-        return await Internal_oEmbedAsync(
-            permaLink, metadata, true, ct).
+        return await ProcessPermaLinkAsync(
+            metadata, permaLink, true, ct).
             ConfigureAwait(false);
     }
 
@@ -171,8 +182,8 @@ internal static class oEmbed
                 $"Invalid card function argument: URL={permaLinkString}");
         }
 
-        return await Internal_oEmbedAsync(
-            permaLink, metadata, false, ct).
+        return await ProcessPermaLinkAsync(
+            metadata, permaLink, false, ct).
             ConfigureAwait(false);
     }
 }

@@ -14,6 +14,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,9 @@ namespace MarkTheRipper.IO;
 public sealed class HttpAccessor : IHttpAccessor
 {
     private static readonly Lazy<HttpClient> httpClientFactory =
-        new(() => new HttpClient());
+        new(() => new());
+    private static readonly Lazy<HttpClient> nonRedirectedHttpClientFactory =
+        new(() => new(new HttpClientHandler() { AllowAutoRedirect = false }));
 
     public static readonly IHttpAccessor Instance =
         new HttpAccessor();
@@ -99,5 +102,18 @@ public sealed class HttpAccessor : IHttpAccessor
 
         return await parser.ParseDocumentAsync(stream, ct).
             ConfigureAwait(false);
+    }
+
+    public async ValueTask<Uri?> ExamineShortUrlAsync(
+        Uri url, CancellationToken ct)
+    {
+        using var response = await nonRedirectedHttpClientFactory.Value.
+            GetAsync(url, ct).
+            ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
+
+        return ((int)response.StatusCode / 100) == 3 ?
+            response.Headers.Location : null;
     }
 }

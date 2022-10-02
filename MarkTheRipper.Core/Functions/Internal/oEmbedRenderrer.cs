@@ -109,15 +109,6 @@ internal static class oEmbedRenderrer
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
-        // Special case: Is it in amazon product page URL?
-        if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
-            httpAccessor, metadata, permaLink, embedPageIfAvailable, ct).
-            ConfigureAwait(false) is { } amazonHtmlContent)
-        {
-            // Accept with Amazon HTML.
-            return amazonHtmlContent;
-        }
-
         // TODO: cache system
         var providersJson = await httpAccessor.FetchJsonAsync(oEmbedProviderListUrl, ct).
             ConfigureAwait(false);
