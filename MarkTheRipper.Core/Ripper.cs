@@ -236,7 +236,7 @@ public sealed class Ripper
 
         // Step 7: Set renderred HTML into metadata context.
         mc.Set("contentBody",
-            new HtmlContentExpression(contentBodyWriter.ToString()));
+            new ValueExpression(new HtmlContentEntry(contentBodyWriter.ToString())));
 
         // Step 8: Get layout AST (ITextTreeNode).
         var layoutNode = await mc.GetLayoutAsync(ct).

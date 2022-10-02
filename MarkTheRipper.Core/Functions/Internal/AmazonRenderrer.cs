@@ -66,7 +66,7 @@ internal static class AmazonRenderrer
 
         // Set patched HTML into metadata context.
         metadata.Set("contentBody",
-            new HtmlContentExpression(contentBody));
+            new ValueExpression(new HtmlContentEntry(contentBody)));
 
         // Get layout AST (ITextTreeNode).
         // `layout-oEmbed-html-Amazon.html` ==> `layout-oEmbed-html.html`

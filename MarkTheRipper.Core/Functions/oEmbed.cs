@@ -98,7 +98,8 @@ internal static class oEmbed
                 ConfigureAwait(false);
 
             // Done.
-            return new HtmlContentExpression(overallHtmlContent);
+            return new ValueExpression(
+                new HtmlContentEntry(overallHtmlContent));
         }
         catch (Exception ex)
         {
@@ -122,7 +123,8 @@ internal static class oEmbed
                 ConfigureAwait(false);
 
             // Done.
-            return new HtmlContentExpression(overallHtmlContent);
+            return new ValueExpression(
+                new HtmlContentEntry(overallHtmlContent));
         }
     }
 

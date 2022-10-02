@@ -77,7 +77,7 @@ internal static class oEmbedRenderrer
 
         // Set patched HTML into metadata context.
         metadata.Set("contentBody",
-            new HtmlContentExpression(contentBodyString));
+            new ValueExpression(new HtmlContentEntry(contentBodyString)));
 
         // Get layout AST (ITextTreeNode).
         // `layout-oEmbed-html-{siteName}.html` ==> `layout-oEmbed-html.html`
@@ -131,7 +131,8 @@ internal static class oEmbedRenderrer
             ConfigureAwait(false) is { } amazonHtmlContentString)
         {
             // Accept with Amazon HTML.
-            return new HtmlContentExpression(amazonHtmlContentString);
+            return new ValueExpression(
+                new HtmlContentEntry(amazonHtmlContentString));
         }
 
         // TODO: cache system
@@ -188,7 +189,8 @@ internal static class oEmbedRenderrer
                             htmlString,
                             ct).
                             ConfigureAwait(false);
-                        return new HtmlContentExpression(sanitizedHtmlString);
+                        return new ValueExpression(
+                            new HtmlContentEntry(sanitizedHtmlString));
                     }
                     else
                     {
@@ -216,7 +218,8 @@ internal static class oEmbedRenderrer
                     metadataJsonObj,
                     ct).
                     ConfigureAwait(false);
-                return new HtmlContentExpression(overallHtmlContentString);
+                return new ValueExpression(
+                    new HtmlContentEntry(overallHtmlContentString));
             }
             catch (Exception ex)
             {
@@ -256,7 +259,8 @@ internal static class oEmbedRenderrer
                         htmlString,
                         ct).
                         ConfigureAwait(false);
-                    return new HtmlContentExpression(sanitizedHtmlString);
+                    return new ValueExpression(
+                        new HtmlContentEntry(sanitizedHtmlString));
                 }
                 else
                 {
@@ -267,7 +271,8 @@ internal static class oEmbedRenderrer
                         metadataJsonObj,
                         ct).
                         ConfigureAwait(false);
-                    return new HtmlContentExpression(overallHtmlContentString);
+                    return new ValueExpression(
+                        new HtmlContentEntry(overallHtmlContentString));
                 }
             }
         }
