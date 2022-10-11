@@ -45,8 +45,7 @@ public sealed class Ripper
     {
         var storeToPathHint = new PathEntry(
             Path.Combine(
-                Path.GetDirectoryName(markdownPath.PhysicalPath) ??
-                Path.DirectorySeparatorChar.ToString(),
+                Utilities.GetDirectoryName(markdownPath.PhysicalPath),
                 Path.GetFileNameWithoutExtension(markdownPath.PhysicalPath) + ".html"));
 
         markdownMetadata["markdownPath"] = new ValueExpression(markdownPath);
@@ -56,8 +55,7 @@ public sealed class Ripper
         if (!markdownMetadata.ContainsKey("category"))
         {
             var relativeDirectoryPath =
-                Path.GetDirectoryName(markdownPath.PhysicalPath) ??
-                Path.DirectorySeparatorChar.ToString();
+                Utilities.GetDirectoryName(markdownPath.PhysicalPath);
             var pathElements = relativeDirectoryPath.
                 Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
             markdownMetadata.Add("category", new ValueExpression(

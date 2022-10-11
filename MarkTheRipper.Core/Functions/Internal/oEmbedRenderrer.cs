@@ -10,13 +10,11 @@
 using MarkTheRipper.Expressions;
 using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
-using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 

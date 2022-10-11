@@ -9,6 +9,7 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
+using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
 using NUnit.Framework;
@@ -48,8 +49,8 @@ public sealed class RipperTests
         baseMetadata ??= new();
         layouts ??= new();
 
-        var metadata = MetadataUtilities.CreateWithDefaults();
-        metadata.SetValue("httpAccessor", new DummyHttpAccessor());
+        var metadata = MetadataUtilities.CreateWithDefaults(
+            new DummyHttpAccessor());
 
         var tr = new StringReader(layoutText);
         var layout = await Parser.ParseTextTreeAsync(

@@ -31,11 +31,11 @@ public static class MetadataUtilities
 
     /////////////////////////////////////////////////////////////////////
 
-    public static MetadataContext CreateWithDefaults()
+    public static MetadataContext CreateWithDefaults(IHttpAccessor httpAccessor)
     {
         var metadata = new MetadataContext();
 
-        metadata.SetValue("httpAccessor", HttpAccessor.Instance);
+        metadata.SetValue("httpAccessor", httpAccessor);
 
         metadata.SetValue("generator", $"MarkTheRipper {ThisAssembly.AssemblyVersion}");
         metadata.SetValue("generated", DateTimeOffset.Now);

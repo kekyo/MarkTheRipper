@@ -7,7 +7,6 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using Markdig.Syntax.Inlines;
 using MarkTheRipper.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -36,6 +35,17 @@ public static class Utilities
 
     public static readonly Encoding UTF8 =
         new UTF8Encoding(false);   // No BOM
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static string GetDirectoryName(string path) =>
+        Path.GetDirectoryName(path) switch
+        {
+            // Not accurate in Windows, but a compromise...
+            null => Path.DirectorySeparatorChar.ToString(),
+            "" => string.Empty,
+            var dp => dp,
+        };
 
     ///////////////////////////////////////////////////////////////////////////////////
 

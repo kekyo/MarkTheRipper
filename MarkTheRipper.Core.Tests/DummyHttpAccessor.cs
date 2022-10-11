@@ -74,6 +74,7 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
     public ValueTask<JToken> PostJsonAsync(
         Uri url, JToken requestJson,
         IReadOnlyDictionary<string, string> headers,
+        IReadOnlyDictionary<string, string> cacheKeyValues,
         CancellationToken ct)
     {
         var (u, c) = this.Dequeue();

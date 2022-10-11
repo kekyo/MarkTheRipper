@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Internal;
+using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
 using System;
@@ -57,6 +58,7 @@ public static class Driver
     /// <param name="output">Log output target</param>
     /// <param name="storeToBasePath">Store to base path</param>
     /// <param name="resourceBasePath">Resource base path</param>
+    /// <param name="cacheBasePath">Cache base path</param>
     /// <param name="contentsBasePathList">Markdown content placed directory path iterator</param>
     /// <param name="requiredBeforeCleanup">Before cleanup</param>
     /// <param name="ct">CancellationToken</param>
@@ -64,6 +66,7 @@ public static class Driver
         TextWriter output,
         string storeToBasePath,
         string resourceBasePath,
+        string cacheBasePath,
         IEnumerable<string> contentsBasePathList,
         bool requiredBeforeCleanup,
         CancellationToken ct)
@@ -164,7 +167,8 @@ public static class Driver
 
         //////////////////////////////////////////////////////////////
 
-        var rootMetadata = MetadataUtilities.CreateWithDefaults();
+        var rootMetadata = MetadataUtilities.CreateWithDefaults(
+            new HttpAccessor(cacheBasePath));
 
         rootMetadata.SetValue("layoutList", layoutList);
 

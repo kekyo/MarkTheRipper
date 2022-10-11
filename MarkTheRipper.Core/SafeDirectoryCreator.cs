@@ -7,7 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using System.Collections.Generic;
+using MarkTheRipper.Internal;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,84 +19,23 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class SafeDirectoryCreator
 {
-    private sealed class Waiter
-    {
-        private Queue<TaskCompletionSource<bool>>? queue = new();
-        private bool isCanceled;
+    private readonly AsyncResourceAllocator allocator;
 
-        public ValueTask AllocateWaitTask()
+    public SafeDirectoryCreator() =>
+        this.allocator = new(dirPath =>
         {
-            lock (this)
+            if (!Directory.Exists(dirPath))
             {
-                if (this.queue is { } queue)
+                try
                 {
-                    var tcs = new TaskCompletionSource<bool>();
-                    queue.Enqueue(tcs);
-                    return new ValueTask(tcs.Task);
+                    Directory.CreateDirectory(dirPath);
                 }
-                else
+                catch
                 {
-                    if (this.isCanceled)
-                    {
-                        throw new TaskCanceledException();
-                    }
-                    return default;
                 }
             }
-        }
-
-        public void SetFinished()
-        {
-            lock (this)
-            {
-                if (this.queue is { } queue)
-                {
-                    while (queue.Count >= 1)
-                    {
-                        queue.Dequeue().TrySetResult(true);
-                    }
-                    this.queue = null;
-                }
-            }
-        }
-
-        public void SetCanceled()
-        {
-            lock (this)
-            {
-                if (this.queue is { } queue)
-                {
-                    while (queue.Count >= 1)
-                    {
-                        queue.Dequeue().TrySetCanceled();
-                    }
-                    this.queue = null;
-                    this.isCanceled = true;
-                }
-            }
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////
-
-    private readonly Dictionary<string, Waiter> dirs = new();
-
-    private (bool required, Waiter waiter) GetWaiter(string dirPath)
-    {
-        Waiter waiter;
-        lock (this.dirs)
-        {
-            if (!this.dirs.TryGetValue(dirPath, out waiter!))
-            {
-                waiter = new();
-                this.dirs.Add(dirPath, waiter);
-                return (true, waiter);
-            }
-        }
-        return (false, waiter);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////
+            return default;
+        });
 
     /// <summary>
     /// Create specified directory.
@@ -104,34 +43,6 @@ public sealed class SafeDirectoryCreator
     /// <param name="dirPath">Directory path</param>
     /// <param name="ct">CancellationToken</param>
     public ValueTask CreateIfNotExistAsync(
-        string dirPath, CancellationToken ct)
-    {
-        var (required, waiter) = this.GetWaiter(dirPath);
-        if (required)
-        {
-            using var _ = ct.Register(() => waiter.SetCanceled());
-            try
-            {
-                if (!Directory.Exists(dirPath))
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(dirPath);
-                    }
-                    catch
-                    {
-                    }
-                }
-            }
-            finally
-            {
-                waiter.SetFinished();
-            }
-            return default;
-        }
-        else
-        {
-            return waiter.AllocateWaitTask();
-        }
-    }
+        string dirPath, CancellationToken ct) =>
+        this.allocator.AllocateAsync(dirPath, ct);
 }

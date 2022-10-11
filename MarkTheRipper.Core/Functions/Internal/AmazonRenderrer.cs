@@ -137,11 +137,18 @@ internal static class AmazonRenderrer
                 Headers(headers).
                 Payload(requestJson.ToString()).
                 Build();
-
             var awsv4AuthHeader = awsv4Auth.GetHeaders();
 
+            var cacheKeyValues = new Dictionary<string, string>
+            {
+                { "asin", asin },
+                { "region", endPoint.PAAPIEndPointRegion },
+                { "partnerTag", partnerTag },
+                { "api", "GetItems" },
+            };
+
             var paapiResultJson = await httpAccessor.PostJsonAsync<AmazonPAAPIGetItemsResponse>(
-                endPoint.PAAPIEndPoint, requestJson, awsv4AuthHeader, ct).
+                endPoint.PAAPIEndPoint, requestJson, awsv4AuthHeader, cacheKeyValues, ct).
                 ConfigureAwait(false);
             if (paapiResultJson.Errors.Length >= 1)
             {

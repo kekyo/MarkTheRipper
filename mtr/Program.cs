@@ -22,12 +22,7 @@ public static class Program
     private static async Task ExtractSampleContentAsync(
         SafeDirectoryCreator dc, string resourceName, string storeToPath)
     {
-        var basePath = Path.GetDirectoryName(storeToPath) switch
-        {
-            null => Path.DirectorySeparatorChar.ToString(),
-            "" => ".",
-            var dp => dp,
-        };
+        var basePath = Utilities.GetDirectoryName(storeToPath);
 
         await dc.CreateIfNotExistAsync(basePath, default);
 
@@ -123,6 +118,7 @@ public static class Program
         {
             var help = false;
             var resourceBasePath = "resources";
+            var cacheBasePath = ".cache";
             var requiredBeforeCleanup = true;
             var requiredOpen = true;
 
@@ -191,6 +187,7 @@ public static class Program
                             Console.Out,
                             storeToBasePath,
                             resourceBasePath,
+                            cacheBasePath,
                             contentsBasePathList,
                             requiredBeforeCleanup,
                             default);

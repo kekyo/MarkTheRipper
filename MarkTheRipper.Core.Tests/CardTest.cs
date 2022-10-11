@@ -33,8 +33,8 @@ public sealed class CardTest
         baseMetadata ??= new();
         layouts ??= new();
 
-        var metadata = MetadataUtilities.CreateWithDefaults();
-        metadata.SetValue("httpAccessor", httpAccessor ?? new());
+        var metadata = MetadataUtilities.CreateWithDefaults(
+            httpAccessor ?? new());
 
         var tr = new StringReader(layoutText);
         var layout = await Parser.ParseTextTreeAsync(

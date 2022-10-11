@@ -21,7 +21,9 @@ public interface IHttpAccessor
     ValueTask<JToken> FetchJsonAsync(
         Uri url, CancellationToken ct);
     ValueTask<JToken> PostJsonAsync(
-        Uri url, JToken requestJson, IReadOnlyDictionary<string, string> headers,
+        Uri url, JToken requestJson,
+        IReadOnlyDictionary<string, string> headers,
+        IReadOnlyDictionary<string, string> cacheKeyValues,
         CancellationToken ct);
 
     ValueTask<IHtmlDocument> FetchHtmlAsync(
@@ -34,10 +36,13 @@ public static class HttpAccessorExtension
 {
     public static async ValueTask<T> PostJsonAsync<T>(
         this IHttpAccessor httpAccess,
-        Uri url, JToken requestJson, IReadOnlyDictionary<string, string> headers,
+        Uri url, JToken requestJson,
+        IReadOnlyDictionary<string, string> headers,
+        IReadOnlyDictionary<string, string> cacheKeyValues,
         CancellationToken ct)
     {
-        var jt = await httpAccess.PostJsonAsync(url, requestJson, headers, ct).
+        var jt = await httpAccess.PostJsonAsync(
+            url, requestJson, headers, cacheKeyValues, ct).
             ConfigureAwait(false);
         return jt.ToObject<T>()!;
     }
