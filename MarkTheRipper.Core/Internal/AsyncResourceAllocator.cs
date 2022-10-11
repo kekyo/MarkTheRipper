@@ -77,10 +77,6 @@ internal sealed class AsyncResourceAllocator
     ///////////////////////////////////////////////////////////////////////////////////
 
     private readonly Dictionary<string, Waiter> waiters = new();
-    private readonly Func<string, ValueTask> allocator;
-
-    public AsyncResourceAllocator(Func<string, ValueTask> allocator) =>
-        this.allocator = allocator;
 
     private (bool required, Waiter waiter) GetWaiter(string key)
     {
@@ -98,7 +94,9 @@ internal sealed class AsyncResourceAllocator
     }
 
     public async ValueTask AllocateAsync(
-        string key, CancellationToken ct)
+        string key,
+        Func<ValueTask> allocator,
+        CancellationToken ct)
     {
         var (required, waiter) = this.GetWaiter(key);
         if (required)
@@ -106,8 +104,8 @@ internal sealed class AsyncResourceAllocator
             using var _ = ct.Register(() => waiter.SetCanceled());
             try
             {
-                await this.allocator(key).
-                ConfigureAwait(false);
+                await allocator().
+                    ConfigureAwait(false);
             }
             finally
             {

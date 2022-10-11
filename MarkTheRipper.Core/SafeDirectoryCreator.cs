@@ -19,10 +19,16 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class SafeDirectoryCreator
 {
-    private readonly AsyncResourceAllocator allocator;
+    private readonly AsyncResourceAllocator allocator = new();
 
-    public SafeDirectoryCreator() =>
-        this.allocator = new(dirPath =>
+    /// <summary>
+    /// Create specified directory.
+    /// </summary>
+    /// <param name="dirPath">Directory path</param>
+    /// <param name="ct">CancellationToken</param>
+    public ValueTask CreateIfNotExistAsync(
+        string dirPath, CancellationToken ct) =>
+        this.allocator.AllocateAsync(dirPath, () =>
         {
             if (!Directory.Exists(dirPath))
             {
@@ -35,14 +41,5 @@ public sealed class SafeDirectoryCreator
                 }
             }
             return default;
-        });
-
-    /// <summary>
-    /// Create specified directory.
-    /// </summary>
-    /// <param name="dirPath">Directory path</param>
-    /// <param name="ct">CancellationToken</param>
-    public ValueTask CreateIfNotExistAsync(
-        string dirPath, CancellationToken ct) =>
-        this.allocator.AllocateAsync(dirPath, ct);
+        }, ct);
 }
