@@ -740,6 +740,8 @@ Here is a list of built-in functions, including the functions that have appeared
 |`mul`|Multiply numeric arguments.|
 |`div`|Divide numeric arguments.|
 |`mod`|Get the remainder of numeric arguments.|
+|`embed`|Generate embedded content using [oEmbed protocol](https://oembed.com/) and etc.|
+|`card`|Generate card-shaped content using [OGP metadata](https://ogp.me/) and etc.|
 
 #### format
 
@@ -939,7 +941,92 @@ In such a case, you can use `add` function to get:
 <p>index/count = {add item.index 1}/{item.count}</p>
 ```
 
-Would result in a number from 1 to `count`, which is closer to a natural representation.
+Would result in a number from 1 to `count`,
+which is closer to a natural representation.
+
+#### embed (Generates embedded content)
+
+The `embed` (and `card`, described below) functions are special,
+powerful functions that generate content by reference to external data,
+rather than performing simple calculations.
+It is a powerful function that generates content by referencing external data.
+
+Have you ever wanted to embed a YouTube video on your blog?
+Or perhaps you have wanted to display card-shaped content to external content,
+rather than just a link.
+
+The `embed` and `card` functions make such complex content embedding easy.
+For example, you could write the following in your document:
+
+```markdown
+## Found a great video!
+
+One day, when I can travel freely, I would like to visit...
+
+{embed https://youtu.be/1La4QzGeaaQ}
+```
+
+Then you will see the following:
+
+![embed-sample1-en](Images/embed-sample1-en.png)
+
+This image is not just a thumbnail.
+You can actually play the video on the page. Magic! Is it?
+This is made possible by using the standard [oEmbed protocol](https://oembed.com/)
+to this is achieved by automatically collecting content that should be embedded in HTML.
+
+The argument to the `embed` function is simply the "permalink" of the content,
+i.e., the URL that should be shared.
+In addition to YouTube, many other well-known content sites support this function, so:
+
+```markdown
+## Today's hacking
+
+{embed https://twitter.com/kozy_kekyo/status/1508078650499149827}
+```
+
+![embed-sample2-en](Images/embed-sample2-en.png)
+
+Thus, other content, such as Twitter, can be easily embedded. To see which content sites are supported, please [directly refer to oEmbed's json metadata](https://oembed.com/providers.json). You will see that quite a few sites are already supported.
+
+However, one of the most useful sites we know of Amazon,
+to our surprise does not support oEmbed!
+Therefore, MarkTheRipper specifically recognizes Amazon's product links so that they can be embedded as well:
+
+```markdown
+## Learning from Failure
+
+{embed https://amzn.to/3USDXfp}
+```
+
+![embed-sample3-en](Images/embed-sample3-en.png)
+
+* This link can be obtained by activating Amazon associates.
+  Amazon associates can be activated by anyone with an Amazon account, but we won't go into details here.
+
+Now, a little preparation is required to use this handy function.
+Prepare a special layout file `embed.html` to display this embedded content and place it in the `layouts` directory.
+The contents are as follows:
+
+```html
+<div style="max-width:800px;margin:10px;">
+    {contentBody}
+</div>
+```
+
+As in the previous layout explanations,
+the `contentBody` will contain the actual oEmbed content to be embedded.
+The outer `div` tag determines the area of this embedded content.
+In the above, the body is 800px wide with some space around the perimeter.
+You may want to adjust this to fit your site's design.
+
+By the way, the information obtained by the oEmbed protocol may not contain embedded content.
+In such a case, the oEmbed metadata that could be obtained together is used to generate content similar to the `card` function introduced next.
+
+#### card (Generate card-shaped content)
+
+TODO:
+
 
 ----
 
