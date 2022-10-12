@@ -36,7 +36,7 @@ internal static class oEmbedRenderrer
         oEmbedUtilities.SetHtmlMetadata(metadata, htmlMetadata);
 
         // Get layout AST (ITextTreeNode).
-        // `layout-{layoutInfix}-{siteName}.html` ==> `layout-{layoutInfix}.html`
+        // `{layoutInfix}-{siteName}.html` ==> `{layoutInfix}.html`
         var layoutNode = await metadata.Get_oEmbedLayoutAsync(
             htmlMetadata, layoutInfix, ct).
             ConfigureAwait(false);

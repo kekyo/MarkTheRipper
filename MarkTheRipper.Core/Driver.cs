@@ -65,12 +65,17 @@ public static class Driver
         CancellationToken ct)
     {
         var contentsBasePath = Path.Combine(basePath, "contents");
+        var layoutsBasePath = Path.Combine(basePath, "layouts");
         var resourceBasePath = Path.Combine(basePath, "resources");
         var cacheBasePath = Path.Combine(basePath, ".cache");
         var storeToBasePath = Path.Combine(basePath, "docs");
 
         await output.WriteLineAsync(
             $"Contents base path: {contentsBasePath}").
+            WithCancellation(ct).
+            ConfigureAwait(false);
+        await output.WriteLineAsync(
+            $"Layouts base path: {layoutsBasePath}").
             WithCancellation(ct).
             ConfigureAwait(false);
         await output.WriteLineAsync(
@@ -92,8 +97,8 @@ public static class Driver
 
         var metadataList = (await Task.WhenAll(
             new[] { Path.Combine(basePath, "metadata.json") }.
-            Concat(Directory.EnumerateFiles(
-                resourceBasePath, "metadata-*.json", SearchOption.TopDirectoryOnly)).
+            Concat(InternalUtilities.EnumerateAllFiles(
+                resourceBasePath, "metadata-*.json")).
             Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask())).
             ConfigureAwait(false)).
             SelectMany(metadata => metadata).
@@ -115,13 +120,12 @@ public static class Driver
         var ripper = new Ripper();
 
         var layoutList = (await Task.WhenAll(
-            Directory.EnumerateFiles(
-                resourceBasePath, "layout-*.html", SearchOption.TopDirectoryOnly).
+            InternalUtilities.EnumerateAllFiles(
+                layoutsBasePath, "*.html").
             Select(async layoutPath =>
             {
                 var layoutName =
-                    Path.GetFileNameWithoutExtension(layoutPath).
-                    Substring("layout-".Length);
+                    Path.GetFileNameWithoutExtension(layoutPath);
                 var layout = await ReadLayoutAsync(ripper, new PathEntry(layoutPath), ct).
                     ConfigureAwait(false);
                 return (layoutName, layout);

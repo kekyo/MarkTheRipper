@@ -10,6 +10,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,6 +31,14 @@ internal static class InternalUtilities
          Uri.TryCreate(urlString, UriKind.Absolute, out var url)) ?
             url :
             defaultUrl;
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    public static IEnumerable<string> EnumerateAllFiles(
+        string path, string searchPattern) =>
+        Directory.Exists(path) ?
+            Directory.EnumerateFiles(path, searchPattern, SearchOption.AllDirectories) :
+            Empty<string>();
 
     ///////////////////////////////////////////////////////////////////////////////////
 

@@ -123,7 +123,7 @@ internal static class oEmbed
 
             // Render with layout.
             // Get layout AST (ITextTreeNode).
-            // `layout-card.html`
+            // `card.html`
             var layoutNode = await mc.Get_oEmbedLayoutAsync(
                 "card", ct).
                 ConfigureAwait(false);

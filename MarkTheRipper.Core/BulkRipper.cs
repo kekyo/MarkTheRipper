@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
@@ -164,9 +165,8 @@ public sealed class BulkRipper
 
         var candidates = contentsBasePathList.
             Select(contentsBasePath => Path.GetFullPath(contentsBasePath)).
-            Where(contentsBasePath => Directory.Exists(contentsBasePath)).
-            SelectMany(contentsBasePath => Directory.EnumerateFiles(
-                contentsBasePath, "*.*", SearchOption.AllDirectories).
+            SelectMany(contentsBasePath => InternalUtilities.EnumerateAllFiles(
+                contentsBasePath, "*.*").
                 Select(path =>
                     (contentsBasePath,
                      relativeContentPath: new PathEntry(path.Substring(contentsBasePath.Length + 1))))).
