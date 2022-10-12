@@ -79,7 +79,9 @@ public sealed class Ripper
         DateTimeOffset generatedDate,
         CancellationToken ct)
     {
-        var path = Path.Combine(contentsBasePath, markdownPath.PhysicalPath);
+        var path = Path.Combine(
+            contentsBasePath,
+            markdownPath.PhysicalPath);
 
         async ValueTask<Dictionary<string, IExpression>> ParseAsync()
         {
@@ -281,30 +283,44 @@ public sealed class Ripper
             Utilities.UTF8,
             true);
 
-        using var outputHtmlStream = new FileStream(
-            Path.Combine(
-                storeToBasePath,
-                markdownEntry.StoreToPath.PhysicalPath),
-            FileMode.Create,
-            FileAccess.ReadWrite,
-            FileShare.None,
-            65536,
-            true);
-        var outputHtmlWriter = new StreamWriter(
-            outputHtmlStream,
-            Utilities.UTF8);
-        outputHtmlWriter.NewLine = Environment.NewLine;
+        var storeToPath = Path.Combine(
+            storeToBasePath,
+            markdownEntry.StoreToPath.PhysicalPath);
+        PathEntry appliedLayoutPath;
 
-        var appliedLayoutPath = await this.RenderContentAsync(
-            markdownEntry.MarkdownPath,
-            markdownReader,
-            metadata,
-            outputHtmlWriter,
-            ct).
-            ConfigureAwait(false);
+        try
+        {
+            using var outputHtmlStream = new FileStream(
+                storeToPath + ".tmp",
+                FileMode.Create,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                65536,
+                true);
+            var outputHtmlWriter = new StreamWriter(
+                outputHtmlStream,
+                Utilities.UTF8);
+            outputHtmlWriter.NewLine = Environment.NewLine;
 
-        await outputHtmlWriter.FlushAsync().
-            ConfigureAwait(false);
+            appliedLayoutPath = await this.RenderContentAsync(
+                markdownEntry.MarkdownPath,
+                markdownReader,
+                metadata,
+                outputHtmlWriter,
+                ct).
+                ConfigureAwait(false);
+
+            await outputHtmlWriter.FlushAsync().
+                ConfigureAwait(false);
+        }
+        catch
+        {
+            File.Delete(storeToPath + ".tmp");
+            throw;
+        }
+
+        File.Delete(storeToPath);
+        File.Move(storeToPath + ".tmp", storeToPath);
 
         return appliedLayoutPath;
     }
