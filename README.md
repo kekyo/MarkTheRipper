@@ -1005,8 +1005,8 @@ Therefore, MarkTheRipper specifically recognizes Amazon's product links so that 
   Amazon associates can be activated by anyone with an Amazon account, but we won't go into details here.
 
 Now, a little preparation is required to use this handy function.
-Prepare a special layout file `embed.html` to display this embedded content and place it in the `layouts` directory.
-The contents are as follows:
+Prepare a dedicated layout file `layouts/embed.html` to display this embedded content.
+The contents are only as follows:
 
 ```html
 <div style="max-width:800px;margin:10px;">
@@ -1020,7 +1020,7 @@ The outer `div` tag determines the area of this embedded content.
 In the above, the body is 800px wide with some space around the perimeter.
 You may want to adjust this to fit your site's design.
 
-By the way, the information obtained by the oEmbed protocol may not contain embedded content.
+By the way, the oEmbed protocol may not contain embedded content.
 In such a case, the oEmbed metadata that could be obtained together is used to generate content similar to the `card` function introduced next.
 
 #### card (Generate card-shaped content)
