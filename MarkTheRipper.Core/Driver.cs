@@ -66,7 +66,7 @@ public static class Driver
     {
         var contentsBasePath = Path.Combine(basePath, "contents");
         var layoutsBasePath = Path.Combine(basePath, "layouts");
-        var resourceBasePath = Path.Combine(basePath, "resources");
+        var metadataBasePath = Path.Combine(basePath, "metadata");
         var cacheBasePath = Path.Combine(basePath, ".cache");
         var storeToBasePath = Path.Combine(basePath, "docs");
 
@@ -79,7 +79,7 @@ public static class Driver
             WithCancellation(ct).
             ConfigureAwait(false);
         await output.WriteLineAsync(
-            $"Resource base path: {resourceBasePath}").
+            $"Extended metadata base path: {metadataBasePath}").
             WithCancellation(ct).
             ConfigureAwait(false);
         await output.WriteLineAsync(
@@ -98,7 +98,7 @@ public static class Driver
         var metadataList = (await Task.WhenAll(
             new[] { Path.Combine(basePath, "metadata.json") }.
             Concat(InternalUtilities.EnumerateAllFiles(
-                resourceBasePath, "metadata-*.json")).
+                metadataBasePath, "*.json")).
             Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask())).
             ConfigureAwait(false)).
             SelectMany(metadata => metadata).
