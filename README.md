@@ -51,12 +51,12 @@ and almost no extra definitions!)
 
 * `contents` directory: `index.md`,
   It is a content (post) file written by markdown.
-* `resources` directory: `layout-page.html`,
+* `layouts` directory: `page.html`,
   When the site is generated, the markdown is converted to HTML and inserted into this layout file.
 
 That's it! Just to be sure, let's show you what's inside:
 
-### index.md
+### contents/index.md
 
 ```markdown
 ---
@@ -75,7 +75,7 @@ H2 body.
 H3 body.
 ```
 
-### layout-page.html
+### layouts/page.html
 
 ```html
 <!DOCTYPE html>
@@ -295,9 +295,9 @@ These keywords can be overridden by writing them in the markdown header.
 It may not make sense to override `generated`, but just know that MarkTheRipper does not treat metadata dictionary definitions specially.
 
 You may be wondering what the default values of `lang`, `layout` and `timezone` are.
-Metadata dictionaries can be placed in `resources/metadata.json`,
+Metadata dictionaries can be placed in `metadata.json`,
 which is the base definition for site generation.
-(It does not have to be there. In fact, it is not present in the minimum/sidebar samples.)
+(It does not have to be there. In fact, it is not present in the minimum samples.)
 For example, the following definition:
 
 ```json
@@ -335,7 +335,7 @@ And as for the `lang` and `layout` fallback:
 
 The layout name may need some supplementation.
 The layout name is used to identify the layout file from which the conversion is being made.
-For example, if the layout name is `page`, the file `resources/layout-page.html` will be applied. If:
+For example, if the layout name is `page`, the file `layouts/page.html` will be applied. If:
 
 ```markdown
 ---
@@ -346,7 +346,7 @@ layout: fancy
 (... Body ...)
 ```
 
-then `resources/layout-fancy.html` will be used.
+then `layouts/fancy.html` will be used.
 
 The `date` represents the date and time of the article and is treated like an ordinary keyword,
 but if it is not defined in the markdown header,
@@ -402,13 +402,13 @@ Use the `lookup` function keyword built-in MarkTheRipper:
 If you do this and register the pair `blog` and `Private diary` in the metadata dictionary,
 the HTML will show `Category: Private diary`.
 
-Such keyword/value pairs can be referenced by writing them in `resources/metadata.json` as shown in the previous section.
-In addition, the metadata dictionary file is actually all JSON files matched by `resources/metadata*.json`.
+Such keyword/value pairs can be referenced by writing them in `metadata.json` as shown in the previous section.
+In addition, the metadata dictionary file is actually all JSON files matched by `metadata/*.json`.
 Even if the files are separated,
 they will all be read and their contents merged when MarkTheRipper starts.
 
 For example, it would be easier to manage only article categories as separate files,
-such as `resource/metadata-category.json`.
+such as `metadata/category.json`.
 
 ----
 
