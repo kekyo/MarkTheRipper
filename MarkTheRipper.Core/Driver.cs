@@ -12,7 +12,6 @@ using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using MarkTheRipper.TextTreeNodes;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -56,23 +55,22 @@ public static class Driver
     /// Run Ripper.
     /// </summary>
     /// <param name="output">Log output target</param>
-    /// <param name="storeToBasePath">Store to base path</param>
-    /// <param name="resourceBasePath">Resource base path</param>
-    /// <param name="cacheBasePath">Cache base path</param>
-    /// <param name="contentsBasePathList">Markdown content placed directory path iterator</param>
+    /// <param name="basePath">Base path</param>
     /// <param name="requiredBeforeCleanup">Before cleanup</param>
     /// <param name="ct">CancellationToken</param>
     public static async ValueTask RunAsync(
         TextWriter output,
-        string storeToBasePath,
-        string resourceBasePath,
-        string cacheBasePath,
-        IEnumerable<string> contentsBasePathList,
+        string basePath,
         bool requiredBeforeCleanup,
         CancellationToken ct)
     {
+        var contentsBasePath = Path.Combine(basePath, "contents");
+        var resourceBasePath = Path.Combine(basePath, "resources");
+        var cacheBasePath = Path.Combine(basePath, ".cache");
+        var storeToBasePath = Path.Combine(basePath, "docs");
+
         await output.WriteLineAsync(
-            $"Contents base path: {string.Join(", ", contentsBasePathList)}").
+            $"Contents base path: {contentsBasePath}").
             WithCancellation(ct).
             ConfigureAwait(false);
         await output.WriteLineAsync(
@@ -93,8 +91,9 @@ public static class Driver
         //////////////////////////////////////////////////////////////
 
         var metadataList = (await Task.WhenAll(
-            Directory.EnumerateFiles(
-                resourceBasePath, "metadata*.json", SearchOption.TopDirectoryOnly).
+            new[] { Path.Combine(basePath, "metadata.json") }.
+            Concat(Directory.EnumerateFiles(
+                resourceBasePath, "metadata-*.json", SearchOption.TopDirectoryOnly)).
             Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask())).
             ConfigureAwait(false)).
             SelectMany(metadata => metadata).
@@ -180,7 +179,7 @@ public static class Driver
         var generator = new BulkRipper(ripper, storeToBasePath);
 
         var (count, maxConcurrentProcessing) = await generator.RipOffAsync(
-            contentsBasePathList,
+            new[] { contentsBasePath },
             (relativeContentsPath, relativeGeneratedPath, contentsBasePath, layoutName) =>
                 output.WriteLineAsync($"Generated: {layoutName}: {relativeContentsPath} ==> {relativeGeneratedPath}").
                 WithCancellation(ct),

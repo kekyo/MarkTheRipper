@@ -67,7 +67,8 @@ public static class Program
         Console.Out.WriteLine();
     }
 
-    private static string GetSafeStoreToPath(string? categoryArgument, string? fileNameArgument)
+    private static string GetSafeStoreToPath(
+        string? categoryArgument, string? fileNameArgument)
     {
         var categories = !string.IsNullOrWhiteSpace(categoryArgument) ?
             categoryArgument!.Split(new[] { '/', '\\', '-', '.', ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries) :
@@ -117,16 +118,13 @@ public static class Program
         try
         {
             var help = false;
-            var resourceBasePath = "resources";
-            var cacheBasePath = ".cache";
             var requiredBeforeCleanup = true;
             var requiredOpen = true;
 
             var options = new OptionSet()
             {
-                { "resources=", "Resource base path", v => resourceBasePath = v },
                 { "no-cleanup", "Do not cleanup before processing if exists", _ => requiredBeforeCleanup = false },
-                { "n|no-open", "Do not open editor/browser automatically", _ => requiredOpen = true },
+                { "n|no-open", "Do not open editor/browser automatically", _ => requiredOpen = false },
                 { "h|help", "Print this help", _ => help = true },
             };
 
@@ -136,15 +134,15 @@ public static class Program
 
             if (help)
             {
-                Console.Out.WriteLine("  Fantastic faster generates static site comes from simply Markdowns.");
-                Console.Out.WriteLine("  Copyright (c) Kouji Matsui.");
-                Console.Out.WriteLine("  https://github.com/kekyo/MarkTheRipper");
+                Console.Out.WriteLine("Fantastic faster generates static site comes from simply Markdowns.");
+                Console.Out.WriteLine("Copyright (c) Kouji Matsui.");
+                Console.Out.WriteLine("https://github.com/kekyo/MarkTheRipper");
                 Console.Out.WriteLine();
 
                 Console.Out.WriteLine("usage: mtr.exe [options] init [<sample name>]");
-                Console.Out.WriteLine("  <sample name>: \"minimum\", \"standard\" and \"rich\"");
+                Console.Out.WriteLine("  <sample name>: \"minimum\", \"sidebar\", \"standard\" and \"rich\"");
                 Console.Out.WriteLine("usage: mtr.exe [options] new [<category path> [<slug>]]");
-                Console.Out.WriteLine("usage: mtr.exe [options] [build [<store to dir path> [<contents dir path> ...]]]");
+                Console.Out.WriteLine("usage: mtr.exe [options] [build]");
                 Console.Out.WriteLine();
 
                 options.WriteOptionDescriptions(Console.Out);
@@ -176,24 +174,14 @@ public static class Program
                         break;
 
                     case "build":
-                        var storeToBasePath = extras.
-                            ElementAtOrDefault(1) ?? "docs";
-                        var contentsBasePathList = extras.
-                            Skip(3).
-                            DefaultIfEmpty("contents").
-                            Distinct().
-                            ToArray();
                         await Driver.RunAsync(
                             Console.Out,
-                            storeToBasePath,
-                            resourceBasePath,
-                            cacheBasePath,
-                            contentsBasePathList,
+                            ".",
                             requiredBeforeCleanup,
                             default);
                         if (requiredOpen)
                         {
-                            var indexPath = Path.Combine(storeToBasePath, "index.html");
+                            var indexPath = Path.Combine("docs", "index.html");
                             Process.Start(indexPath);
                         }
                         break;
