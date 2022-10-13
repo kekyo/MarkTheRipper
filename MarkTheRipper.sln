@@ -17,9 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README_ja.md = README_ja.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkTheRipper.Core", "MarkTheRipper.Core\MarkTheRipper.Core.csproj", "{7478E169-20DC-4B97-881C-75B2AC02EF03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkTheRipper.Engine", "MarkTheRipper.Engine\MarkTheRipper.Engine.csproj", "{7478E169-20DC-4B97-881C-75B2AC02EF03}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkTheRipper.Core.Tests", "MarkTheRipper.Core.Tests\MarkTheRipper.Core.Tests.csproj", "{AE3D3C34-BCE1-4803-A5DF-887927362E1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkTheRipper.Engine.Tests", "MarkTheRipper.Engine.Tests\MarkTheRipper.Engine.Tests.csproj", "{AE3D3C34-BCE1-4803-A5DF-887927362E1D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mtr", "mtr\mtr.csproj", "{071E2149-00AD-426A-82F1-090E2737D452}"
 EndProject

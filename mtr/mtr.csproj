@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarkTheRipper.Core\MarkTheRipper.Core.csproj" />
+    <ProjectReference Include="..\MarkTheRipper.Engine\MarkTheRipper.Engine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

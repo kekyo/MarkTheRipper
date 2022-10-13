@@ -9,4 +9,4 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("MarkTheRipper.Core.Tests")]
+[assembly: InternalsVisibleTo("MarkTheRipper.Engine.Tests")]
