@@ -26,7 +26,7 @@ public sealed class ApplyExpression : IExpression
     string IExpression.PrettyPrint =>
         $"{this.Function.PrettyPrint} {string.Join(" ", this.Parameters.Select(e => e.PrettyPrint))}";
     object? IExpression.ImplicitValue =>
-        (this.Function.ImplicitValue, this.Parameters.Select(e => e.ImplicitValue).ToArray());
+        $"{this.Function.PrettyPrint} {string.Join(" ", this.Parameters.Select(e => e.PrettyPrint))}";
 
     public bool Equals(ApplyExpression rhs) =>
         this.Function.Equals(rhs.Function) &&

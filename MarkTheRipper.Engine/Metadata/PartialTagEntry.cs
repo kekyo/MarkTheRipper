@@ -23,22 +23,22 @@ internal sealed class PartialTagEntry :
         this.Name = name;
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(this.Name);
 
     private async ValueTask<TagEntry?> GetRealTagEntryAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         metadata.Lookup("tagList") is { } tagListExpression &&
-        await tagListExpression.ReduceExpressionAsync(metadata, ct).
+        await reducer.ReduceExpressionAsync(tagListExpression, metadata, ct).
             ConfigureAwait(false) is IReadOnlyDictionary<string, TagEntry> tagList &&
         tagList.TryGetValue(this.Name, out var tag) ?
             tag : null;
 
     public async ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
-        await this.GetRealTagEntryAsync(metadata, ct).
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
+        await this.GetRealTagEntryAsync(metadata, reducer, ct).
             ConfigureAwait(false) is { } tag &&
-        await tag.GetPropertyValueAsync(keyName, metadata, ct).
+        await tag.GetPropertyValueAsync(keyName, metadata, reducer, ct).
             ConfigureAwait(false) is { } value ?
             value : keyName switch
             {

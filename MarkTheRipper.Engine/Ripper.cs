@@ -164,9 +164,9 @@ public sealed class Ripper
         return new(metadata, contentsBasePath);
     }
 
-    private static MetadataContext SpawnWithAdditionalMetadata(
+    private static IMetadataContext SpawnWithAdditionalMetadata(
         Dictionary<string, IExpression> markdownMetadata,
-        MetadataContext parentMetadata,
+        IMetadataContext parentMetadata,
         PathEntry markdownPath)
     {
         var mc = parentMetadata.Spawn();
@@ -193,7 +193,7 @@ public sealed class Ripper
     public async ValueTask<PathEntry> RenderContentAsync(
         PathEntry markdownPath,
         TextReader markdownReader,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         TextWriter outputHtmlWriter,
         CancellationToken ct)
     {
@@ -265,7 +265,7 @@ public sealed class Ripper
     /// <returns>Applied layout path.</returns>
     public async ValueTask<PathEntry> RenderContentAsync(
         MarkdownEntry markdownEntry,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         string storeToBasePath,
         CancellationToken ct)
     {

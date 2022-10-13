@@ -7,7 +7,10 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Metadata;
 using System;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace MarkTheRipper.Expressions;
 

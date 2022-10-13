@@ -52,7 +52,7 @@ internal static class AmazonRenderrer
     //////////////////////////////////////////////////////////////////////////////
 
     private static async ValueTask<IExpression> RenderEmbeddablePageAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         AmazonEndPoint endPoint,
         string trackingId,
         string asin,
@@ -81,7 +81,7 @@ internal static class AmazonRenderrer
 
     private static async ValueTask<IExpression?> RenderPAAPIAsync(
         IHttpAccessor httpAccessor,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         Uri permaLink,
         AmazonEndPoint endPoint,
         string asin,
@@ -188,7 +188,7 @@ internal static class AmazonRenderrer
 
     private static async ValueTask<IExpression?> RenderEmbeddablePageWithParsingAsync(
         IHttpAccessor httpAccessor,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         AmazonEndPoint endPoint,
         string trackingId,
         string asin,
@@ -244,7 +244,7 @@ internal static class AmazonRenderrer
 
     public static async ValueTask<IExpression?> RenderAmazonHtmlContentAsync(
         IHttpAccessor httpAccessor,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         Uri permaLink,
         bool embedPageIfAvailable,
         CancellationToken ct)

@@ -19,7 +19,8 @@ internal static class Lookup
 {
     public static async ValueTask<IExpression> LookupAsync(
         IExpression[] parameters,
-        MetadataContext metadata,
+        IMetadataContext metadata,
+        IReducer reducer,
         CancellationToken ct)
     {
         if (parameters.Length != 1)
@@ -28,7 +29,7 @@ internal static class Lookup
                 $"Invalid lookup function arguments: Count={parameters.Length}");
         }
 
-        var name = await parameters[0].ReduceExpressionAsync(metadata, ct).
+        var name = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
             ConfigureAwait(false);
         var nameString = await MetadataUtilities.FormatValueAsync(name, metadata, ct).
             ConfigureAwait(false);

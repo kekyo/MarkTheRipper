@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,11 +23,11 @@ public sealed class HtmlContentEntry :
         this.Content = content;
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(this.Content);
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         InternalUtilities.NullAsync;
 
     public void Deconstruct(out string content) =>

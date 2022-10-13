@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using System;
 using System.Linq;
@@ -39,11 +40,11 @@ public sealed class PathEntry :
         System.IO.Path.Combine(this.PathElements);
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(this.Path);
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         InternalUtilities.NullAsync;
 
     public bool Equals(PathEntry? other) =>

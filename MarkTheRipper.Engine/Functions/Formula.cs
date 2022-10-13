@@ -22,7 +22,7 @@ internal static class Formula
         IExpression[] parameters,
         Func<long, long, long> int64Accumrator,
         Func<double, double, double> doubleAccumrator,
-        MetadataContext metadata, CancellationToken ct)
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct)
     {
         if (parameters.Length == 0)
         {
@@ -36,7 +36,7 @@ internal static class Formula
         }
 
         var values = await Task.WhenAll(
-            parameters.Select(p => p.ReduceExpressionAsync(metadata, ct).AsTask())).
+            parameters.Select(p => reducer.ReduceExpressionAsync(p, metadata, ct).AsTask())).
             ConfigureAwait(false);
 
         var fp = await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
@@ -60,47 +60,52 @@ internal static class Formula
     }
 
     public static ValueTask<IExpression> AddAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct) =>
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         ComputeAsync(
             parameters,
             (lhs, rhs) => lhs + rhs,
             (lhs, rhs) => lhs + rhs,
             metadata,
+            reducer,
             ct);
 
     public static ValueTask<IExpression> SubtractAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct) =>
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         ComputeAsync(
             parameters,
             (lhs, rhs) => lhs - rhs,
             (lhs, rhs) => lhs - rhs,
             metadata,
+            reducer,
             ct);
 
     public static ValueTask<IExpression> MultipleAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct) =>
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         ComputeAsync(
             parameters,
             (lhs, rhs) => lhs * rhs,
             (lhs, rhs) => lhs * rhs,
             metadata,
+            reducer,
             ct);
 
     public static ValueTask<IExpression> DivideAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct) =>
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         ComputeAsync(
             parameters,
             (lhs, rhs) => lhs / rhs,
             (lhs, rhs) => lhs / rhs,
             metadata,
+            reducer,
             ct);
 
     public static ValueTask<IExpression> ModuloAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct) =>
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         ComputeAsync(
             parameters,
             (lhs, rhs) => lhs % rhs,
             (lhs, rhs) => lhs % rhs,
             metadata,
+            reducer,
             ct);
 }

@@ -33,11 +33,11 @@ internal sealed class ForEachNode : ITextTreeNode
 
     public async ValueTask RenderAsync(
         Action<string> writer,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct)
     {
         if (this.parameters.FirstOrDefault() is { } expression0 &&
-            await expression0.ReduceExpressionAsync(metadata, ct).
+            await Reducer.Instance.ReduceExpressionAsync(expression0, metadata, ct).
                 ConfigureAwait(false) is { } rawValue &&
             MetadataUtilities.EnumerateValue(rawValue, metadata) is { } enumerable)
         {

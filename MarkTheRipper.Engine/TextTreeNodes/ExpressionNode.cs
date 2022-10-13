@@ -25,10 +25,11 @@ internal sealed class ExpressionNode : ITextTreeNode
 
     public async ValueTask RenderAsync(
         Action<string> writer,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct)
     {
-        var reduced = await expression.ReduceExpressionAsync(metadata, ct).
+        var reduced = await Reducer.Instance.ReduceExpressionAsync(
+            expression, metadata, ct).
             ConfigureAwait(false);
         if (reduced is HtmlContentEntry(var contentString))
         {

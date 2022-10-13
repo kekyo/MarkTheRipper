@@ -613,10 +613,10 @@ This is test contents.
 </html>
 ",
 new(("test", FunctionFactory.CastTo(
-    async (parameters, metadata, ct) =>
+    async (parameters, metadata, reducer, ct) =>
     {
-        var name = await parameters[0].ReduceExpressionAndFormatAsync(metadata, ct);
-        var arg1 = await parameters[1].ReduceExpressionAndFormatAsync(metadata, ct);
+        var name = await reducer.ReduceExpressionAndFormatAsync(parameters[0], metadata, ct);
+        var arg1 = await reducer.ReduceExpressionAndFormatAsync(parameters[1], metadata, ct);
         return new ValueExpression(name + arg1);
     }))));
         await Verifier.Verify(actual);

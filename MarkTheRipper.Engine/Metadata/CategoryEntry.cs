@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,11 +57,11 @@ public sealed class CategoryEntry :
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(string.Join("/", this.Breadcrumbs.Select(c => c.Name)));
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         keyName switch
         {
             "name" => new(this.Name),

@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using Newtonsoft.Json;
@@ -56,11 +57,11 @@ internal sealed class oEmbedEndPoint : IMetadataEntry
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(url);
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext context, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(keyName switch
         {
             "url" => url,
@@ -93,11 +94,11 @@ internal sealed class oEmbedProvider : IMetadataEntry
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(provider_name);
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext context, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(keyName switch
         {
             "name" => provider_name,

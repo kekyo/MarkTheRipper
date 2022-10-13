@@ -8,16 +8,20 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Metadata;
-using System;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
 
-namespace MarkTheRipper.TextTreeNodes;
+namespace MarkTheRipper.Expressions;
 
-public interface ITextTreeNode
+public interface IReducer
 {
-    ValueTask RenderAsync(
-        Action<string> writer,
+    ValueTask<object?> ReduceExpressionAsync(
+        IExpression expression,
+        IMetadataContext metadata,
+        CancellationToken ct);
+
+    ValueTask<string> ReduceExpressionAndFormatAsync(
+        IExpression expression,
         IMetadataContext metadata,
         CancellationToken ct);
 }

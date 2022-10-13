@@ -28,11 +28,12 @@ internal sealed class PartialDateEntry :
         this.Date = date;
 
     private static async ValueTask<Func<DateTimeOffset, DateTimeOffset>> GetDateTimeConverterAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
+        IReducer reducer,
         CancellationToken ct)
     {
         var timezoneValue = metadata.Lookup("timezone") is { } timezoneExpression ?
-            await timezoneExpression.ReduceExpressionAsync(metadata, ct).
+            await reducer.ReduceExpressionAsync(timezoneExpression, metadata, ct).
                 ConfigureAwait(false) : null;
         if (timezoneValue != null)
         {
@@ -79,11 +80,11 @@ internal sealed class PartialDateEntry :
     }
 
     public async ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
-        (await GetDateTimeConverterAsync(metadata, ct).ConfigureAwait(false))(this.Date);
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
+        (await GetDateTimeConverterAsync(metadata, reducer, ct).ConfigureAwait(false))(this.Date);
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         InternalUtilities.NullAsync;
 
     public override string ToString() =>

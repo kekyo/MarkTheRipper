@@ -26,7 +26,7 @@ internal static class oEmbed
     //////////////////////////////////////////////////////////////////////////////
 
     private static async ValueTask<IExpression> ProcessPermaLinkAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         Uri permaLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
@@ -142,7 +142,8 @@ internal static class oEmbed
 
     public static async ValueTask<IExpression> EmbedAsync(
         IExpression[] parameters,
-        MetadataContext metadata,
+        IMetadataContext metadata,
+        IReducer reducer,
         CancellationToken ct)
     {
         if (parameters.Length != 1)
@@ -151,8 +152,8 @@ internal static class oEmbed
                 $"Invalid embed function arguments: Count={parameters.Length}");
         }
 
-        var permaLinkString = (await parameters[0].
-            ReduceExpressionAndFormatAsync(metadata, ct).
+        var permaLinkString = (await reducer.
+            ReduceExpressionAndFormatAsync(parameters[0], metadata, ct).
             ConfigureAwait(false)).
             Trim();
         if (!Uri.TryCreate(permaLinkString, UriKind.Absolute, out var permaLink))
@@ -168,7 +169,8 @@ internal static class oEmbed
 
     public static async ValueTask<IExpression> CardAsync(
         IExpression[] parameters,
-        MetadataContext metadata,
+        IMetadataContext metadata,
+        IReducer reducer,
         CancellationToken ct)
     {
         if (parameters.Length != 1)
@@ -177,8 +179,8 @@ internal static class oEmbed
                 $"Invalid card function arguments: Count={parameters.Length}");
         }
 
-        var permaLinkString = (await parameters[0].
-            ReduceExpressionAndFormatAsync(metadata, ct).
+        var permaLinkString = (await reducer.
+            ReduceExpressionAndFormatAsync(parameters[0], metadata, ct).
             ConfigureAwait(false)).
             Trim();
         if (!Uri.TryCreate(permaLinkString, UriKind.Absolute, out var permaLink))

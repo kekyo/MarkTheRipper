@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
@@ -32,11 +33,11 @@ public sealed class RootTextNode :
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(this.Path);
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext context, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         keyName switch
         {
             "name" => new(this.Path),
@@ -45,7 +46,7 @@ public sealed class RootTextNode :
 
     public async ValueTask RenderAsync(
         Action<string> writer,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct)
     {
         foreach (var node in nodes)
@@ -56,7 +57,7 @@ public sealed class RootTextNode :
     }
 
     public async ValueTask<string> RenderOverallAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct)
     {
         var mc = metadata.Spawn();

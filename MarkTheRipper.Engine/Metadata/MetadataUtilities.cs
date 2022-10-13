@@ -31,7 +31,7 @@ public static class MetadataUtilities
 
     /////////////////////////////////////////////////////////////////////
 
-    public static MetadataContext CreateWithDefaults(IHttpAccessor httpAccessor)
+    public static IMetadataContext CreateWithDefaults(IHttpAccessor httpAccessor)
     {
         var metadata = new MetadataContext();
 
@@ -121,18 +121,18 @@ public static class MetadataUtilities
     /////////////////////////////////////////////////////////////////////
 
     private static IFormatProvider UnsafeGetFormatProvider(
-        MetadataContext metadata) =>
+        IMetadataContext metadata) =>
         metadata.Lookup("lang") is { } langExpression &&
-            Reducer.UnsafeReduceExpression(langExpression, metadata) is { } langValue ?
+            Reducer.Instance.UnsafeReduceExpression(langExpression, metadata) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
                     Utilities.GetLocale(UnsafeFormatValue(langValue, metadata)) :
                 CultureInfo.InvariantCulture;
 
     public static async ValueTask<IFormatProvider> GetFormatProviderAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, CancellationToken ct) =>
         metadata.Lookup("lang") is { } langExpression &&
-            await langExpression.ReduceExpressionAsync(metadata, ct) is { } langValue ?
+            await Reducer.Instance.ReduceExpressionAsync(langExpression, metadata, ct) is { } langValue ?
                 langValue is IFormatProvider fp ?
                     fp :
                     Utilities.GetLocale(await FormatValueAsync(langValue, metadata, ct).
@@ -142,14 +142,14 @@ public static class MetadataUtilities
     /////////////////////////////////////////////////////////////////////
 
     internal static string UnsafeFormatValue(
-        object? value, MetadataContext metadata) =>
+        object? value, IMetadataContext metadata) =>
         value switch
         {
             null =>
                 string.Empty,
             IMetadataEntry entry =>
                 UnsafeFormatValue(
-                    entry.GetImplicitValueAsync(metadata, default).Result,
+                    entry.GetImplicitValueAsync(metadata, Reducer.Instance, default).Result,
                     metadata),
             string str =>
                 str,
@@ -167,14 +167,15 @@ public static class MetadataUtilities
         };
 
     public static async ValueTask<string> FormatValueAsync(
-        object? value, MetadataContext metadata, CancellationToken ct) =>
+        object? value, IMetadataContext metadata, CancellationToken ct) =>
         value switch
         {
             null =>
                 string.Empty,
             IMetadataEntry entry =>
                 await FormatValueAsync(
-                    await entry.GetImplicitValueAsync(metadata, ct).ConfigureAwait(false),
+                    await entry.GetImplicitValueAsync(metadata, Reducer.Instance, ct).
+                        ConfigureAwait(false),
                     metadata,
                     ct).
                     ConfigureAwait(false),
@@ -198,7 +199,7 @@ public static class MetadataUtilities
         };
 
     public static IEnumerable<object?> EnumerateValue(
-        object? value, MetadataContext metadata) =>
+        object? value, IMetadataContext metadata) =>
         value switch
         {
             null => empty,
@@ -208,21 +209,22 @@ public static class MetadataUtilities
         };
 
     public static async ValueTask<TValue> LookupValueAsync<TValue>(
-        this MetadataContext metadata, string keyName, TValue defaultValue, CancellationToken ct) =>
+        this IMetadataContext metadata, string keyName, TValue defaultValue, CancellationToken ct) =>
         metadata.Lookup(keyName) is { } expression &&
-        await Reducer.ReduceExpressionAsync(expression, metadata, ct).
+        await Reducer.Instance.ReduceExpressionAsync(expression, metadata, ct).
             ConfigureAwait(false) is TValue value ?
             value : defaultValue;
 
     /////////////////////////////////////////////////////////////////////
 
     public static async ValueTask<RootTextNode> GetLayoutAsync(
-        this MetadataContext metadata, string layoutName,
+        this IMetadataContext metadata, string layoutName,
         string? fallbackName, CancellationToken ct)
     {
         if (metadata.Lookup("layoutList") is { } layoutListExpression &&
-            await Reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
-            ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> tl)
+            await Reducer.Instance.ReduceExpressionAsync(
+                layoutListExpression, metadata, ct).
+                ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> tl)
         {
             if (tl.TryGetValue(layoutName, out var layout))
             {
@@ -254,10 +256,11 @@ public static class MetadataUtilities
     }
 
     public static async ValueTask<RootTextNode> GetLayoutAsync(
-        this MetadataContext metadata, CancellationToken ct)
+        this IMetadataContext metadata, CancellationToken ct)
     {
         if (metadata.Lookup("layout") is { } layoutExpression &&
-            await Reducer.ReduceExpressionAsync(layoutExpression, metadata, ct).
+            await Reducer.Instance.ReduceExpressionAsync(
+                layoutExpression, metadata, ct).
                 ConfigureAwait(false) is { } layoutValue)
         {
             if (layoutValue is RootTextNode layout)

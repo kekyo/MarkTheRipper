@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,13 +29,13 @@ internal sealed class IteratorEntry :
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(this.Value);
 
     public async ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext context, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         this.Value is IMetadataEntry entry &&
-        await entry.GetPropertyValueAsync(keyName, context, ct).
+        await entry.GetPropertyValueAsync(keyName, metadata, reducer, ct).
             ConfigureAwait(false) is { } value ?
             value :
             keyName switch

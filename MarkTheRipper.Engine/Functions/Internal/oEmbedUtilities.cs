@@ -25,7 +25,7 @@ namespace MarkTheRipper.Functions.Internal;
 internal static class oEmbedUtilities
 {
     public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
-        this MetadataContext metadata,
+        this IMetadataContext metadata,
         HtmlMetadata htmlMetadata,
         string layoutInfix,
         CancellationToken ct) =>
@@ -41,7 +41,7 @@ internal static class oEmbedUtilities
                 ConfigureAwait(false);
 
     public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
-        this MetadataContext metadata,
+        this IMetadataContext metadata,
         string layoutInfix,
         CancellationToken ct) =>
         // Get layout AST (ITextTreeNode).
@@ -139,7 +139,7 @@ internal static class oEmbedUtilities
     //////////////////////////////////////////////////////////////////////////////
 
     public static void SetHtmlMetadata(
-        MetadataContext metadata, HtmlMetadata htmlMetadata)
+        IMetadataContext metadata, HtmlMetadata htmlMetadata)
     {
         metadata.SetValue("siteName", htmlMetadata.SiteName);
         metadata.SetValue("title", htmlMetadata.Title);

@@ -24,22 +24,22 @@ internal sealed class PartialLayoutEntry :
         this.Name = name;
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(this.Name);
 
     private async ValueTask<RootTextNode?> GetRealLayoutNodeAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         metadata.Lookup("layoutList") is { } layoutListExpression &&
-        await layoutListExpression.ReduceExpressionAsync(metadata, ct).
+        await reducer.ReduceExpressionAsync(layoutListExpression, metadata, ct).
             ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> layoutList &&
         layoutList.TryGetValue(this.Name, out var layout) ?
             layout : null;
 
     public async ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
-        await this.GetRealLayoutNodeAsync(metadata, ct).
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
+        await this.GetRealLayoutNodeAsync(metadata, reducer, ct).
             ConfigureAwait(false) is { } layout &&
-        await layout.GetPropertyValueAsync(keyName, metadata, ct).
+        await layout.GetPropertyValueAsync(keyName, metadata, reducer, ct).
             ConfigureAwait(false) is { } value ?
             value :
             keyName switch

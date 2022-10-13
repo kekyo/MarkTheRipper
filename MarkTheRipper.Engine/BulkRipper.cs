@@ -115,7 +115,7 @@ public sealed class BulkRipper
     /// <param name="contentsBasePathList">Markdown content placed directory path list</param>
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, (_, _, _, _) => default, metadata, default);
 
@@ -128,7 +128,7 @@ public sealed class BulkRipper
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         Func<string, string, string, string, ValueTask> generated,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, metadata, default);
 
@@ -142,7 +142,7 @@ public sealed class BulkRipper
     /// <remarks>Coverage</remarks>
     public ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         Func<string, string, string, string, ValueTask> generated,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct,
         params string[] contentsBasePathList) =>
         this.RipOffAsync(contentsBasePathList, generated, metadata, ct);
@@ -158,7 +158,7 @@ public sealed class BulkRipper
     public async ValueTask<(int count, int maxConcurrentProcessing)> RipOffAsync(
         IEnumerable<string> contentsBasePathList,
         Func<string, string, string, string, ValueTask> generated,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct)
     {
         var dc = new SafeDirectoryCreator();

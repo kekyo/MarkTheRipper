@@ -40,7 +40,7 @@ internal static class Relative
     }
 
     public static async ValueTask<IExpression> RelativeAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct)
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct)
     {
         if (parameters.Length != 1)
         {
@@ -50,9 +50,9 @@ internal static class Relative
 
         if (metadata.Lookup("path") is { } currentPathExpression)
         {
-            if (await currentPathExpression.ReduceExpressionAsync(metadata, ct).
+            if (await reducer.ReduceExpressionAsync(currentPathExpression, metadata, ct).
                 ConfigureAwait(false) is { } currentPathValue &&
-                await parameters[0].ReduceExpressionAsync(metadata, ct).
+                await reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
                 ConfigureAwait(false) is { } targetPathValue)
             {
                 var relativePath = (currentPathValue, targetPathValue) switch

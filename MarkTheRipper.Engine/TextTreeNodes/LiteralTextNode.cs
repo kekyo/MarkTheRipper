@@ -23,7 +23,7 @@ internal sealed class LiteralTextNode : ITextTreeNode
 
     public ValueTask RenderAsync(
         Action<string> writer,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct)
     {
         writer(text);

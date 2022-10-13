@@ -49,14 +49,14 @@ public sealed class MarkdownEntry :
 
     internal PathEntry MarkdownPath =>
         this.metadata.TryGetValue("markdownPath", out var markdownPathExpression) &&
-        Reducer.UnsafeReduceExpression(
+        Reducer.Instance.UnsafeReduceExpression(
             markdownPathExpression, MetadataContext.Empty) is { } value &&
             value is PathEntry markdownPath ?
             markdownPath : PathEntry.Unknown;
 
     internal PathEntry StoreToPath =>
         this.metadata.TryGetValue("path", out var pathExpression) &&
-        Reducer.UnsafeReduceExpression(
+        Reducer.Instance.UnsafeReduceExpression(
             pathExpression, MetadataContext.Empty) is { } value &&
             value is PathEntry path ?
             path : PathEntry.Unknown;
@@ -65,7 +65,7 @@ public sealed class MarkdownEntry :
         IReadOnlyDictionary<string, IExpression> metadata) =>
         // true if `published` does not exist, or if it exists and true
         metadata.TryGetValue("published", out var publishedExpression) ?
-            Reducer.UnsafeReduceExpression(
+            Reducer.Instance.UnsafeReduceExpression(
                 publishedExpression, MetadataContext.Empty) is bool published && published :
         true;
 
@@ -74,28 +74,28 @@ public sealed class MarkdownEntry :
 
     internal string Title =>
         this.metadata.TryGetValue("title", out var titleExpression) &&
-        Reducer.UnsafeReduceExpressionAndFormat(
+        Reducer.Instance.UnsafeReduceExpressionAndFormat(
             titleExpression, MetadataContext.Empty) is { } title ? 
             title : "(Untitled)";
 
     internal DateTimeOffset? Date =>
         this.metadata.TryGetValue("date", out var dateExpression) &&
-        Reducer.UnsafeReduceExpression(
+        Reducer.Instance.UnsafeReduceExpression(
             dateExpression, MetadataContext.Empty) is DateTimeOffset date ?
             date : null;
 
     public async ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         this.metadata.TryGetValue("title", out var valueExpression) &&
-            await valueExpression.ReduceExpressionAndFormatAsync(
-                metadata, ct).
+            await reducer.ReduceExpressionAndFormatAsync(
+                valueExpression, metadata, ct).
                 ConfigureAwait(false) is { } title ?
             title : null ?? "(Untitled)";
 
     public ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         this.metadata.TryGetValue(keyName, out var valueExpression) ?
-            valueExpression.ReduceExpressionAsync(metadata, ct) :
+            reducer.ReduceExpressionAsync(valueExpression, metadata, ct) :
             InternalUtilities.NullAsync;
 
     public bool Equals(MarkdownEntry? other) =>

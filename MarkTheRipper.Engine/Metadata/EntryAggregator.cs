@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
 using System;
 using System.Collections.Generic;
@@ -25,10 +26,10 @@ internal static class EntryAggregator
 
     public static async ValueTask<Dictionary<string, TagEntry>> AggregateTagsAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         CancellationToken ct) =>
         (await Task.WhenAll(markdownEntries.Select(async markdownEntry =>
-            await markdownEntry.GetPropertyValueAsync("tags", metadata, ct).
+            await markdownEntry.GetPropertyValueAsync("tags", metadata, Reducer.Instance, ct).
                 ConfigureAwait(false) is { } tagsValue ?
                 MetadataUtilities.EnumerateValue(tagsValue, metadata).
                     OfType<PartialTagEntry>().
@@ -53,14 +54,14 @@ internal static class EntryAggregator
         string categoryName,
         IEnumerable<MarkdownEntry> markdownEntries,
         int levelIndex,
-        MetadataContext metadata, 
+        IMetadataContext metadata, 
         CancellationToken ct)
     {
         var categoryLists = await Task.WhenAll(markdownEntries.
             Select(async markdownEntry =>
                 (markdownEntry,
                  categoryList:
-                    await markdownEntry.GetPropertyValueAsync("category", metadata, ct).
+                    await markdownEntry.GetPropertyValueAsync("category", metadata, Reducer.Instance, ct).
                         ConfigureAwait(false) is PartialCategoryEntry entry ?
                     entry.Unfold(e => e.Parent).Reverse().Skip(1).ToArray() :
                     InternalUtilities.Empty<PartialCategoryEntry>()))).
@@ -91,7 +92,7 @@ internal static class EntryAggregator
 
     public static ValueTask<CategoryEntry> AggregateCategoriesAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
-        MetadataContext context,
+        IMetadataContext metadata,
         CancellationToken ct) =>
-        AggregateCategoryAsync("(root)", markdownEntries, 0, context, ct);
+        AggregateCategoryAsync("(root)", markdownEntries, 0, metadata, ct);
 }

@@ -28,7 +28,7 @@ internal static class oEmbedRenderrer
     //////////////////////////////////////////////////////////////////////////////
 
     public static async ValueTask<IExpression> RenderWithHtmlMetadataAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         string layoutInfix,
         HtmlMetadata htmlMetadata,
         CancellationToken ct)
@@ -53,7 +53,7 @@ internal static class oEmbedRenderrer
     //////////////////////////////////////////////////////////////////////////////
 
     private static async ValueTask<IExpression> RenderResponsiveBlockAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         string? siteName,
         JObject oEmbedMetadataJson,
         string iFrameHtmlString,
@@ -81,7 +81,7 @@ internal static class oEmbedRenderrer
     //////////////////////////////////////////////////////////////////////////////
 
     private static ValueTask<IExpression> Render_oEmbedCardAsync(
-        MetadataContext metadata,
+        IMetadataContext metadata,
         string? siteName,
         JObject oEmbedMetadataJson,
         CancellationToken ct)
@@ -102,7 +102,7 @@ internal static class oEmbedRenderrer
 
     public static async ValueTask<IExpression?> Render_oEmbedAsync(
         IHttpAccessor httpAccessor,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         Uri permaLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
@@ -201,7 +201,7 @@ internal static class oEmbedRenderrer
 
     public static async ValueTask<IExpression?> Render_oEmbedDiscoveryAsync(
         IHttpAccessor httpAccessor,
-        MetadataContext metadata,
+        IMetadataContext metadata,
         Uri permaLink,
         bool embedPageIfAvailable,
         CancellationToken ct)

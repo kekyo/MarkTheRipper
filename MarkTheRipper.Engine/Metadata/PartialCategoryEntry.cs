@@ -48,22 +48,22 @@ internal sealed class PartialCategoryEntry :
     }
 
     public ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         new(string.Join("/", this.Breadcrumbs.Select(pc => pc.Name)));
 
     private async ValueTask<CategoryEntry?> GetRealCategoryEntryAsync(
-        MetadataContext metadata, CancellationToken ct) =>
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         this.Breadcrumbs.Aggregate(
             metadata.Lookup("rootCategory") is { } rootCategoryExpression &&
-            await rootCategoryExpression.ReduceExpressionAsync(metadata, ct) is CategoryEntry entry ?
+            await reducer.ReduceExpressionAsync(rootCategoryExpression, metadata, ct) is CategoryEntry entry ?
                 entry : null,
             (agg, pc) => (agg != null && agg.Children.TryGetValue(pc.Name, out var child)) ? child : null!);
 
     public async ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext metadata, CancellationToken ct) =>
-        await this.GetRealCategoryEntryAsync(metadata, ct).
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
+        await this.GetRealCategoryEntryAsync(metadata, reducer, ct).
             ConfigureAwait(false) is { } entry &&
-        await entry.GetPropertyValueAsync(keyName, metadata, ct).
+        await entry.GetPropertyValueAsync(keyName, metadata, reducer, ct).
             ConfigureAwait(false) is { } value ?
             value :
             keyName switch

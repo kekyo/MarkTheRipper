@@ -17,7 +17,8 @@ namespace MarkTheRipper.Functions;
 
 public delegate ValueTask<IExpression> AsyncFunctionDelegate(
     IExpression[] parameters,
-    MetadataContext metadata,
+    IMetadataContext metadata,
+    IReducer reducer,
     CancellationToken ct);
 
 public static class FunctionFactory

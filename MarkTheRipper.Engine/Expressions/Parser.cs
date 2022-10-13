@@ -271,15 +271,16 @@ public static class Parser
             "title" => ParseExpression(expressionString, ListTypes.SingleValue),
             "author" => ParseExpression(expressionString, ListTypes.Array),
             "layout" => new ValueExpression(new PartialLayoutEntry(
-                await ParseExpression(expressionString, ListTypes.SingleValue).
-                    ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
+                await Reducer.Instance.ReduceExpressionAndFormatAsync(
+                    ParseExpression(expressionString, ListTypes.SingleValue),
+                    MetadataContext.Empty, ct).
                     ConfigureAwait(false))),
             "category" => new ValueExpression(
                 ParseExpression(expressionString, ListTypes.StrictArray) switch
                 {
                     ArrayExpression(var elements) =>
                         (await Task.WhenAll(elements.Select(element =>
-                            element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).AsTask())).
+                            Reducer.Instance.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).AsTask())).
                             ConfigureAwait(false)).
                         SelectMany(categoryName => categoryName.
                             Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).
@@ -294,7 +295,7 @@ public static class Parser
                 ParseExpression(expressionString, ListTypes.StrictArray) is ArrayExpression(var elements) ?
                     await Task.WhenAll(elements.Select(async element =>
                         new PartialTagEntry(
-                            await element.ReduceExpressionAndFormatAsync(MetadataContext.Empty, ct).
+                            await Reducer.Instance.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).
                                 ConfigureAwait(false)))).
                         ConfigureAwait(false) :
                     InternalUtilities.Empty<PartialTagEntry>()),

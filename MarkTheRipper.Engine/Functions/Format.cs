@@ -19,7 +19,7 @@ namespace MarkTheRipper.Functions;
 internal static class Format
 {
     public static async ValueTask<IExpression> FormatAsync(
-        IExpression[] parameters, MetadataContext metadata, CancellationToken ct)
+        IExpression[] parameters, IMetadataContext metadata, IReducer reducer, CancellationToken ct)
     {
         if (parameters.Length == 0 || parameters.Length >= 3)
         {
@@ -27,12 +27,12 @@ internal static class Format
                 $"Invalid format function arguments: Count={parameters.Length}");
         }
 
-        var value = await parameters[0].ReduceExpressionAsync(metadata, ct).
+        var value = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
             ConfigureAwait(false);
 
         var formatExpression = parameters.ElementAtOrDefault(1);
         var format = formatExpression != null ?
-            await formatExpression.ReduceExpressionAndFormatAsync(metadata, ct).
+            await reducer.ReduceExpressionAndFormatAsync(formatExpression, metadata, ct).
                 ConfigureAwait(false) :
             null;
 
