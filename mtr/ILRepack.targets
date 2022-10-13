@@ -4,8 +4,12 @@
     <Target Name="ILRepacker" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
         <InputAssemblies Include="$(OutputPath)$(TargetName)$(TargetExt)"/>
+        <!-- TODO:
         <InputAssemblies Include="$(OutputPath)*.dll"
                          Exclude="$(OutputPath)$(TargetName)$(TargetExt);$(OutputPath)MarkTheRipper.Core.dll;$(OutputPath)System.Threading.Tasks.Extensions.dll;$(OutputPath)System.Runtime.CompilerServices.Unsafe.dll"/>
+        -->
+        <InputAssemblies Include="$(OutputPath)*.dll"
+                         Exclude="$(OutputPath)$(TargetName)$(TargetExt)"/>
     </ItemGroup>
     <ILRepack
         Parallel="true"

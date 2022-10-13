@@ -91,10 +91,20 @@ internal sealed class Reducer : IReducer
             ConfigureAwait(false);
         return f switch
         {
-            AsyncFunctionDelegate func => await this.ReduceExpressionAsync(
+            FunctionDelegate func => await this.ReduceExpressionAsync(
                 await func(parameters, metadata, this, ct).ConfigureAwait(false),
                 metadata, ct).
                 ConfigureAwait(false),
+            SimpleFunctionDelegate func =>
+                await func(
+                    await this.ReduceExpressionsAsync(parameters, metadata, ct).
+                        ConfigureAwait(false),
+                    keyName => metadata.Lookup(keyName) is { } valueExpression ?
+                        this.ReduceExpressionAsync(valueExpression, metadata, ct) :
+                        default,
+                    await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
+                        ConfigureAwait(false),
+                    ct),
             Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>> func =>
                 await func(
                     await this.ReduceExpressionsAsync(parameters, metadata, ct).

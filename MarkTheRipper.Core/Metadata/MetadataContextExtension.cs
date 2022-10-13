@@ -13,11 +13,15 @@ using System.ComponentModel;
 
 namespace MarkTheRipper.Metadata;
 
-public interface IMetadataContext
+public static class MetadataContextExtension
 {
-    void Set(string keyName, IExpression expression);
+    public static void SetValue(
+        this IMetadataContext metadata, string keyName, object? value) =>
+        metadata.Set(keyName, new ValueExpression(value));
 
-    IExpression? Lookup(string keyName);
-
-    IMetadataContext Spawn();
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete("Invalid usage, use Set() instead.", true)]
+    public static void SetValue(
+        this IMetadataContext metadata, string keyName, IExpression expression) =>
+        throw new InvalidOperationException("Invalid usage, use Set() instead.");
 }

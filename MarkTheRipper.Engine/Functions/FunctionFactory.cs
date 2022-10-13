@@ -7,24 +7,20 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
-using MarkTheRipper.Expressions;
-using MarkTheRipper.Metadata;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Functions;
 
-public delegate ValueTask<IExpression> AsyncFunctionDelegate(
-    IExpression[] parameters,
-    IMetadataContext metadata,
-    IReducer reducer,
-    CancellationToken ct);
-
 public static class FunctionFactory
 {
-    public static AsyncFunctionDelegate
-        CastTo(AsyncFunctionDelegate func) =>
+    public static SimpleFunctionDelegate
+        CastTo(SimpleFunctionDelegate func) =>
+        func;
+
+    public static FunctionDelegate
+        CastTo(FunctionDelegate func) =>
         func;
 
     public static Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>>
