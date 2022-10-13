@@ -12,6 +12,7 @@ MarkTheRipper - Fantastic faster generates static site comes from simply Markdow
 |:---------|:---------------------------------------------------------------------------------------------------------------------|
 | MarkTheRipper | [![NuGet MarkTheRipper](https://img.shields.io/nuget/v/MarkTheRipper.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper) |
 | MarkTheRipper.Core | [![NuGet MarkTheRipper.Core](https://img.shields.io/nuget/v/MarkTheRipper.Core.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Core) |
+| MarkTheRipper.Engine | [![NuGet MarkTheRipper.Engine](https://img.shields.io/nuget/v/MarkTheRipper.Engine.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Engine) |
 
 ## CI
 
@@ -38,6 +39,8 @@ If you already have .NET 6.0 installation, you can install it simply:
 ```bash
 dotnet tool install -g MarkTheRipper
 ```
+
+Alternatively, [you can download a binary distribution](https://github.com/kekyo/MarkTheRipper/releases) that is compatible with .NET Framework 4.71 or higher.
 
 Then at first time, you will need to run:
 

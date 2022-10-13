@@ -12,6 +12,7 @@ MarkTheRipper - マークダウンで書く事が出来る、静的サイトの�
 |:---------|:---------------------------------------------------------------------------------------------------------------------|
 | MarkTheRipper | [![NuGet MarkTheRipper](https://img.shields.io/nuget/v/MarkTheRipper.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper) |
 | MarkTheRipper.Core | [![NuGet MarkTheRipper.Core](https://img.shields.io/nuget/v/MarkTheRipper.Core.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Core) |
+| MarkTheRipper.Engine | [![NuGet MarkTheRipper.Engine](https://img.shields.io/nuget/v/MarkTheRipper.Engine.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Engine) |
 
 ## CI
 
@@ -36,7 +37,7 @@ MarkTheRipperは、非常にシンプルかつ高速な静的サイトジェネ�
 dotnet tool install -g MarkTheRipper
 ```
 
-とするだけでインストールできます。または、.NET Framework 4.8に対応した、ポータブルバージョンのバイナリをダウンロードする事もできます。
+とするだけでインストールできます。または、.NET Framework 4.71以上に対応した、[ビルド済みのバイナリをダウンロードする事もできます。](https://github.com/kekyo/MarkTheRipper/releases)
 
 初めて使う場合は、
 
