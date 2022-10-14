@@ -776,9 +776,7 @@ lang: ja-jp
 
 ```json
 {
-     :
-  "diary": "今日起きたこと",
-     :
+  "diary": "今日起きたこと"
 }
 ```
 
@@ -933,8 +931,68 @@ YouTubeの他にも、数多くの有名コンテンツサイトが対応して�
 
 #### card (カードコンテンツを生成)
 
-TODO:
+`embed`関数は、コンテンツプロバイダーが用意した埋め込みコンテンツを直接表示させるものでした。
+この`card`関数は、コンテンツのメタデータを収集して、MarkTheRipper側で用意したビューで表示させます。
 
+メタデータは、以下の方法で収集します:
+
+* oEmbed: 付随するメタデータを使用（`embed`関数で埋め込みコンテンツが提供されなかった場合を含む）
+* OGP (Open Graph protocol): 対象のページをスクレイピングし、ページに含まれるOGPメタデータを収集。
+* Amazon: Amazon associatesページから収集。
+
+使い方は`embed`関数と全く同じです:
+
+```markdown
+## すばらしい動画を発見
+
+いつか、自由に旅行できるようになったら、訪れてみたい...
+
+{card https://youtu.be/1La4QzGeaaQ}
+```
+
+すると、以下のように表示されます:
+
+![card-sample1-ja](Images/card-sample1-ja.png)
+
+`embed`関数と異なり、付加情報をカード状にまとめた、コンテンツとリンクとして表示します。
+同様に:
+
+```markdown
+## USBホストを行う実験
+
+{card https://amzn.to/3V6lYlQ}
+```
+
+![card-sample3-ja](Images/card-sample3-ja.png)
+
+様々なコンテンツを、同じカード形式で表示できます。
+埋め込み形式とカード形式のどちらを使うかは、好みで使い分ければ良いでしょう。
+
+`card`関数も、`embed`関数と同様に、専用のレイアウトファイルを用意する必要があります。
+レイアウトファイル`layouts/card.html`も、以下のひな形を元に、自分のサイトに合わせていけば良いでしょう:
+
+```html
+<div style="max-width:640px;margin:10px;">
+    <ul style="display:flex;padding:0;border:1px solid #e0e0e0;border-radius:5px;">
+        <li style="min-width:180px;max-width:180px;padding:0;list-style:none;">
+            <a href="{permaLink}" target="_blank" style="display:block;width:100%;height:auto;color:inherit;text-decoration:inherit;">
+                <img style="margin:10px;width:100%;height:auto;" src="{imageUrl}" alt="{title}">
+            </a>
+        </li>
+        <li style="flex-grow:1;margin:10px;list-style:none; ">
+            <a href="{permaLink}" target="_blank" style="display:block;width:100%;height:auto;color:inherit;text-decoration:inherit;">
+                <h5 style="font-weight:bold;">{title}</h5>
+                <p>{author}</p>
+                <p>{description}</p>
+                <p><small class="text-muted">{siteName}</small></p>
+            </a>
+        </li>
+    </ul>
+</div>
+```
+
+このひな形は、完全に独立したHTMLになっています。もしBootstrapと併用したいのであれば、
+`mtr init standard`や`mtr init rich`で生成されるサンプルレイアウトに含まれるファイルを参照して下さい。
 
 ----
 
