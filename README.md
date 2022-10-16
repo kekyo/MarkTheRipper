@@ -688,7 +688,7 @@ Then, like the tags, you can pull the header information for each markdown
 from each of the elements enumerated in the `entries`.
 
 Here, `path` is used to output the path to the content, but you can use `title` to output the title.
-If you use `item.path.relative`, you can get the path relative to the current content,
+If you use `relative item.path`, you can get the path relative to the current content,
 which can be used as the URL of the link to realize the link.
 
 To enumerate categories, use the `children` property:
