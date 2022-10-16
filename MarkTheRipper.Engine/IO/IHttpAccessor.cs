@@ -29,7 +29,8 @@ public interface IHttpAccessor
     ValueTask<IHtmlDocument> FetchHtmlAsync(
         Uri url, CancellationToken ct);
 
-    ValueTask<Uri?> ExamineShortUrlAsync(Uri url, CancellationToken ct);
+    ValueTask<Uri> ExamineShortUrlAsync(
+        Uri url, CancellationToken ct);
 }
 
 public static class HttpAccessorExtension

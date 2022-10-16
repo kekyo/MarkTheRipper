@@ -50,7 +50,7 @@ public sealed class BulkRipper
 
     private StoreToPathElements GetStoreToPathElements(PathEntry markdownPath)
     {
-        var dirPath = Utilities.GetDirectoryName(
+        var dirPath = Utilities.GetDirectoryPath(
             Path.Combine(this.storeToBasePath, markdownPath.PhysicalPath));
         var fileName = Path.GetFileNameWithoutExtension(dirPath);
         var explicitPath = Path.Combine(dirPath, fileName + ".html");

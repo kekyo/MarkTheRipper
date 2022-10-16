@@ -38,7 +38,7 @@ public static class Utilities
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-    public static string GetDirectoryName(string path) =>
+    public static string GetDirectoryPath(string path) =>
         Path.GetDirectoryName(path) switch
         {
             // Not accurate in Windows, but a compromise...

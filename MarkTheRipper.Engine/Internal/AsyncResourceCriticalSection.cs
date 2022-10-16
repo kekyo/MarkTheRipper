@@ -14,14 +14,14 @@ using System.Threading.Tasks;
 
 namespace MarkTheRipper.Internal;
 
-internal sealed class AsyncResourceAllocator
+internal sealed class AsyncResourceCriticalSection
 {
     private sealed class Waiter
     {
         private Queue<TaskCompletionSource<bool>>? queue = new();
         private bool isCanceled;
 
-        public ValueTask AllocateWaitTask()
+        public ValueTask WaitAsync()
         {
             lock (this)
             {
@@ -76,17 +76,50 @@ internal sealed class AsyncResourceAllocator
 
     ///////////////////////////////////////////////////////////////////////////////////
 
+    private sealed class WaiterContinuatiuon : IDisposable
+    {
+        private readonly Waiter waiter;
+        private readonly CancellationTokenRegistration ctr;
+
+        public WaiterContinuatiuon(Waiter waiter, CancellationToken ct)
+        {
+            this.waiter = waiter;
+            this.ctr = ct.Register(() => waiter.SetCanceled());
+        }
+
+        public void Dispose()
+        {
+            this.ctr.Dispose();
+            this.waiter.SetFinished();
+        }
+    }
+
+    private sealed class NopContinuation : IDisposable
+    {
+        private NopContinuation()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+
+        public static readonly NopContinuation Instance = new();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
     private readonly Dictionary<string, Waiter> waiters = new();
 
-    private (bool required, Waiter waiter) GetWaiter(string key)
+    private (bool required, Waiter waiter) GetWaiter(string resourceKey)
     {
         Waiter waiter;
         lock (this.waiters)
         {
-            if (!this.waiters.TryGetValue(key, out waiter!))
+            if (!this.waiters.TryGetValue(resourceKey, out waiter!))
             {
                 waiter = new();
-                this.waiters.Add(key, waiter);
+                this.waiters.Add(resourceKey, waiter);
                 return (true, waiter);
             }
         }
@@ -114,8 +147,25 @@ internal sealed class AsyncResourceAllocator
         }
         else
         {
-            await waiter.AllocateWaitTask().
+            await waiter.WaitAsync().
                 ConfigureAwait(false);
+        }
+    }
+
+    public async ValueTask<IDisposable> EnterAsync(
+        string resourceKey,
+        CancellationToken ct)
+    {
+        var (required, waiter) = this.GetWaiter(resourceKey);
+        if (required)
+        {
+            return new WaiterContinuatiuon(waiter, ct);
+        }
+        else
+        {
+            await waiter.WaitAsync().
+                ConfigureAwait(false);
+            return NopContinuation.Instance;
         }
     }
 }

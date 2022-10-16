@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using MarkTheRipper.Internal;
 using MarkTheRipper.IO;
 using MarkTheRipper.Metadata;
 using Newtonsoft.Json.Linq;
@@ -104,6 +105,7 @@ internal static class oEmbedRenderrer
         IHttpAccessor httpAccessor,
         IMetadataContext metadata,
         Uri permaLink,
+        Uri examinedLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
@@ -111,7 +113,11 @@ internal static class oEmbedRenderrer
         var providersJson = await httpAccessor.FetchJsonAsync(oEmbedProviderListUrl, ct).
             ConfigureAwait(false);
 
+        static bool IsMatched(oEmbedEndPoint endPoint, string urlString) =>
+            endPoint.matchers.Any(matcher => matcher(urlString));
+
         var permaLinkString = permaLink.ToString();
+        var examinedLinkString = examinedLink.ToString();
         var targetEntries = (await Task.WhenAll(
             providersJson.
                 EnumerateArray<oEmbedProvider>().
@@ -121,11 +127,23 @@ internal static class oEmbedRenderrer
                     provider.endpoints.Length >= 1).
                 Select(provider =>
                     Task.Run(() => provider.endpoints.
-                        Select(endPoint => endPoint.matchers.
-                            Any(matcher => matcher(permaLinkString)) ?
-                                new { provider, endPoint } : null!).
+                        Collect(endPoint =>
+                        {
+                            if (IsMatched(endPoint, permaLinkString))
+                            {
+                                return new { provider, endPoint, url = permaLink };
+                            }
+                            else if (IsMatched(endPoint, examinedLinkString))
+                            {
+                                return new { provider, endPoint, url = examinedLink };
+                            }
+                            else
+                            {
+                                return null!;
+                            }
+                        }).
                         Where(targetEntry =>
-                            !string.IsNullOrWhiteSpace(targetEntry?.endPoint.url)).
+                            !string.IsNullOrWhiteSpace(targetEntry.endPoint.url)).
                         ToArray()))).
             ConfigureAwait(false)).
             SelectMany(endPointUrls => endPointUrls).
@@ -137,7 +155,7 @@ internal static class oEmbedRenderrer
         {
             // oEmbed specification: 2.2. Consumer Request
             var requestUrlString =
-                $"{targetEntry.endPoint.url.Trim()}?url={permaLink}&format=json";
+                $"{targetEntry.endPoint.url.Trim()}?url={targetEntry.url}&format=json";
             try
             {
                 var requestUrl = new Uri(requestUrlString, UriKind.Absolute);
@@ -179,7 +197,6 @@ internal static class oEmbedRenderrer
         // Render with oEmbed metadata and layout when produce one or more oEmbed metadata.
         foreach (var (providerName, endPointUrl, metadataJsonObj) in secondResults)
         {
-            var requestUrlString = $"{endPointUrl}?url={permaLink}";
             try
             {
                 return await Render_oEmbedCardAsync(
@@ -191,6 +208,7 @@ internal static class oEmbedRenderrer
             }
             catch (Exception ex)
             {
+                var requestUrlString = $"{endPointUrl}?url={permaLink}";
                 Trace.WriteLine(
                     $"Could not fetch from oEmbed end point: Url={requestUrlString}, Message={ex.Message}");
             }

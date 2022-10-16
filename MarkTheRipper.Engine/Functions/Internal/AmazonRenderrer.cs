@@ -245,22 +245,10 @@ internal static class AmazonRenderrer
     public static async ValueTask<IExpression?> RenderAmazonHtmlContentAsync(
         IHttpAccessor httpAccessor,
         IMetadataContext metadata,
-        Uri permaLink,
+        Uri examinedLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
-        // Examine short url.
-        var examinedLink = permaLink;
-        if (permaLink.Host == "amzn.to")
-        {
-            if (await httpAccessor.ExamineShortUrlAsync(
-                permaLink, ct).
-                ConfigureAwait(false) is { } url)
-            {
-                examinedLink = url;
-            }
-        }
-
         if (amazonEmbeddingQueries.TryGetValue(examinedLink.Host, out var endPoint) &&
             examinedLink.LocalPath.Split(pathSeparateChars, StringSplitOptions.RemoveEmptyEntries) is { } pathElements &&
             pathElements.

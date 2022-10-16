@@ -22,7 +22,7 @@ public static class Program
     private static async Task ExtractSampleContentAsync(
         SafeDirectoryCreator dc, string resourceName, string storeToPath)
     {
-        var basePath = Utilities.GetDirectoryName(storeToPath);
+        var basePath = Utilities.GetDirectoryPath(storeToPath);
 
         await dc.CreateIfNotExistAsync(basePath, default);
 

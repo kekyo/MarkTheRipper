@@ -85,14 +85,14 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
         return new ValueTask<JToken>(JToken.ReadFrom(jr));
     }
 
-    public ValueTask<Uri?> ExamineShortUrlAsync(
+    public ValueTask<Uri> ExamineShortUrlAsync(
         Uri url, CancellationToken ct)
     {
         var (u, c) = this.Dequeue();
         AreEqual(u, url);
 
-        return new ValueTask<Uri?>(
+        return new ValueTask<Uri>(
             Uri.TryCreate(c, UriKind.RelativeOrAbsolute, out var examined) ?
-                examined : null);
+                examined : url);
     }
 }

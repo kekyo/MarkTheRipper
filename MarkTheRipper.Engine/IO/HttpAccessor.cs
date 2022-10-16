@@ -13,10 +13,10 @@ using MarkTheRipper.Internal;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,273 +25,310 @@ namespace MarkTheRipper.IO;
 public sealed class HttpAccessor : IHttpAccessor
 {
     private static readonly Lazy<HttpClient> httpClientFactory =
-        new(() => new());
-    private static readonly Lazy<HttpClient> nonRedirectedHttpClientFactory =
-        new(() => new(new HttpClientHandler() { AllowAutoRedirect = false }));
-    private static readonly HashSet<char> sanitizeChars = new()
-    {
-        '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')',
-        '+', '=', '[', ']', '{', '}', ';', '<', '>', '|', '?',
-        ',', '\'', '"', '`',
-    };
+        new(() => new(new HttpClientHandler { AllowAutoRedirect = false }));
+    private static readonly IReadOnlyDictionary<string, string> empty =
+        new Dictionary<string, string>();
 
     private readonly string cacheBasePath;
     private readonly SafeDirectoryCreator safeDirectoryCreator = new();
-    private readonly AsyncResourceAllocator filePathAllocator = new();
+    private readonly AsyncResourceCriticalSection cs = new();
 
     public HttpAccessor(string cacheBasePath) =>
         this.cacheBasePath = cacheBasePath;
 
-    private static IReadOnlyDictionary<string, string> GetCacheKeyValuesFrom(Uri url)
-    {
-        var kv = url.Query.StartsWith("?") ?
-            url.Query.TrimStart('?').
-            Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries).
-            Select(kv =>
-            {
-                var splitted = kv.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
-                return (key: splitted[0], value: splitted.ElementAtOrDefault(1));
-            }).
-            ToDictionary(kv => kv.key, kv => kv.value)! :
-            new Dictionary<string, string>();
-
-        var path = url.LocalPath;
-        if (path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries) is { } splitted &&
-            splitted.Length >= 2)
-        {
-            kv.Add("-=@path@=-", string.Join("/", splitted.Take(splitted.Length - 1)));
-        }
-
-        return kv;
-    }
-
-    private static string CalculateHashPostfix(
-        IReadOnlyDictionary<string, string> cacheKeyValues)
-    {
-        if (cacheKeyValues.Count >= 1)
-        {
-            using var ms = new MemoryStream();
-            var tw = new StreamWriter(ms);
-            foreach (var kv in cacheKeyValues.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase))
-            {
-                tw.Write(kv.Key);
-                tw.Write('=');
-                tw.Write(kv.Value);
-                tw.Write(',');
-            }
-            tw.Flush();
-            ms.Position = 0;
-
-            using var sha1 = SHA1.Create();
-            var hash = sha1.ComputeHash(ms);
-
-            return "_" +
-                BitConverter.ToString(hash).
-                Replace("-", string.Empty).
-                ToLowerInvariant();
-        }
-        else
-        {
-            return string.Empty;
-        }
-    }
-
-    private string GetPhysicalPath(
-        Uri url, string defaultExtHint,
-        IReadOnlyDictionary<string, string> cacheKeyValues)
-    {
-        var hashPostfix = CalculateHashPostfix(cacheKeyValues);
-        var host = url.IsDefaultPort ? url.Host : $"{url.Host}_{url.Port}";
-
-        var fileNameHint = url.LocalPath.Split('/').LastOrDefault() ??
-            "index";
-        var ext = Path.GetExtension(fileNameHint);
-        if (ext.Length == 0 || ext == ".")
-        {
-            ext = defaultExtHint;
-        }
-
-        var fileName =
-            Path.GetFileNameWithoutExtension(fileNameHint) +
-            hashPostfix +
-            ext;
-        return Path.Combine(
-            this.cacheBasePath, host, fileName);
-    }
-
     private async ValueTask<T> RunAsync<T>(
-        string path,
-        Func<Stream, ValueTask> fetcher,
-        Func<Stream, ValueTask<T>> runner,
+        Uri url,
+        string? defaultExtHint,
+        HttpContent? content,
+        IReadOnlyDictionary<string, string> headers,
+        IReadOnlyDictionary<string, string>? cacheKeyValues,
+        Func<Uri, Func<Stream>, ValueTask<T>> deserializer,
         CancellationToken ct)
     {
-        var dirPath = Utilities.GetDirectoryName(path);
+        // The method implementation is too complex, goals are:
+        // 1. Cache prepared content from HTTP.
+        // 2. Transact and observe URLs for HTTP redirection.
+        // 3. Avoid any race conditions.
 
-        await this.safeDirectoryCreator.CreateIfNotExistAsync(
-            dirPath, ct).
-            ConfigureAwait(false);
+        var currentUrl = url;
 
-        await this.filePathAllocator.AllocateAsync(
-            path, async () =>
+        while (true)
+        {
+            // Get candidate cached (physical) path from current URL.
+            var (pathBase, ext) = HttpAccessorUtilities.GetPhysicalPath(
+                this.cacheBasePath, currentUrl, defaultExtHint ?? string.Empty, cacheKeyValues ??
+                HttpAccessorUtilities.GetCacheKeyValues(currentUrl));
+
+            // Found cached pending content.
+            var targetPath = $"{pathBase}{ext}";
+            var pendingTargetPath = $"{pathBase}_pending";
+            if (File.Exists(pendingTargetPath))
             {
-                if (!File.Exists(path))
+                // Accept pending file with extension when default extension is given.
+                if (defaultExtHint is { })
                 {
-                    using var targetStream = new FileStream(
-                        path + ".tmp", FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, true);
-
+                    File.Delete(targetPath);
                     try
                     {
-                        await fetcher(targetStream).
-                            ConfigureAwait(false);
-                        await targetStream.FlushAsync().
-                            ConfigureAwait(false);
+                        File.Move(pendingTargetPath, targetPath);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        // (Avoid race condition)
+                    }
+                }
+                // Reuse pending file immediately.
+                else
+                {
+                    targetPath = pendingTargetPath;
+                }
+            }
 
-                        targetStream.Close();
-                        File.Delete(path);
-                        File.Move(path + ".tmp", path);
+            // Found cached final content.
+            if (File.Exists(targetPath))
+            {
+                Stream? cachedContentStream = null;
+                try
+                {
+                    return await deserializer(currentUrl, () =>
+                    {
+                        cachedContentStream = new FileStream(
+                            targetPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+                        return cachedContentStream;
+                    }).
+                    ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+
+                    // Recovery protocol: Will remove cached file and force re-fetch.
+                    cachedContentStream?.Close();
+                    try
+                    {
+                        File.Delete(targetPath);
                     }
                     catch
                     {
-                        targetStream.Close();
-                        File.Delete(path + ".tmp");
-                        throw;
                     }
                 }
-            },
-            ct);
+                finally
+                {
+                    cachedContentStream?.Dispose();
+                }
+            }
 
-        using var readStream = new FileStream(
-            path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
-
-        return await runner(readStream).
-            ConfigureAwait(false);
-    }
-
-    public ValueTask<JToken> FetchJsonAsync(
-        Uri url, CancellationToken ct)
-    {
-        var cacheKeyValues = GetCacheKeyValuesFrom(url);
-        var path = this.GetPhysicalPath(url, ".json", cacheKeyValues);
-
-        return this.RunAsync(
-            path,
-            async targetStream =>
+            // Found cached redirection.
+            var redirectPath = $"{pathBase}_redirect.url";
+            if (File.Exists(redirectPath))
             {
-                using var responseStream = await httpClientFactory.Value.GetStreamAsync(url).
-                    WithCancellation(ct).
-                    ConfigureAwait(false);
+                using var redirectStream = new FileStream(
+                    redirectPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+                var tr = new StreamReader(redirectStream);
 
-                await responseStream.CopyToAsync(targetStream).
-                    ConfigureAwait(false);
-                await targetStream.FlushAsync().
-                    ConfigureAwait(false);
-            },
-            readStream =>
-                InternalUtilities.DefaultJsonSerializer.DeserializeJsonAsync(readStream, ct),
-            ct);
-    }
+                try
+                {
+                    var sectionString = await tr.ReadLineAsync().
+                        WithCancellation(ct).
+                        ConfigureAwait(false);
+                    if (sectionString != "[InternetShortcut]")
+                    {
+                        throw new FormatException(
+                            $"Redirection cache is invalid [1]: Path={redirectPath}");
+                    }
 
-    public ValueTask<JToken> PostJsonAsync(
-        Uri url, JToken requestJson,
-        IReadOnlyDictionary<string, string> headers,
-        IReadOnlyDictionary<string, string> cacheKeyValues,
-        CancellationToken ct)
-    {
-        var path = this.GetPhysicalPath(url, ".json", cacheKeyValues);
+                    var kvString = (await tr.ReadLineAsync().
+                        WithCancellation(ct).
+                        ConfigureAwait(false))?.
+                        Trim();
+                    var separatorIndex = kvString?.IndexOf('=') ?? -1;
+                    if (separatorIndex == -1)
+                    {
+                        throw new FormatException(
+                            $"Redirection cache is invalid [2]: Path={redirectPath}");
+                    }
 
-        return this.RunAsync(
-            path,
-            async targetStream =>
+                    var key = kvString!.Substring(0, separatorIndex).Trim();
+                    var value = kvString.Substring(separatorIndex + 1).Trim();
+                    if (key != "URL" || !Uri.TryCreate(value, UriKind.Absolute, out var redirectUrl))
+                    {
+                        throw new FormatException(
+                            $"Redirection cache is invalid [3]: Path={redirectPath}");
+                    }
+
+                    currentUrl = redirectUrl;
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+
+                    // Recovery protocol: Will remove cached file and force re-fetch.
+                    redirectStream.Close();
+                    try
+                    {
+                        File.Delete(redirectPath);
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            // Not found any cached data.
+
+            var temporaryPath = $"{pathBase}{ext}.tmp";
+            var dirPath = Utilities.GetDirectoryPath(temporaryPath);
+
+            // Construct sub directory.
+            await this.safeDirectoryCreator.CreateIfNotExistAsync(dirPath, ct).
+                ConfigureAwait(false);
+
+            // Enter asynchronous critical section by target path.
+            using var _ = await this.cs.EnterAsync(targetPath, ct);
+
+            using var temporaryStream = new FileStream(
+                temporaryPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 65536, true);
+
+            try
             {
+                // Construct HTTP request.
                 using var request = new HttpRequestMessage(
-                    HttpMethod.Post, url);
-
-                var content = new StringContent(
-                    requestJson.ToString(),
-                    Utilities.UTF8,
-                    "application/json");
-                request.Content = content;
-
+                    content is { }  ? HttpMethod.Post : HttpMethod.Get, currentUrl);
+                if (content != null)
+                {
+                    request.Content = content;
+                }
                 foreach (var entry in headers)
                 {
-                    if (!content.Headers.TryAddWithoutValidation(entry.Key, entry.Value))
+                    if (!(content?.Headers.TryAddWithoutValidation(entry.Key, entry.Value) ?? false))
                     {
                         request.Headers.Add(entry.Key, entry.Value);
                     }
                 }
 
-                using var response = await httpClientFactory.Value.
-                    SendAsync(request, ct).
+                // Connect HTTP server and send.
+                using var response = await httpClientFactory.Value.SendAsync(request, ct).
                     ConfigureAwait(false);
 
-                using var responseStream = await response.Content.ReadAsStreamAsync().
-                    WithCancellation(ct).
-                    ConfigureAwait(false);
+                // Needed redirection:
+                if (((int)response.StatusCode / 100) == 3)
+                {
+                    var tw = new StreamWriter(temporaryStream, Utilities.UTF8);
+                    tw.NewLine = "\n";
 
-                await responseStream.CopyToAsync(targetStream).
-                    ConfigureAwait(false);
-                await targetStream.FlushAsync().
-                    ConfigureAwait(false);
-            },
-            readStream =>
-                InternalUtilities.DefaultJsonSerializer.DeserializeJsonAsync(readStream, ct),
+                    // Retreive redirection URL.
+                    currentUrl = new Uri(
+                        response.Headers.Location?.ToString() ?? string.Empty,
+                        UriKind.Absolute);
+
+                    // Save into cache file.
+                    await tw.WriteLineAsync("[InternetShortcut]").
+                        ConfigureAwait(false);
+                    await tw.WriteLineAsync($"URL={currentUrl}").
+                        ConfigureAwait(false);
+                    await tw.FlushAsync().
+                        ConfigureAwait(false);
+
+                    temporaryStream.Close();
+
+                    // Enable cache file.
+                    File.Delete(redirectPath);
+                    File.Move(temporaryPath, redirectPath);
+                }
+                // Other:
+                else
+                {
+                    // Save HTTP response content.
+                    response.EnsureSuccessStatusCode();
+
+                    await response.Content.CopyToAsync(temporaryStream).
+                        WithCancellation(ct).
+                        ConfigureAwait(false);
+                    await temporaryStream.FlushAsync().
+                        ConfigureAwait(false);
+
+                    temporaryStream.Close();
+
+                    // Commit target path.
+                    //   The file will be made pending state when default extension hint is not given.
+                    //   Final (NOT redirection) response contains genuine content body,
+                    //   but we don't know applicable extension when this time.
+                    var exactTargetPath = defaultExtHint is { } ?
+                        targetPath : pendingTargetPath;
+
+                    // Enable cache file.
+                    File.Delete(exactTargetPath);
+                    File.Move(temporaryPath, exactTargetPath);
+
+                    Stream? cachedContentStream = null;
+                    try
+                    {
+                        return await deserializer(currentUrl, () =>
+                        {
+                            cachedContentStream = new FileStream(
+                                exactTargetPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+                            return cachedContentStream;
+                        }).
+                        ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        cachedContentStream?.Dispose();
+                    }
+                }
+            }
+            catch
+            {
+                temporaryStream.Close();
+                File.Delete(temporaryPath);
+                throw;
+            }
+        }
+    }
+
+    public ValueTask<JToken> FetchJsonAsync(
+        Uri url, CancellationToken ct) =>
+        this.RunAsync(
+            url, ".json",
+            null, empty, null,
+            (url, streamOpener) =>
+                InternalUtilities.DefaultJsonSerializer.DeserializeJsonAsync(streamOpener(), ct),
+            ct);
+
+    public async ValueTask<JToken> PostJsonAsync(
+        Uri url, JToken requestJson,
+        IReadOnlyDictionary<string, string> headers,
+        IReadOnlyDictionary<string, string> cacheKeyValues,
+        CancellationToken ct)
+    {
+        using var content = new StringContent(
+            requestJson.ToString(),
+            Utilities.UTF8,
+            "application/json");
+        return await this.RunAsync(
+            url, ".json",
+            content, headers, cacheKeyValues,
+            (url, streamOpener) =>
+                InternalUtilities.DefaultJsonSerializer.DeserializeJsonAsync(streamOpener(), ct),
             ct);
     }
 
     public ValueTask<IHtmlDocument> FetchHtmlAsync(
-        Uri url, CancellationToken ct)
-    {
-        var cacheKeyValues = GetCacheKeyValuesFrom(url);
-        var path = this.GetPhysicalPath(url, ".html", cacheKeyValues);
-
-        return this.RunAsync(
-            path,
-            async targetStream =>
-            {
-                using var responseStream = await httpClientFactory.Value.GetStreamAsync(url).
-                    WithCancellation(ct).
-                    ConfigureAwait(false);
-
-                await responseStream.CopyToAsync(targetStream).
-                    ConfigureAwait(false);
-                await targetStream.FlushAsync().
-                    ConfigureAwait(false);
-            },
-            readStream =>
-                new ValueTask<IHtmlDocument>(new HtmlParser().ParseDocumentAsync(readStream, ct)),
+        Uri url, CancellationToken ct) =>
+        this.RunAsync(
+            url, ".html",
+            null, empty, null,
+            (url, streamOpener) => new ValueTask<IHtmlDocument>(
+                new HtmlParser().ParseDocumentAsync(streamOpener(), ct)),
             ct);
-    }
 
-    public ValueTask<Uri?> ExamineShortUrlAsync(
-        Uri url, CancellationToken ct)
-    {
-        var cacheKeyValues = GetCacheKeyValuesFrom(url);
-        var path = this.GetPhysicalPath(url, ".txt", cacheKeyValues);
-
-        return this.RunAsync(
-            path,
-            async targetStream =>
-            {
-                using var response = await nonRedirectedHttpClientFactory.Value.GetAsync(url, ct).
-                    ConfigureAwait(false);
-
-                var tw = new StreamWriter(targetStream);
-                if (((int)response.StatusCode / 100) == 3)
-                {
-                    await tw.WriteAsync(response.Headers.Location?.ToString() ?? string.Empty).
-                        ConfigureAwait(false);
-                    await tw.FlushAsync().
-                        ConfigureAwait(false);
-                }
-            },
-            async readStream =>
-            {
-                var tr = new StreamReader(readStream);
-                var location = await tr.ReadToEndAsync().
-                    ConfigureAwait(false);
-                return Uri.TryCreate(location, UriKind.Absolute, out var redirectUrl) ?
-                    redirectUrl : null;
-            },
+    public ValueTask<Uri> ExamineShortUrlAsync(
+        Uri url, CancellationToken ct) =>
+        this.RunAsync(
+            url,
+            null,  // Make pending
+            null, empty, null,
+            (url, streamOpener) => new ValueTask<Uri>(url),
             ct);
-    }
 }

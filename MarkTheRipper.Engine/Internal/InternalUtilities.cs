@@ -108,6 +108,17 @@ internal static class InternalUtilities
     }
 #endif
 
+    public static IEnumerable<U> Collect<T, U>(this IEnumerable<T> enumerable, Func<T, U?> selector)
+    {
+        foreach (var value in enumerable)
+        {
+            if (selector(value) is { } mapped)
+            {
+                yield return mapped;
+            }
+        }
+    }
+
     public static IEnumerable<T> Unfold<T>(this T value, Func<T, T?> selector)
     {
         var current = value;
