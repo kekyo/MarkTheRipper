@@ -106,7 +106,7 @@ internal static class oEmbed
             // Step 6. Give up oEmbed resolving, retreive meta tags from HTML.
 
             var htmlMetadata = oEmbedUtilities.CreateHtmlMetadata(
-                html, permaLink);
+                html, permaLink, examinedLink);
 
             // Removed parent content body.
             mc.SetValue("contentBody", string.Empty);

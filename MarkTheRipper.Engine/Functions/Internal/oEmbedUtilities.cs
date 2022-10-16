@@ -64,9 +64,19 @@ internal static class oEmbedUtilities
         };
 
     public static HtmlMetadata CreateHtmlMetadata(
-        IHtmlDocument html, Uri requestUrl)
+        IHtmlDocument html, Uri permaLink, Uri examinedLink)
     {
         var htmlMetadata = new HtmlMetadata();
+
+        // HACK: Contains invalid OGP metadata in Google Maps :(
+        var isGoogleMaps =
+            examinedLink.Host.EndsWith("google.com") &&
+            examinedLink.LocalPath.StartsWith("/maps/");
+
+        if (isGoogleMaps)
+        {
+            htmlMetadata.SiteName = "Google Maps";
+        }
 
         // Retreive title.
         if (html.Head?.QuerySelector("title") is { } title &&
@@ -87,7 +97,7 @@ internal static class oEmbedUtilities
             Where(href => href != null).
             FirstOrDefault() is { } iconUrl)
         {
-            htmlMetadata.ImageUrl = new Uri(requestUrl, iconUrl);
+            htmlMetadata.ImageUrl = new Uri(permaLink, iconUrl);
         }
 
         // Retreive OGP tags.
@@ -109,21 +119,38 @@ internal static class oEmbedUtilities
                             htmlMetadata.Type = c;
                             break;
                         case "og:title":
-                            if (string.IsNullOrWhiteSpace(htmlMetadata.Title))
+                            if (isGoogleMaps)
                             {
-                                htmlMetadata.Title = c;
+                                var index = c.IndexOf('·');
+                                htmlMetadata.Title =
+                                    index >= 0 ? c.Substring(0, index).Trim() : c; ;
+                                htmlMetadata.Description =
+                                    index >= 0 ? c.Substring(index + 1).Trim() : string.Empty;
                             }
                             else
                             {
-                                htmlMetadata.AltTitle = htmlMetadata.Title;
-                                htmlMetadata.Title = c;
+                                if (string.IsNullOrWhiteSpace(htmlMetadata.Title))
+                                {
+                                    htmlMetadata.Title = c;
+                                }
+                                else
+                                {
+                                    htmlMetadata.AltTitle = htmlMetadata.Title;
+                                    htmlMetadata.Title = c;
+                                }
                             }
                             break;
                         case "og:description":
-                            htmlMetadata.Description = c;
+                            if (!isGoogleMaps)
+                            {
+                                htmlMetadata.Description = c;
+                            }
                             break;
                         case "og:site_name":
-                            htmlMetadata.SiteName = c;
+                            if (!isGoogleMaps)
+                            {
+                                htmlMetadata.SiteName = c;
+                            }
                             break;
                         case "og:image" when Uri.TryCreate(c, UriKind.Absolute, out var imageUrl):
                             htmlMetadata.ImageUrl = imageUrl;
