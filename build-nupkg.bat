@@ -13,4 +13,5 @@ echo.
 rem git clean -xfd
 
 dotnet restore
+dotnet build -p:Configuration=Release
 dotnet pack -p:Configuration=Release -o artifacts

@@ -113,6 +113,17 @@ public static class Program
         return storeToPath;
     }
 
+    private static void OpenExternalProcess(string path)
+    {
+        // https://stackoverflow.com/questions/46808315/net-core-2-0-process-start-throws-the-specified-executable-is-not-a-valid-appl
+        var p = new Process();
+        p.StartInfo = new ProcessStartInfo(path)
+        {
+            UseShellExecute = true
+        };
+        p.Start();
+    }
+
     public static async Task<int> Main(string[] args)
     {
         try
@@ -169,7 +180,7 @@ public static class Program
                         await ExtractNewMarkdownAsync(storeToPath);
                         if (requiredOpen)
                         {
-                            Process.Start(storeToPath);
+                            OpenExternalProcess(storeToPath);
                         }
                         break;
 
@@ -182,7 +193,7 @@ public static class Program
                         if (requiredOpen)
                         {
                             var indexPath = Path.Combine("docs", "index.html");
-                            Process.Start(indexPath);
+                            OpenExternalProcess(indexPath);
                         }
                         break;
 
