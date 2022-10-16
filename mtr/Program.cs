@@ -9,12 +9,10 @@
 
 using Mono.Options;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper;
@@ -24,12 +22,7 @@ public static class Program
     private static async Task ExtractSampleContentAsync(
         SafeDirectoryCreator dc, string resourceName, string storeToPath)
     {
-        var basePath = Path.GetDirectoryName(storeToPath) switch
-        {
-            null => Path.DirectorySeparatorChar.ToString(),
-            "" => ".",
-            var dp => dp,
-        };
+        var basePath = Utilities.GetDirectoryPath(storeToPath);
 
         await dc.CreateIfNotExistAsync(basePath, default);
 
@@ -44,45 +37,38 @@ public static class Program
         var dc = new SafeDirectoryCreator();
 
         var baseName = "MarkTheRipper.embeds." + sampleName;
-#if DEBUG
-        foreach (var resourceName in
-            typeof(Program).Assembly.GetManifestResourceNames().
-            Where(resourceName => resourceName.StartsWith(baseName)))
-        {
-            var pathElements = resourceName.
-                Substring(baseName.Length + 1).
-                Split('.');
-            var path = string.Join(
-                Path.DirectorySeparatorChar.ToString(),
-                pathElements.
-                    Take(pathElements.Length - 3 - 1)) +
-                    $".{pathElements.Last()}";
-            await ExtractSampleContentAsync(
-                dc, resourceName, path);
-        }
-#else
-        await Task.WhenAll(
-            typeof(Program).Assembly.GetManifestResourceNames().
+        var candidates = typeof(Program).Assembly.GetManifestResourceNames().
             Where(resourceName => resourceName.StartsWith(baseName)).
-            Select(resourceName => {
+            Select(resourceName =>
+            {
                 var pathElements = resourceName.
                     Substring(baseName.Length + 1).
                     Split('.');
                 var path = string.Join(
                     Path.DirectorySeparatorChar.ToString(),
                     pathElements.
-                        Take(pathElements.Length - 3 - 1)) +
-                        $".{pathElements.Last()}";
-                return ExtractSampleContentAsync(
-                    dc, resourceName, path);
-            }));
+                        Take(pathElements.Length - 1)) +
+                    $".{pathElements.Last()}";
+                return (resourceName, path);
+            });
+#if DEBUG
+        foreach (var candidate in candidates)
+        {
+            await ExtractSampleContentAsync(
+                dc, candidate.resourceName, candidate.path);
+        }
+#else
+        await Task.WhenAll(candidates.
+            Select(candidate => ExtractSampleContentAsync(
+                dc, candidate.resourceName, candidate.path)));
 #endif
 
         Console.Out.WriteLine($"Extracted sample files: {sampleName}");
         Console.Out.WriteLine();
     }
 
-    private static string GetSafeStoreToPath(string? categoryArgument, string? fileNameArgument)
+    private static string GetSafeStoreToPath(
+        string? categoryArgument, string? fileNameArgument)
     {
         var categories = !string.IsNullOrWhiteSpace(categoryArgument) ?
             categoryArgument!.Split(new[] { '/', '\\', '-', '.', ',', ':', ';' }, StringSplitOptions.RemoveEmptyEntries) :
@@ -132,15 +118,13 @@ public static class Program
         try
         {
             var help = false;
-            var resourceBasePath = "resources";
             var requiredBeforeCleanup = true;
             var requiredOpen = true;
 
             var options = new OptionSet()
             {
-                { "resources=", "Resource base path", v => resourceBasePath = v },
                 { "no-cleanup", "Do not cleanup before processing if exists", _ => requiredBeforeCleanup = false },
-                { "n|no-open", "Do not open editor/browser automatically", _ => requiredOpen = true },
+                { "n|no-open", "Do not open editor/browser automatically", _ => requiredOpen = false },
                 { "h|help", "Print this help", _ => help = true },
             };
 
@@ -150,15 +134,15 @@ public static class Program
 
             if (help)
             {
-                Console.Out.WriteLine("  Fantastic faster generates static site comes from simply Markdowns.");
-                Console.Out.WriteLine("  Copyright (c) Kouji Matsui.");
-                Console.Out.WriteLine("  https://github.com/kekyo/MarkTheRipper");
+                Console.Out.WriteLine("Fantastic faster generates static site comes from simply Markdowns.");
+                Console.Out.WriteLine("Copyright (c) Kouji Matsui.");
+                Console.Out.WriteLine("https://github.com/kekyo/MarkTheRipper");
                 Console.Out.WriteLine();
 
                 Console.Out.WriteLine("usage: mtr.exe [options] init [<sample name>]");
-                Console.Out.WriteLine("  <sample name>: \"minimum\", \"standard\" and \"rich\"");
+                Console.Out.WriteLine("  <sample name>: \"minimum\", \"sidebar\", \"standard\" and \"rich\"");
                 Console.Out.WriteLine("usage: mtr.exe [options] new [<category path> [<slug>]]");
-                Console.Out.WriteLine("usage: mtr.exe [options] [build [<store to dir path> [<contents dir path> ...]]]");
+                Console.Out.WriteLine("usage: mtr.exe [options] [build]");
                 Console.Out.WriteLine();
 
                 options.WriteOptionDescriptions(Console.Out);
@@ -190,23 +174,14 @@ public static class Program
                         break;
 
                     case "build":
-                        var storeToBasePath = extras.
-                            ElementAtOrDefault(1) ?? "docs";
-                        var contentsBasePathList = extras.
-                            Skip(3).
-                            DefaultIfEmpty("contents").
-                            Distinct().
-                            ToArray();
                         await Driver.RunAsync(
                             Console.Out,
-                            storeToBasePath,
-                            resourceBasePath,
-                            contentsBasePathList,
+                            ".",
                             requiredBeforeCleanup,
                             default);
                         if (requiredOpen)
                         {
-                            var indexPath = Path.Combine(storeToBasePath, "index.html");
+                            var indexPath = Path.Combine("docs", "index.html");
                             Process.Start(indexPath);
                         }
                         break;

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.2;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <AssemblyName>mtr</AssemblyName>
     <PackageId>MarkTheRipper</PackageId>
     <ApplicationIcon>..\Images\MarkTheRipper.ico</ApplicationIcon>
@@ -15,12 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarkTheRipper.Core\MarkTheRipper.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\mtr\embeds\**\*" LinkBase="embeds" />
-    <EmbeddedResource Include="..\mtr\embeds\**\*" LinkBase="embeds" />
+    <ProjectReference Include="..\MarkTheRipper.Engine\MarkTheRipper.Engine.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,12 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="..\mtr\contents\**\*" Pack="false">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="..\mtr\layouts\**\*" Pack="false">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Remove="..\mtr\embeds\**\*" LinkBase="embeds" />
+    <EmbeddedResource Include="..\mtr\embeds\**\*" LinkBase="embeds" />
   </ItemGroup>
 
 </Project>

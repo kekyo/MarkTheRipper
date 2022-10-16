@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <ul>
+<li>permaLink: https://www.amazon.co.jp/dp/B07KQ25738/</li>
+<li>siteName: Amazon</li>
+<li>title: KKHMF EZ-USB FX2LP CY7C68013A USB開発ボードコアボードロジックアナライザ</li>
+<li>altTitle: </li>
+<li>author: </li>
+<li>description: ￥892</li>
+<li>type: rich</li>
+<li>imageUrl: https://m.media-amazon.com/images/I/61RrsobTTiL._AC_AC_SR98,95_.jpg</li>
+</ul>
+<div>contentBody: </div>
+
+
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>

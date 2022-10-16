@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <ul>
+<li>permaLink: https://bit.ly/3gbo2ZM</li>
+<li>siteName: YouTube</li>
+<li>title: Smooth Lounge</li>
+<li>altTitle: </li>
+<li>author: Waderman - Topic</li>
+<li>description: </li>
+<li>type: video</li>
+<li>imageUrl: https://i.ytimg.com/vi/Crn-HCz7yKU/hqdefault.jpg</li>
+</ul>
+<div>contentBody: <div style='position:relative; width:100%; padding-top:75.000%;'><iframe src="https://www.youtube.com/embed/Crn-HCz7yKU?feature=oembed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" title="Smooth Lounge" style="position:absolute !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important;"></iframe></div></div>
+
+
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>
