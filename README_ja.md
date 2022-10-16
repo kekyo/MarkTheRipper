@@ -843,18 +843,14 @@ lang: ja-jp
 括弧はいくつでもネスト出来ます。括弧を応用して、`format`関数を使って望ましい形に整形出来ます:
 
 ```html
-<p>1 / 3 = {format (div 1 3) 'F3'}</p>
+<p>1 + 3 = {format (add 1 3) 'D3'}</p>
 ```
 
 結果:
 
 ```html
-<p>1 / 3 = 0.333</p>
+<p>1 + 3 = 004</p>
 ```
-
-小数を含む結果は、意図したとおりの表示にならない事があります。
-そのような可能性を考えて、常に`format`関数を使った方が良いかもしれません。
-小数を含む書式の指定方法は、[ここを参照して下さい](https://docs.microsoft.com/ja-jp/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f)。
 
 引数が数値ではなくても、文字列が数値として見なすことが出来ればOKです:
 
@@ -867,6 +863,10 @@ lang: ja-jp
 ```html
 <p>1 + 2.1 + 3 = {add 1 2.1 3}</p>
 ```
+
+小数を含む結果は、意図したとおりの表示にならない事があります。
+そのような可能性を考えて、常に`format`関数を使った方が良いかもしれません。
+小数を含む書式の指定方法は、[ここを参照して下さい](https://docs.microsoft.com/ja-jp/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f)。
 
 計算を使用する簡単な例を示します。列挙中の`item.index`は、0から開始される数値です。
 一方、`item.count`は列挙できる数ですが、これを並べると一般的な表記となりません:
@@ -890,6 +890,14 @@ lang: ja-jp
 ```
 
 とすれば、1から`count`までの数値となり、自然な表現に近づける事が出来ます。
+
+結果:
+
+```html
+<p>index/count = 1/3</p>
+<p>index/count = 2/3</p>
+<p>index/count = 3/3</p>
+```
 
 #### embed (埋め込みコンテンツを生成)
 

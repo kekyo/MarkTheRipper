@@ -928,18 +928,14 @@ You can nest any number of parentheses.
 Parentheses can be applied and formatted as desired using the `format` function:
 
 ```html
-<p>1 / 3 = {format (div 1 3) 'F3'}</p>
+<p>1 + 3 = {format (add 1 3) 'D3'}</p>
 ```
 
 Result:
 
 ```html
-<p>1 / 3 = 0.333</p>
+<p>1 + 3 = 004</p>
 ```
-
-Results containing decimals may not always turn out as intended.
-It may be better to always use the `format` function to account for such possibilities.
-For information on how to specify formats that include decimals, [see here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f).
 
 The argument does not have to be a number,
 as long as the string can be regarded as a number:
@@ -955,6 +951,10 @@ If so, it will be treated as a calculation with decimals
 ```html
 <p>1 + 2.1 + 3 = {add 1 2.1 3}</p>
 ```
+
+Results containing decimals may not always turn out as intended.
+It may be better to always use the `format` function to account for such possibilities.
+For information on how to specify formats that include decimals, [see here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f).
 
 Here is a simple example of using the calculation.
 In enumeration, `item.index` is a number and starting from 0.
@@ -981,6 +981,14 @@ In such a case, you can use `add` function to get:
 
 Would result in a number from 1 to `count`,
 which is closer to a natural representation.
+
+Result:
+
+```html
+<p>index/count = 1/3</p>
+<p>index/count = 2/3</p>
+<p>index/count = 3/3</p>
+```
 
 #### embed (Generates embedded content)
 
