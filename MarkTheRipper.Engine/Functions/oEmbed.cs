@@ -40,6 +40,9 @@ internal static class oEmbed
                 "Could not find any HTTP accessor.");
         }
 
+        var language = await metadata.GetLanguageAsync(ct).
+            ConfigureAwait(false);
+
         var mc = metadata.Spawn();
         mc.SetValue("permaLink", permaLink);
 
@@ -47,14 +50,14 @@ internal static class oEmbed
         // Step 1. Examine short url.
 
         var examinedLink = await httpAccessor.ExamineShortUrlAsync(
-            permaLink, ct).
+            permaLink, language, ct).
             ConfigureAwait(false);
 
         //////////////////////////////////////////////////////////////////
         // Step 2. Is it in amazon product page URL?
 
         if (await AmazonRenderrer.RenderAmazonHtmlContentAsync(
-            httpAccessor, mc, examinedLink, embedPageIfAvailable, ct).
+            httpAccessor, mc, language, examinedLink, embedPageIfAvailable, ct).
             ConfigureAwait(false) is { } amazonHtmlContent)
         {
             // Accept with Amazon HTML.
@@ -66,7 +69,7 @@ internal static class oEmbed
 
         // Render oEmbed from perma link.
         if (await oEmbedRenderrer.Render_oEmbedAsync(
-            httpAccessor, mc, permaLink, examinedLink, embedPageIfAvailable, ct).
+            httpAccessor, mc, language, permaLink, examinedLink, embedPageIfAvailable, ct).
             ConfigureAwait(false) is { } result1)
         {
             // Done.
@@ -80,7 +83,7 @@ internal static class oEmbed
         {
             // TODO: cache system
             var html = await httpAccessor.FetchHtmlAsync(
-                examinedLink, ct).
+                examinedLink, language, ct).
                 ConfigureAwait(false);
 
             //////////////////////////////////////////////////////////////////
@@ -94,7 +97,7 @@ internal static class oEmbed
             {
                 // Render oEmbed from discovered perma link.
                 if (await oEmbedRenderrer.Render_oEmbedDiscoveryAsync(
-                    httpAccessor, mc, href, embedPageIfAvailable, ct).
+                    httpAccessor, mc, language, href, embedPageIfAvailable, ct).
                     ConfigureAwait(false) is { } result2)
                 {
                     // Done.

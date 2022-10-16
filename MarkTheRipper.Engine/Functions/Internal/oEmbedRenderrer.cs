@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -104,13 +105,15 @@ internal static class oEmbedRenderrer
     public static async ValueTask<IExpression?> Render_oEmbedAsync(
         IHttpAccessor httpAccessor,
         IMetadataContext metadata,
+        CultureInfo language,
         Uri permaLink,
         Uri examinedLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
     {
         // TODO: cache system
-        var providersJson = await httpAccessor.FetchJsonAsync(oEmbedProviderListUrl, ct).
+        var providersJson = await httpAccessor.FetchJsonAsync(
+            oEmbedProviderListUrl, language, ct).
             ConfigureAwait(false);
 
         static bool IsMatched(oEmbedEndPoint endPoint, string urlString) =>
@@ -161,7 +164,8 @@ internal static class oEmbedRenderrer
                 var requestUrl = new Uri(requestUrlString, UriKind.Absolute);
 
                 // TODO: cache system
-                var metadataJson = await httpAccessor.FetchJsonAsync(requestUrl, ct).
+                var metadataJson = await httpAccessor.FetchJsonAsync(
+                    requestUrl, language, ct).
                     ConfigureAwait(false);
 
                 if (metadataJson is JObject metadataJsonObj)
@@ -220,6 +224,7 @@ internal static class oEmbedRenderrer
     public static async ValueTask<IExpression?> Render_oEmbedDiscoveryAsync(
         IHttpAccessor httpAccessor,
         IMetadataContext metadata,
+        CultureInfo language,
         Uri permaLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
@@ -227,7 +232,8 @@ internal static class oEmbedRenderrer
         try
         {
             // TODO: cache system
-            var metadataJson = await httpAccessor.FetchJsonAsync(permaLink, ct).
+            var metadataJson = await httpAccessor.FetchJsonAsync(
+                permaLink, language, ct).
                 ConfigureAwait(false);
 
             if (metadataJson is JObject metadataJsonObj)

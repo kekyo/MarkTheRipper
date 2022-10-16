@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using MarkTheRipper.Internal;
@@ -14,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -40,6 +42,7 @@ public sealed class HttpAccessor : IHttpAccessor
         Uri url,
         string? defaultExtHint,
         HttpContent? content,
+        CultureInfo? language,
         IReadOnlyDictionary<string, string> headers,
         IReadOnlyDictionary<string, string>? cacheKeyValues,
         Func<Uri, Func<Stream>, ValueTask<T>> deserializer,
@@ -57,7 +60,7 @@ public sealed class HttpAccessor : IHttpAccessor
             // Get candidate cached (physical) path from current URL.
             var (pathBase, ext) = HttpAccessorUtilities.GetPhysicalPath(
                 this.cacheBasePath, currentUrl, defaultExtHint ?? string.Empty, cacheKeyValues ??
-                HttpAccessorUtilities.GetCacheKeyValues(currentUrl));
+                HttpAccessorUtilities.GetCacheKeyValues(currentUrl, language));
 
             // Found cached pending content.
             var targetPath = $"{pathBase}{ext}";
@@ -195,9 +198,17 @@ public sealed class HttpAccessor : IHttpAccessor
                 // Construct HTTP request.
                 using var request = new HttpRequestMessage(
                     content is { }  ? HttpMethod.Post : HttpMethod.Get, currentUrl);
-                if (content != null)
+                if (content is { })
                 {
                     request.Content = content;
+                }
+                if (language is { })
+                {
+                    if (!(content?.Headers.TryAddWithoutValidation(
+                        "Accept-Language", language.IetfLanguageTag) ?? false))
+                    {
+                        request.Headers.Add("Accept-Language", language.IetfLanguageTag);
+                    }
                 }
                 foreach (var entry in headers)
                 {
@@ -288,10 +299,11 @@ public sealed class HttpAccessor : IHttpAccessor
     }
 
     public ValueTask<JToken> FetchJsonAsync(
-        Uri url, CancellationToken ct) =>
+        Uri url, CultureInfo requestLanguage, CancellationToken ct) =>
         this.RunAsync(
             url, ".json",
-            null, empty, null,
+            null, requestLanguage,
+            empty, null,
             (url, streamOpener) =>
                 InternalUtilities.DefaultJsonSerializer.DeserializeJsonAsync(streamOpener(), ct),
             ct);
@@ -308,27 +320,30 @@ public sealed class HttpAccessor : IHttpAccessor
             "application/json");
         return await this.RunAsync(
             url, ".json",
-            content, headers, cacheKeyValues,
+            content, null,
+            headers, cacheKeyValues,
             (url, streamOpener) =>
                 InternalUtilities.DefaultJsonSerializer.DeserializeJsonAsync(streamOpener(), ct),
             ct);
     }
 
     public ValueTask<IHtmlDocument> FetchHtmlAsync(
-        Uri url, CancellationToken ct) =>
+        Uri url, CultureInfo requestLanguage, CancellationToken ct) =>
         this.RunAsync(
             url, ".html",
-            null, empty, null,
+            null, requestLanguage,
+            empty, null,
             (url, streamOpener) => new ValueTask<IHtmlDocument>(
                 new HtmlParser().ParseDocumentAsync(streamOpener(), ct)),
             ct);
 
     public ValueTask<Uri> ExamineShortUrlAsync(
-        Uri url, CancellationToken ct) =>
+        Uri url, CultureInfo requestLanguage, CancellationToken ct) =>
         this.RunAsync(
             url,
             null,  // Make pending
-            null, empty, null,
+            null, requestLanguage,
+            empty, null,
             (url, streamOpener) => new ValueTask<Uri>(url),
             ct);
 }

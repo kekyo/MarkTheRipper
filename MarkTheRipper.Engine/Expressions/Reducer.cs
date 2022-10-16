@@ -102,7 +102,7 @@ internal sealed class Reducer : IReducer
                     keyName => metadata.Lookup(keyName) is { } valueExpression ?
                         this.ReduceExpressionAsync(valueExpression, metadata, ct) :
                         default,
-                    await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
+                    await metadata.GetLanguageAsync(ct).
                         ConfigureAwait(false),
                     ct),
             Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>> func =>
@@ -112,7 +112,7 @@ internal sealed class Reducer : IReducer
                     keyName => metadata.Lookup(keyName) is { } valueExpression ?
                         this.ReduceExpressionAsync(valueExpression, metadata, ct).AsTask() :
                         Task.FromResult(default(object)),
-                    await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
+                    await metadata.GetLanguageAsync(ct).
                         ConfigureAwait(false),
                     ct),
             _ => throw new InvalidOperationException("Could not apply non-function object."),

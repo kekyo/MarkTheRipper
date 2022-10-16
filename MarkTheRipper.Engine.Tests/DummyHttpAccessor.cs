@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,7 +85,8 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
         }
     }
 
-    public ValueTask<IHtmlDocument> FetchHtmlAsync(Uri url, CancellationToken ct)
+    public ValueTask<IHtmlDocument> FetchHtmlAsync(
+        Uri url, CultureInfo language, CancellationToken ct)
     {
         var (u, c) = this.Dequeue();
         AreEqual(u, url);
@@ -94,7 +96,8 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
         return new ValueTask<IHtmlDocument>(parser.ParseDocumentAsync((string)c));
     }
 
-    public ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct)
+    public ValueTask<JToken> FetchJsonAsync(
+        Uri url, CultureInfo language, CancellationToken ct)
     {
         var (u, c) = this.Dequeue();
         AreEqual(u, url);
@@ -121,7 +124,7 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
     }
 
     public ValueTask<Uri> ExamineShortUrlAsync(
-        Uri url, CancellationToken ct)
+        Uri url, CultureInfo language, CancellationToken ct)
     {
         if (this.Peek() is (var u, Uri expected))
         {

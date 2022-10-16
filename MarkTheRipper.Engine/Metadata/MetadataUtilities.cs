@@ -9,7 +9,6 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Functions;
-using MarkTheRipper.Internal;
 using MarkTheRipper.IO;
 using MarkTheRipper.TextTreeNodes;
 using Newtonsoft.Json;
@@ -129,12 +128,12 @@ public static class MetadataUtilities
                     Utilities.GetLocale(UnsafeFormatValue(langValue, metadata)) :
                 CultureInfo.InvariantCulture;
 
-    public static async ValueTask<IFormatProvider> GetFormatProviderAsync(
-        IMetadataContext metadata, CancellationToken ct) =>
+    public static async ValueTask<CultureInfo> GetLanguageAsync(
+        this IMetadataContext metadata, CancellationToken ct) =>
         metadata.Lookup("lang") is { } langExpression &&
             await Reducer.Instance.ReduceExpressionAsync(langExpression, metadata, ct) is { } langValue ?
-                langValue is IFormatProvider fp ?
-                    fp :
+                langValue is CultureInfo ci ?
+                    ci :
                     Utilities.GetLocale(await FormatValueAsync(langValue, metadata, ct).
                         ConfigureAwait(false)) :
             CultureInfo.InvariantCulture;
@@ -190,7 +189,7 @@ public static class MetadataUtilities
             IFormattable formattable =>
                 formattable.ToString(
                     null,
-                    await GetFormatProviderAsync(metadata, ct).
+                    await GetLanguageAsync(metadata, ct).
                         ConfigureAwait(false)) ??
                 string.Empty,
             _ =>

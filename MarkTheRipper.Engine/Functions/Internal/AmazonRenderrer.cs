@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -189,6 +190,7 @@ internal static class AmazonRenderrer
     private static async ValueTask<IExpression?> RenderEmbeddablePageWithParsingAsync(
         IHttpAccessor httpAccessor,
         IMetadataContext metadata,
+        CultureInfo language,
         AmazonEndPoint endPoint,
         string trackingId,
         string asin,
@@ -199,7 +201,7 @@ internal static class AmazonRenderrer
             endPoint.AssociateEndPointFormat, trackingId, asin);
 
         var bodyHtml = await httpAccessor.FetchHtmlAsync(
-            new Uri(sourceUrl), ct).
+            new Uri(sourceUrl), language, ct).
             ConfigureAwait(false);
 
         if (bodyHtml.GetElementsByClassName("amzn-ad-prod-detail") is { } details &&
@@ -245,6 +247,7 @@ internal static class AmazonRenderrer
     public static async ValueTask<IExpression?> RenderAmazonHtmlContentAsync(
         IHttpAccessor httpAccessor,
         IMetadataContext metadata,
+        CultureInfo language,
         Uri examinedLink,
         bool embedPageIfAvailable,
         CancellationToken ct)
@@ -314,7 +317,7 @@ internal static class AmazonRenderrer
             if (!string.IsNullOrWhiteSpace(trackingId))
             {
                 if (await RenderEmbeddablePageWithParsingAsync(
-                    httpAccessor, metadata, endPoint, trackingId!, asin, ct).
+                    httpAccessor, metadata, language, endPoint, trackingId!, asin, ct).
                     ConfigureAwait(false) is { } embeddableResult)
                 {
                     return embeddableResult;

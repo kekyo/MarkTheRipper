@@ -36,12 +36,12 @@ internal static class Format
                 ConfigureAwait(false) :
             null;
 
-        var fp = await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
+        var ci = await metadata.GetLanguageAsync(ct).
             ConfigureAwait(false);
 
         return value switch
         {
-            IFormattable formattable => new ValueExpression(formattable.ToString(format, fp)),
+            IFormattable formattable => new ValueExpression(formattable.ToString(format, ci)),
             _ => parameters[0],
         };
     }

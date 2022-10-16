@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -17,7 +18,8 @@ namespace MarkTheRipper.IO;
 
 internal static class HttpAccessorUtilities
 {
-    public static IReadOnlyDictionary<string, string> GetCacheKeyValues(Uri url)
+    public static IReadOnlyDictionary<string, string> GetCacheKeyValues(
+        Uri url, CultureInfo? requestLanguage)
     {
         var kv = url.Query.StartsWith("?") ?
             url.Query.TrimStart('?').
@@ -29,6 +31,11 @@ internal static class HttpAccessorUtilities
             }).
             ToDictionary(kv => kv.key, kv => kv.value)! :
             new Dictionary<string, string>();
+
+        if (requestLanguage is { })
+        {
+            kv.Add("-=@requestLanguage@=-", requestLanguage.IetfLanguageTag);
+        }
 
         var path = url.LocalPath;
         if (path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries) is { } splitted &&

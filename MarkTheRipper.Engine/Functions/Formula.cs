@@ -39,21 +39,21 @@ internal static class Formula
             parameters.Select(p => reducer.ReduceExpressionAsync(p, metadata, ct).AsTask())).
             ConfigureAwait(false);
 
-        var fp = await MetadataUtilities.GetFormatProviderAsync(metadata, ct).
+        var ci = await metadata.GetLanguageAsync(ct).
             ConfigureAwait(false);
 
         if (values.All(v => v is int || v is long ||
             (v is string s && long.TryParse(s, out var _))))
         {
             var result = values.
-                Select(v => Convert.ToInt64(v, fp)).
+                Select(v => Convert.ToInt64(v, ci)).
                 Aggregate(int64Accumrator);
             return new ValueExpression(result);
         }
         else
         {
             var result = values.
-                Select(v => Convert.ToDouble(v, fp)).
+                Select(v => Convert.ToDouble(v, ci)).
                 Aggregate(doubleAccumrator);
             return new ValueExpression(result);
         }
