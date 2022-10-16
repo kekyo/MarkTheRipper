@@ -36,14 +36,24 @@ public sealed class ValueExpression : IExpression
     public string Type =>
         this.Value?.GetType().Name ?? "(null)";
 
-    public bool Equals(ValueExpression rhs) =>
-        (this.Value, rhs.Value) switch
+    public bool Equals(ValueExpression rhs)
+    {
+        // Dirty statements instead pattern matching,
+        // because avoid reference ValueTuple assembly.
+        if (this.Value == null)
         {
-            (null, null) => true,
-            (null, _) => false,
-            (_, null) => false,
-            (_, _) => this.Value.Equals(rhs.Value),
-        };
+            if (rhs.Value == null)
+            {
+                return true;
+            }
+            return false;
+        }
+        if (rhs.Value == null)
+        {
+            return false;
+        }
+        return this.Value.Equals(rhs.Value);
+    }
 
     bool IEquatable<IExpression>.Equals(IExpression? other) =>
         other is ValueExpression rhs &&

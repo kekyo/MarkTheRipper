@@ -1,0 +1,1032 @@
+﻿/////////////////////////////////////////////////////////////////////////////////////
+//
+// MarkTheRipper - Fantastic faster generates static site comes from simply Markdowns.
+// Copyright (c) Kouji Matsui (@kozy_kekyo, @kekyo@mastodon.cloud)
+//
+// Licensed under Apache-v2: https://opensource.org/licenses/Apache-2.0
+//
+/////////////////////////////////////////////////////////////////////////////////////
+
+using MarkTheRipper.Expressions;
+using MarkTheRipper.Metadata;
+using MarkTheRipper.TextTreeNodes;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using VerifyNUnit;
+
+using static NUnit.Framework.Assert;
+
+namespace MarkTheRipper;
+
+internal sealed class RipOffBaseMetadata
+{
+    public readonly (string key, object? value)[] BaseMetadata;
+
+    public RipOffBaseMetadata(params (string key, object? value)[] baseMetadata) =>
+        this.BaseMetadata = baseMetadata;
+}
+
+internal sealed class RipOffLayouts
+{
+    public readonly (string layoutName, string layoutText)[] Layouts;
+
+    public RipOffLayouts(params (string layoutName, string)[] layouts) =>
+        this.Layouts = layouts;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+
+[TestFixture]
+public sealed class oEmbedTests
+{
+    private static async ValueTask<string> RipOffContentAsync(
+        string markdownText, string layoutName, string layoutText,
+        RipOffBaseMetadata? baseMetadata = default,
+        RipOffLayouts? layouts = default,
+        DummyHttpAccessor? httpAccessor = default)
+    {
+        baseMetadata ??= new();
+        layouts ??= new();
+
+        var metadata = MetadataUtilities.CreateWithDefaults(
+            httpAccessor ?? new());
+
+        var tr = new StringReader(layoutText);
+        var layout = await Parser.ParseTextTreeAsync(
+            new PathEntry(layoutName),
+            _ => new ValueTask<string?>(tr.ReadLineAsync()),
+            (_, _) => false,
+            default);
+
+        var layoutList = new Dictionary<string, RootTextNode>
+        {
+            { layoutName, layout }
+        };
+
+        foreach (var entry in layouts.Layouts)
+        {
+            var tr2 = new StringReader(entry.layoutText);
+            var entryLayout = await Parser.ParseTextTreeAsync(
+                new PathEntry(entry.layoutName),
+                _ => new ValueTask<string?>(tr2.ReadLineAsync()),
+                (_, _) => false,
+                default);
+            layoutList.Add(entry.layoutName, entryLayout);
+        }
+
+        metadata.SetValue("layout", new PartialLayoutEntry(layoutName));
+        metadata.SetValue("layoutList", layoutList);
+
+        foreach (var entry in baseMetadata.BaseMetadata)
+        {
+            metadata.SetValue(entry.key, entry.value);
+        }
+
+        var ripper = new Ripper();
+
+        var htmlWriter = new StringWriter();
+        htmlWriter.NewLine = Environment.NewLine;
+        var appliedLayoutName = await ripper.RenderContentAsync(
+            new PathEntry("RipperTests.md"),
+            new StringReader(markdownText),
+            metadata,
+            htmlWriter,
+            default);
+
+        AreEqual(layoutName, appliedLayoutName.Path);
+
+        httpAccessor?.AssertEmpty();
+
+        return htmlWriter.ToString();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffoEmbed1()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("embed-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new("https://oembed.com/providers.json",
+    @"[
+    {
+        ""provider_name"": ""YouTube"",
+        ""provider_url"": ""https://www.youtube.com/"",
+        ""endpoints"": [
+            {
+                ""schemes"": [
+                    ""https://*.youtube.com/watch*"",
+                    ""https://*.youtube.com/v/*"",
+                    ""https://youtu.be/*"",
+                    ""https://*.youtube.com/playlist?list=*"",
+                    ""https://youtube.com/playlist?list=*"",
+                    ""https://*.youtube.com/shorts*""
+                ],
+                ""url"": ""https://www.youtube.com/oembed"",
+                ""discovery"": true
+            }
+        ]
+    }
+]"),
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"",
+    ""html"": ""\u003ciframe width=\u0022200\u0022 height=\u0022113\u0022 src=\u0022https://www.youtube.com/embed/1La4QzGeaaQ?feature=oembed\u0022 frameborder=\u00220\u0022 allow=\u0022accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\u0022 allowfullscreen title=\u0022Peru 8K HDR 60FPS (FUHD)\u0022\u003e\u003c/iframe\u003e""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbed2()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+{embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+{contentBody}</body>
+</html>
+",
+default,
+new(("embed-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new("https://oembed.com/providers.json",
+    @"[
+    {
+        ""provider_name"": ""YouTube"",
+        ""provider_url"": ""https://www.youtube.com/"",
+        ""endpoints"": [
+            {
+                ""schemes"": [
+                    ""https://*.youtube.com/watch*"",
+                    ""https://*.youtube.com/v/*"",
+                    ""https://youtu.be/*"",
+                    ""https://*.youtube.com/playlist?list=*"",
+                    ""https://youtube.com/playlist?list=*"",
+                    ""https://*.youtube.com/shorts*""
+                ],
+                ""url"": ""https://www.youtube.com/oembed"",
+                ""discovery"": true
+            }
+        ]
+    }
+]"),
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"",
+    ""html"": ""\u003ciframe width=\u0022200\u0022 height=\u0022113\u0022 src=\u0022https://www.youtube.com/embed/1La4QzGeaaQ?feature=oembed\u0022 frameborder=\u00220\u0022 allow=\u0022accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\u0022 allowfullscreen title=\u0022Peru 8K HDR 60FPS (FUHD)\u0022\u003e\u003c/iframe\u003e""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedNotIncludeHtml()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[
+    {
+        ""provider_name"": ""YouTube"",
+        ""provider_url"": ""https://www.youtube.com/"",
+        ""endpoints"": [
+            {
+                ""schemes"": [
+                    ""https://*.youtube.com/watch*"",
+                    ""https://*.youtube.com/v/*"",
+                    ""https://youtu.be/*"",
+                    ""https://*.youtube.com/playlist?list=*"",
+                    ""https://youtube.com/playlist?list=*"",
+                    ""https://*.youtube.com/shorts*""
+                ],
+                ""url"": ""https://www.youtube.com/oembed"",
+                ""discovery"": true
+            }
+        ]
+    }
+]"),
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedNotIncludeHtmlToDefault()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[
+    {
+        ""provider_name"": ""YouTube"",
+        ""provider_url"": ""https://www.youtube.com/"",
+        ""endpoints"": [
+            {
+                ""schemes"": [
+                    ""https://*.youtube.com/watch*"",
+                    ""https://*.youtube.com/v/*"",
+                    ""https://youtu.be/*"",
+                    ""https://*.youtube.com/playlist?list=*"",
+                    ""https://youtube.com/playlist?list=*"",
+                    ""https://*.youtube.com/shorts*""
+                ],
+                ""url"": ""https://www.youtube.com/oembed"",
+                ""discovery"": true
+            }
+        ]
+    }
+]"),
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedOnlyHtmlTags()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[]"),
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
+    <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
+    <meta property=""og:type"" content=""video"" />
+    <meta property=""og:site_name"" content=""YouTube"" />
+    <meta property=""og:image"" content=""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"" />
+    </head><body /></html>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedOnlyHtmlTitle()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[]"),
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <title>Peru 8K HDR 60FPS (FUHD)</title>
+    <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
+    <meta property=""og:type"" content=""video"" />
+    <meta property=""og:site_name"" content=""YouTube"" />
+    <meta property=""og:image"" content=""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"" />
+    </head><body /></html>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedBothHtmlTitle()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[]"),
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <title>[AltTitle]</title>
+    <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
+    <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
+    <meta property=""og:type"" content=""video"" />
+    <meta property=""og:site_name"" content=""YouTube"" />
+    <meta property=""og:image"" content=""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"" />
+    </head><body /></html>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedFallback()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[]"),
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedDiscovery()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("card-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>")),
+new(new("https://oembed.com/providers.json",
+    @"[]"),
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <link type=""application/json+oembed"" href=""https://www.example.com/"" />
+    </head><body /></html>"),
+    new("https://www.example.com/",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedDiscoveryWithHtml()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.youtube.com/watch?v=1La4QzGeaaQ}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("embed-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new("https://oembed.com/providers.json",
+    @"[]"),
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    @"<html><head>
+    <link type=""application/json+oembed"" href=""https://www.example.com/"" />
+    </head><body /></html>"),
+    new("https://www.example.com/",
+    @"{
+    ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
+    ""author_name"": ""Jacob + Katie Schwarz"",
+    ""author_url"": ""https://www.youtube.com/c/JacobKatieSchwarz"",
+    ""type"": ""video"",
+    ""height"": 113,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/1La4QzGeaaQ/hqdefault.jpg"",
+    ""html"": ""\u003ciframe width=\u0022200\u0022 height=\u0022113\u0022 src=\u0022https://www.youtube.com/embed/1La4QzGeaaQ?feature=oembed\u0022 frameborder=\u00220\u0022 allow=\u0022accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\u0022 allowfullscreen title=\u0022Peru 8K HDR 60FPS (FUHD)\u0022\u003e\u003c/iframe\u003e""
+}")));
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonCom()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.amazon.com/gp/product/B07X5FPP4P/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-us", "abcde1-1")),
+new(("embed-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonCoJp()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://www.amazon.co.jp/dp/B07KQ25738/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-jp", "abcde1-1")),
+new(("embed-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonComInCard()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {card https://www.amazon.com/gp/product/B07X5FPP4P/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-us", "abcde1-1")),
+new(("card-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new AssertionPair[] { new("https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id=abcde1-1&language=en_US&marketplace=amazon&region=US&asins=B07X5FPP4P&show_border=false&link_opens_in_new_window=true",
+    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonComInCard.html")!).ReadToEnd()) }));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonCoJpInCard()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {card https://www.amazon.co.jp/dp/B07KQ25738/}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-jp", "abcde1-1")),
+new(("card-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new AssertionPair[] { new("https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t=abcde1-1&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins=B07KQ25738",
+    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonCoJpInCard.html")!).ReadToEnd()) }));
+        await Verifier.Verify(actual);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    [Test]
+    public async Task RipOffoEmbedInAmazonComInShortLink()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://amzn.to/3CpBGAX}
+
+{contentBody}</body>
+</html>
+",
+new(("amazonTrackingId-us", "abcde1-1")),
+new(("embed-Amazon", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new AssertionPair[] {
+    new("https://amzn.to/3CpBGAX",
+        new Uri(@"https://www.amazon.com/gp/product/B07X5FPP4P/")), }));
+        await Verifier.Verify(actual);
+    }
+
+    [Test]
+    public async Task RipOffoEmbedInShortLink()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://bit.ly/3gbo2ZM}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("embed-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new("https://bit.ly/3gbo2ZM",
+        new Uri("https://www.youtube.com/watch?v=Crn-HCz7yKU")),
+    new("https://oembed.com/providers.json",
+    @"[
+    {
+        ""provider_name"": ""YouTube"",
+        ""provider_url"": ""https://www.youtube.com/"",
+        ""endpoints"": [
+            {
+                ""schemes"": [
+                    ""https://*.youtube.com/watch*"",
+                    ""https://*.youtube.com/v/*"",
+                    ""https://youtu.be/*"",
+                    ""https://*.youtube.com/playlist?list=*"",
+                    ""https://youtube.com/playlist?list=*"",
+                    ""https://*.youtube.com/shorts*""
+                ],
+                ""url"": ""https://www.youtube.com/oembed"",
+                ""discovery"": true
+            }
+        ]
+    }
+]"),
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=Crn-HCz7yKU&format=json",
+    @"{
+    ""title"": ""Smooth Lounge"",
+    ""author_name"": ""Waderman - Topic"",
+    ""author_url"": ""https://www.youtube.com/channel/UCSmCQPA-rmQYkd_giaOSLJA"",
+    ""type"": ""video"",
+    ""height"": 150,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/Crn-HCz7yKU/hqdefault.jpg"",
+    ""html"": ""<iframe width=\""200\"" height=\""150\"" src=\""https://www.youtube.com/embed/Crn-HCz7yKU?feature=oembed\"" frameborder=\""0\"" allow=\""accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\"" allowfullscreen title=\""Smooth Lounge\""></iframe>""
+}
+")));
+        await Verifier.Verify(actual);
+    }
+
+}

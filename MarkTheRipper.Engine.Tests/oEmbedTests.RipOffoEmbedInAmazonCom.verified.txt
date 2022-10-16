@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>hoehoe</title>
+    <meta name="keywords" content="foo,bar" />
+  </head>
+  <body>
+    <ul>
+<li>permaLink: https://www.amazon.com/gp/product/B07X5FPP4P/</li>
+<li>siteName: Amazon</li>
+<li>title: </li>
+<li>altTitle: </li>
+<li>author: </li>
+<li>description: </li>
+<li>type: rich</li>
+<li>imageUrl: </li>
+</ul>
+<div>contentBody: <iframe sandbox='allow-popups allow-scripts allow-modals allow-forms allow-same-origin' width='120' height='240' marginwidth='0' marginheight='0' scrolling='no' frameborder='0' src='https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id=abcde1-1&language=en_US&marketplace=amazon&region=US&asins=B07X5FPP4P&show_border=false&link_opens_in_new_window=true'></iframe></div>
+
+
+<p>Hello MarkTheRipper!
+This is test contents.</p>
+</body>
+</html>

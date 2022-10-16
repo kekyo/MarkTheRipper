@@ -12,6 +12,7 @@ MarkTheRipper - マークダウンで書く事が出来る、静的サイトの�
 |:---------|:---------------------------------------------------------------------------------------------------------------------|
 | MarkTheRipper | [![NuGet MarkTheRipper](https://img.shields.io/nuget/v/MarkTheRipper.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper) |
 | MarkTheRipper.Core | [![NuGet MarkTheRipper.Core](https://img.shields.io/nuget/v/MarkTheRipper.Core.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Core) |
+| MarkTheRipper.Engine | [![NuGet MarkTheRipper.Engine](https://img.shields.io/nuget/v/MarkTheRipper.Engine.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Engine) |
 
 ## CI
 
@@ -36,7 +37,7 @@ MarkTheRipperは、非常にシンプルかつ高速な静的サイトジェネ�
 dotnet tool install -g MarkTheRipper
 ```
 
-とするだけでインストールできます。または、.NET Framework 4.8に対応した、ポータブルバージョンのバイナリをダウンロードする事もできます。
+とするだけでインストールできます。または、.NET Framework 4.71以上に対応した、[ビルド済みのバイナリをダウンロードする事もできます。](https://github.com/kekyo/MarkTheRipper/releases)
 
 初めて使う場合は、
 
@@ -48,16 +49,16 @@ $ mtr init mininum
 （恐れる必要はありません！たった2つ、しかも中身は余計な定義が殆ど存在しない、数行のファイルです！）
 
 * `contents`ディレクトリ: `index.md`ファイルが置かれます。中身は一般的に想定されるマークダウンによる記事テキストです。
-* `resources`ディレクトリ: `layout-page.html`ファイルが置かれます。サイト生成するときに、マークダウンがHTMLに変換され、このレイアウトファイルの中に挿入されます。
+* `layouts`ディレクトリ: `page.html`ファイルが置かれます。サイト生成するときに、マークダウンがHTMLに変換され、このレイアウトファイルの中に挿入されます。
 
 これだけです！念のために、中身も見せましょう:
 
-### index.md
+### contents/index.md
 
 ```markdown
 ---
 title: Hello MarkTheRipper!
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 This is sample post.
@@ -71,7 +72,7 @@ H2 body.
 H3 body.
 ```
 
-### layout-page.html
+### layouts/page.html
 
 ```html
 <!DOCTYPE html>
@@ -220,9 +221,9 @@ foobar: Hello MarkTheRipper!
 (... 本文 ...)
 ```
 
-* このヘッダの事を、他のサイトジェネレーターでは「FrontMatter」と呼び、YAML構文で記述することになっていますが、
+* 補足: このヘッダの事を、他のサイトジェネレーターでは「FrontMatter」と呼び、YAML構文で記述することになっていますが、
   MarkTheRipperは厳密にはYAMLではなく、記述の柔軟性を高めるための構文を使用しています。
-  例えば、`title`は、ダブルクオートで括る事は必須ではありません。
+  例えば、`title`は、ダブルクオートで括る事は必須ではありませんし、`tags`は角括弧で括らなくても正しく認識されます。
   念のため、MarkTheRipperでは、FrontMatterという用語を使っていません。
 
 何となく、メタデータ辞書をどう活用すれば良いか、見えてきましたか？
@@ -267,8 +268,8 @@ stylesheet: darcula
 MarkTheRipperがメタデータ辞書の定義を特別扱いしない、と言う事だけ知っておけば問題ありません。
 
 上記のキーワードのうち、`lang`や`layout`や`timezone`のデフォルト値は何なのかが気になった人もいると思います。
-メタデータ辞書は、サイト生成時のベースとなる定義を、`resources/metadata.json`に配置することが出来ます。
-（無くても構いません。実際、minimum/sidebarサンプルには存在しません）
+メタデータ辞書は、サイト生成時のベースとなる定義を、`metadata.json`に配置することが出来ます。
+（無くても構いません。実際、minimumサンプルには存在しません）
 例えば、以下のような定義です:
 
 ```json
@@ -293,7 +294,7 @@ MarkTheRipperがメタデータ辞書の定義を特別扱いしない、と言�
 
 ブログに使うことを考えた場合、殆どの投稿文書はあなた自身が書いたものとなるので、いちいちマークダウンのヘッダに自分の名前を書きたいとは思わないでしょう。
 しかし、タイトルはもちろん、その投稿毎に異なるはずです。
-そのような場合分けに、この、メタデータ辞書の「フォールバック」機能を使うことが出来ます。
+そのような場合分けに、このメタデータ辞書の「フォールバック」機能を使うことが出来ます。
 
 そして、`layout`と`lang`のフォールバックですが:
 
@@ -302,7 +303,7 @@ MarkTheRipperがメタデータ辞書の定義を特別扱いしない、と言�
 * `timezone`がフォールバックにも見つからない場合に限り、システムのタイムゾーン設定が適用されます。
 
 レイアウト名には、少し補足が必要でしょう。レイアウト名は、変換元のレイアウトファイルの特定に使用されます。
-例えば、レイアウト名が`page`の場合は、`resources/layout-page.html`ファイルが使用されます。もし:
+例えば、レイアウト名が`page`の場合は、`layouts/page.html`ファイルが使用されます。もし:
 
 ```markdown
 ---
@@ -313,7 +314,7 @@ layout: fancy
 (... 本文 ...)
 ```
 
-のように指定した場合は、`resources/layout-fancy.html`が使用されます。
+のように指定した場合は、`layouts/fancy.html`が使用されます。
 
 `date`は記事の日時を表していて、普通のキーワードと同様に扱われますが、
 マークダウンヘッダに定義されていなかった場合は、自動的に生成時の日時が挿入されます。
@@ -359,13 +360,11 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 
 こうしておいて、メタデータ辞書に、`blog`と`私的な日記` を対にして登録しておけば、HTMLには `Category: 私的な日記` と表示されます。
 
-このようなキーワードと値のペアは、前節で示した`resources/metadata.json`に書いておけば参照出来るようになります。
-加えて、実はメタデータ辞書のファイルは、`resources/metadata*.json`でマッチするすべてのJSONファイルが対象です。
+このようなキーワードと値のペアは、前節で示した`metadata.json`に書いておけば参照出来るようになります。
+加えて、実はメタデータ辞書のファイルは、`metadata/*.json`でマッチするすべてのJSONファイルが対象です。
 ファイルが分かれていても、MarkTheRipperが起動する時に、すべて読み込まれて内容がマージされます。
 
-例えば、記事カテゴリだけを管理するファイルとして、`resource/metadata-category.json`のように別のファイルにしておけば、管理が容易になるでしょう。
-
-この再帰検索は、一度のみ実行できます。つまり、得られた値をキーに繰り返し検索し続ける事は出来ません。
+例えば、記事カテゴリだけを管理するファイルとして、`metadata/category.json`のように別のファイルにしておけば、管理が容易になるでしょう。
 
 ----
 
@@ -392,7 +391,7 @@ MarkTheRipperに組み込まれている、`lookup` 関数キーワードを使�
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 (... 本文 ...)
@@ -583,7 +582,7 @@ MarkTheRipper内部では、無名の`(root)`カテゴリに属することに�
 ```markdown
 ---
 title: Hello MarkTheRipper
-category: [foo,bar,baz]
+category: foo,bar,baz
 ---
 
 (... 本文 ...)
@@ -620,7 +619,7 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 この名称が表示にふさわしくない場合は、キーワードの再帰検索を使って置き換えるか、またはこの例ではルートなので、直接書いてしまっても良いと思います。
 
 そして、タグの時と同様に`entries`で列挙したそれぞれの要素から、各マークダウンのヘッダ情報を引き出すことが出来ます。
-ここでは`path`を指定して、コンテンツのパスを出力していますが、`title`とすればタイトルが出力出来て、`item.path.relative`とすれば、現在のコンテンツからの相対パスが得られるので、これをそのままリンクのURLにすることで、リンクを実現できます。
+ここでは`path`を指定して、コンテンツのパスを出力していますが、`title`とすればタイトルが出力出来て、`relative item.path`とすれば、現在のコンテンツからの相対パスが得られるので、これをそのままリンクのURLにすることで、リンクを実現できます。
 
 カテゴリを列挙するには、`children`プロパティを使います:
 
@@ -656,6 +655,42 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 
 ----
 
+## マークダウン中のキーワードの置き換え
+
+これまでに説明してきたキーワードの置き換えは、レイアウトファイルに対して行うというものでした。
+このキーワード置き換え機能は、マークダウンファイルにも同様に適用されます。例えば:
+
+```markdown
+---
+title: hoehoe
+tags: foo,bar,baz
+---
+
+Title: {title}
+```
+
+このようなマークダウンを記述すると、`{title}`が同じようにキーワード置換されます。
+もちろんこれまでに説明してきた、関数キーワードによる計算も可能です。
+
+マークダウン上のキーワード置き換えは、コードブロックに対しては機能しません:
+
+````markdown
+---
+title: hoehoe
+tags: foo,bar,baz
+---
+
+Title: `{title}`
+
+```
+{title}
+```
+````
+
+上記のように、コードブロック内に配置された`{...}`は、MarkTheRipperで解釈されずに、そのまま出力されます。
+
+----
+
 ### 関数キーワード
 
 これまでに出てきた関数を含めた、組み込み関数の一覧を示します:
@@ -670,6 +705,8 @@ CMSやサイトジェネレーターではこのような階層構造を、し�
 |`mul`|引数を乗算します。|
 |`div`|引数を除算します。|
 |`mod`|引数の剰余を取得します。|
+|`embed`|[oEmbedプロトコル](https://oembed.com/)などを使用して、埋め込みコンテンツを生成します。|
+|`card`|[OGPメタデータ](https://ogp.me/)などを使用して、カード形式のコンテンツを生成します。|
 
 #### format
 
@@ -775,9 +812,7 @@ lang: ja-jp
 
 ```json
 {
-     :
-  "diary": "今日起きたこと",
-     :
+  "diary": "今日起きたこと"
 }
 ```
 
@@ -808,18 +843,14 @@ lang: ja-jp
 括弧はいくつでもネスト出来ます。括弧を応用して、`format`関数を使って望ましい形に整形出来ます:
 
 ```html
-<p>1 / 3 = {format (div 1 3) 'F3'}</p>
+<p>1 + 3 = {format (add 1 3) 'D3'}</p>
 ```
 
 結果:
 
 ```html
-<p>1 / 3 = 0.333</p>
+<p>1 + 3 = 004</p>
 ```
-
-小数を含む結果は、意図したとおりの表示にならない事があります。
-そのような可能性を考えて、常に`format`関数を使った方が良いかもしれません。
-小数を含む書式の指定方法は、[ここを参照して下さい](https://docs.microsoft.com/ja-jp/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f)。
 
 引数が数値ではなくても、文字列が数値として見なすことが出来ればOKです:
 
@@ -832,6 +863,10 @@ lang: ja-jp
 ```html
 <p>1 + 2.1 + 3 = {add 1 2.1 3}</p>
 ```
+
+小数を含む結果は、意図したとおりの表示にならない事があります。
+そのような可能性を考えて、常に`format`関数を使った方が良いかもしれません。
+小数を含む書式の指定方法は、[ここを参照して下さい](https://docs.microsoft.com/ja-jp/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f)。
 
 計算を使用する簡単な例を示します。列挙中の`item.index`は、0から開始される数値です。
 一方、`item.count`は列挙できる数ですが、これを並べると一般的な表記となりません:
@@ -856,41 +891,157 @@ lang: ja-jp
 
 とすれば、1から`count`までの数値となり、自然な表現に近づける事が出来ます。
 
-----
+結果:
 
-## マークダウン中のキーワードの置き換え
+```html
+<p>index/count = 1/3</p>
+<p>index/count = 2/3</p>
+<p>index/count = 3/3</p>
+```
 
-これまでに説明してきたキーワードの置き換えは、レイアウトファイルに対して行うというものでした。
-このキーワード置き換え機能は、マークダウンファイルにも同様に適用されます。例えば:
+#### embed (埋め込みコンテンツを生成)
+
+`embed` (と後述の`card`) 関数は特殊で、単純な計算を行うのではなく、
+外部データを参照してコンテンツを生成する、強力な関数です。
+
+あなたは、自分のブログにYouTubeの動画を埋め込みたいと考えたことはありませんか？
+あるいは、単なるリンクではなく、外部コンテンツへのカード形式のコンテンツを表示したいと考えたこともあるかも知れません。
+
+`embed`と`card`関数は、このような複雑なコンテンツ埋め込みを容易に実現します。
+例えば、文書中に以下のように書きます:
 
 ```markdown
----
-title: hoehoe
-tags: [foo,bar,baz]
----
+## すばらしい動画を発見
 
-Title: {title}
+いつか、自由に旅行できるようになったら、訪れてみたい...
+
+{embed https://youtu.be/1La4QzGeaaQ}
 ```
 
-このようなマークダウンを記述すると、`{title}`が同じようにキーワード置換されます。
-もちろんこれまでに説明してきた、関数キーワードによる計算も可能です。
+すると、以下のように表示されます:
 
-マークダウン上のキーワード置き換えは、コードブロックに対しては機能しません:
+![embed-sample1-ja](Images/embed-sample1-ja.png)
 
-````markdown
----
-title: hoehoe
-tags: [foo,bar,baz]
----
+この画像は、単なるサムネイルではありません。実際にページ内で動画を再生することもできます。
+マジック！ですか？ これは、業界標準の[oEmbedプロトコル](https://oembed.com/)を使って、
+HTMLに埋め込むべきコンテンツを自動的に収集して実現しています。
 
-Title: `{title}`
+`embed`関数の引数には、そのコンテンツの「パーマリンク」、つまり共有すべきURLを指定するだけです。
+YouTubeの他にも、数多くの有名コンテンツサイトが対応しているため:
 
+```markdown
+## Today's DIVISION
+
+{embed https://twitter.com/kekyo2/status/1467073038667882497}
 ```
-{title}
-```
-````
 
-上記のように、コードブロック内に配置された`{...}`は、MarkTheRipperで解釈されずに、そのまま出力されます。
+![embed-sample2-ja](Images/embed-sample2-ja.png)
+
+このように、Twitterなど、他のコンテンツも簡単に埋め込めます。
+どのコンテンツサイトが対応しているのかは、[直接oEmbedのjsonメタデータを参照](https://oembed.com/providers.json)して確かめてみてください。
+かなり多くのサイトが対応済みであることが分かります。
+
+しかし、私たちが知りうる有用なサイトの一つであるAmazonは、何とoEmbedに対応していません！
+そのため、MarkTheRipperでは、Amazonの商品リンクを特別に認識して、同様に埋め込めるようにしています:
+
+```markdown
+## USBホストを行う実験
+
+{embed https://amzn.to/3V6lYlQ}
+```
+
+![embed-sample3-ja](Images/embed-sample3-ja.png)
+
+* このリンクは、Amazon associatesを有効化する事で、取得出来るようになります。
+  Amazon associatesは、Amazonのアカウントがあれば誰でも有効化出来ますが、ここでは詳細を省きます。
+
+さて、この便利な関数を使用するには、少しだけ準備が必要です。
+この埋め込みコンテンツを表示させるための、専用のレイアウトファイル`layouts/embed.html`を用意します。
+内容は以下の通りです:
+
+```html
+<div style="max-width:800px;margin:10px;">
+    {contentBody}
+</div>
+```
+
+これまでのレイアウト解説と同様に、`contentBody`には、実際に埋め込むべきoEmbedのコンテンツが埋め込まれます。
+外側の`div`タグは、この埋め込みコンテンツの領域を決めるものです。
+上記では外周に若干空白を持たせて、本体は横が800pxとなるようにしています。
+あなたのサイトのデザインに合わせて、調整すると良いでしょう。
+
+もし、コンテンツサイトごとに異なるレイアウトが必要な場合は、`layouts/embed-YouTube.html`のように、
+oEmbedプロバイダ名を指定したファイル名とする事で、サイト固有のカスタマイズが出来ます。
+
+ところで、oEmbedプロトコルで得られる情報には、埋め込みコンテンツが含まれていない場合があります。
+そのような場合は、一緒に取得出来たoEmbedメタデータを使用して、次に紹介する`card`関数と同様のコンテンツを生成します。
+
+#### card (カードコンテンツを生成)
+
+`embed`関数は、コンテンツプロバイダーが用意した埋め込みコンテンツを直接表示させるものでした。
+この`card`関数は、コンテンツのメタデータを収集して、MarkTheRipper側で用意したビューで表示させます。
+
+メタデータは、以下の方法で収集します:
+
+* oEmbed: 付随するメタデータを使用（`embed`関数で埋め込みコンテンツが提供されなかった場合を含む）
+* OGP (Open Graph protocol): 対象のページをスクレイピングし、ページに含まれるOGPメタデータを収集。
+* Amazon: Amazon associatesページから収集。
+
+使い方は`embed`関数と全く同じです:
+
+```markdown
+## すばらしい動画を発見
+
+いつか、自由に旅行できるようになったら、訪れてみたい...
+
+{card https://youtu.be/1La4QzGeaaQ}
+```
+
+すると、以下のように表示されます:
+
+![card-sample1-ja](Images/card-sample1-ja.png)
+
+`embed`関数と異なり、付加情報をカード状にまとめた、コンテンツとリンクとして表示します。
+同様に:
+
+```markdown
+## USBホストを行う実験
+
+{card https://amzn.to/3V6lYlQ}
+```
+
+![card-sample3-ja](Images/card-sample3-ja.png)
+
+様々なコンテンツを、同じカード形式で表示できます。
+埋め込み形式とカード形式のどちらを使うかは、好みで使い分ければ良いでしょう。
+
+`card`関数も、`embed`関数と同様に、専用のレイアウトファイルを用意する必要があります。
+レイアウトファイル`layouts/card.html`も、以下のひな形を元に、自分のサイトに合わせていけば良いでしょう:
+
+```html
+<div style="max-width:640px;margin:10px;">
+    <ul style="display:flex;padding:0;border:1px solid #e0e0e0;border-radius:5px;">
+        <li style="min-width:180px;max-width:180px;padding:0;list-style:none;">
+            <a href="{permaLink}" target="_blank" style="display:block;width:100%;height:auto;color:inherit;text-decoration:inherit;">
+                <img style="margin:10px;width:100%;height:auto;" src="{imageUrl}" alt="{title}">
+            </a>
+        </li>
+        <li style="flex-grow:1;margin:10px;list-style:none; ">
+            <a href="{permaLink}" target="_blank" style="display:block;width:100%;height:auto;color:inherit;text-decoration:inherit;">
+                <h5 style="font-weight:bold;">{title}</h5>
+                <p>{author}</p>
+                <p>{description}</p>
+                <p><small class="text-muted">{siteName}</small></p>
+            </a>
+        </li>
+    </ul>
+</div>
+```
+
+このひな形は、完全に独立したHTMLになっています。もしBootstrapと併用したいのであれば、
+`mtr init standard`や`mtr init rich`で生成されるサンプルレイアウトに含まれるファイルを参照して下さい。
+
+`card`関数でも、`layouts/card-YouTube.html`のようなファイル名にする事で、サイト固有のカスタマイズが出来ます。
 
 ----
 

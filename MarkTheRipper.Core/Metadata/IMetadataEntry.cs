@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using MarkTheRipper.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,8 +16,8 @@ namespace MarkTheRipper.Metadata;
 public interface IMetadataEntry
 {
     ValueTask<object?> GetImplicitValueAsync(
-        MetadataContext metadata, CancellationToken ct);
+        IMetadataContext metadata, IReducer reducer, CancellationToken ct);
 
     ValueTask<object?> GetPropertyValueAsync(
-        string keyName, MetadataContext context, CancellationToken ct);
+        string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct);
 }

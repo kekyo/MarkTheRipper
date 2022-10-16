@@ -12,6 +12,7 @@ MarkTheRipper - Fantastic faster generates static site comes from simply Markdow
 |:---------|:---------------------------------------------------------------------------------------------------------------------|
 | MarkTheRipper | [![NuGet MarkTheRipper](https://img.shields.io/nuget/v/MarkTheRipper.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper) |
 | MarkTheRipper.Core | [![NuGet MarkTheRipper.Core](https://img.shields.io/nuget/v/MarkTheRipper.Core.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Core) |
+| MarkTheRipper.Engine | [![NuGet MarkTheRipper.Engine](https://img.shields.io/nuget/v/MarkTheRipper.Engine.svg?style=flat)](https://www.nuget.org/packages/MarkTheRipper.Engine) |
 
 ## CI
 
@@ -39,6 +40,8 @@ If you already have .NET 6.0 installation, you can install it simply:
 dotnet tool install -g MarkTheRipper
 ```
 
+Alternatively, [you can download a binary distribution](https://github.com/kekyo/MarkTheRipper/releases) that is compatible with .NET Framework 4.71 or higher.
+
 Then at first time, you will need to run:
 
 ```bash
@@ -51,17 +54,17 @@ and almost no extra definitions!)
 
 * `contents` directory: `index.md`,
   It is a content (post) file written by markdown.
-* `resources` directory: `layout-page.html`,
+* `layouts` directory: `page.html`,
   When the site is generated, the markdown is converted to HTML and inserted into this layout file.
 
 That's it! Just to be sure, let's show you what's inside:
 
-### index.md
+### contents/index.md
 
 ```markdown
 ---
 title: Hello MarkTheRipper!
-tags: [foo,bar]
+tags: foo,bar
 ---
 
 This is sample post.
@@ -75,7 +78,7 @@ H2 body.
 H3 body.
 ```
 
-### layout-page.html
+### layouts/page.html
 
 ```html
 <!DOCTYPE html>
@@ -244,11 +247,12 @@ foobar: Hello MarkTheRipper!
 (... Body ...)
 ```
 
-* This header is called "FrontMatter" in other site generators and is written in YAML syntax.
+* Note: This header is called "FrontMatter" in other site generators and is written in YAML syntax.
   However, MarkTheRipper does not strictly use YAML,
   because uses a syntax that allows for greater flexibility in text.
-  For example, `title` is not required to be enclosed in double quotes.
-  For the record, MarkTheRipper does not use the term FrontMatter.
+  For example, `title` is not required to be enclosed in double quotes,
+  and `tags` is correctly recognized without square brackets.
+  For the record, MarkTheRipper does not use the term "FrontMatter."
 
 Do you somehow see how you can make use of metadata dictionaries?
 In other words, MarkTheRipper can treat any set of "key-value" pairs you write in the markdown header as a metadata dictionary,
@@ -294,9 +298,9 @@ These keywords can be overridden by writing them in the markdown header.
 It may not make sense to override `generated`, but just know that MarkTheRipper does not treat metadata dictionary definitions specially.
 
 You may be wondering what the default values of `lang`, `layout` and `timezone` are.
-Metadata dictionaries can be placed in `resources/metadata.json`,
+Metadata dictionaries can be placed in `metadata.json`,
 which is the base definition for site generation.
-(It does not have to be there. In fact, it is not present in the minimum/sidebar samples.)
+(It does not have to be there. In fact, it is not present in the minimum samples.)
 For example, the following definition:
 
 ```json
@@ -334,7 +338,7 @@ And as for the `lang` and `layout` fallback:
 
 The layout name may need some supplementation.
 The layout name is used to identify the layout file from which the conversion is being made.
-For example, if the layout name is `page`, the file `resources/layout-page.html` will be applied. If:
+For example, if the layout name is `page`, the file `layouts/page.html` will be applied. If:
 
 ```markdown
 ---
@@ -345,7 +349,7 @@ layout: fancy
 (... Body ...)
 ```
 
-then `resources/layout-fancy.html` will be used.
+then `layouts/fancy.html` will be used.
 
 The `date` represents the date and time of the article and is treated like an ordinary keyword,
 but if it is not defined in the markdown header,
@@ -401,16 +405,13 @@ Use the `lookup` function keyword built-in MarkTheRipper:
 If you do this and register the pair `blog` and `Private diary` in the metadata dictionary,
 the HTML will show `Category: Private diary`.
 
-Such keyword/value pairs can be referenced by writing them in `resources/metadata.json` as shown in the previous section.
-In addition, the metadata dictionary file is actually all JSON files matched by `resources/metadata*.json`.
+Such keyword/value pairs can be referenced by writing them in `metadata.json` as shown in the previous section.
+In addition, the metadata dictionary file is actually all JSON files matched by `metadata/*.json`.
 Even if the files are separated,
 they will all be read and their contents merged when MarkTheRipper starts.
 
 For example, it would be easier to manage only article categories as separate files,
-such as `resource/metadata-category.json`.
-
-This recursive search can be performed only once (by design).
-In other words, it is not possible to keep searching repeatedly using the obtained values as keys.
+such as `metadata/category.json`.
 
 ----
 
@@ -441,7 +442,7 @@ Now suppose we convert the following markdown:
 ```markdown
 ---
 title: Hello MarkTheRipper
-tags: [foo,bar,baz]
+tags: foo,bar,baz
 ---
 
 (... Body ...)
@@ -641,7 +642,7 @@ The definition corresponding to `foobarbaz1.md` above is:
 ```markdown.
 ---
 title: Hello MarkTheRipper
-category: [foo,bar,baz]
+category: foo,bar,baz
 ---
 
 (... Body ...)
@@ -687,7 +688,7 @@ Then, like the tags, you can pull the header information for each markdown
 from each of the elements enumerated in the `entries`.
 
 Here, `path` is used to output the path to the content, but you can use `title` to output the title.
-If you use `item.path.relative`, you can get the path relative to the current content,
+If you use `relative item.path`, you can get the path relative to the current content,
 which can be used as the URL of the link to realize the link.
 
 To enumerate categories, use the `children` property:
@@ -728,6 +729,43 @@ In the above example, the `name` property outputs the name of the category.
 
 ----
 
+## Replacing keywords in markdown
+
+The keyword replacement described so far is for "Layout" files.
+It feature applies equally to markdown files.
+For example, the keyword replacement in:
+
+```markdown
+---
+title: hoehoe
+tags: foo,bar,baz
+---
+
+Title: {title}
+```
+
+If you write such a markdown, `{title}` will be keyword-substituted in the same way.
+Of course, the function keyword calculations described so far are also possible.
+
+Keyword substitution on markdown does not work for code blocks:
+
+````markdown
+---
+title: hoehoe
+tags: foo,bar,baz
+---
+
+Title: `{title}`
+
+```
+{title}
+```
+````
+
+As shown above, `{...}` are not interpreted by MarkTheRipper and are output as is.
+
+----
+
 ### Function keywords
 
 Here is a list of built-in functions, including the functions that have appeared so far:
@@ -742,6 +780,8 @@ Here is a list of built-in functions, including the functions that have appeared
 |`mul`|Multiply numeric arguments.|
 |`div`|Divide numeric arguments.|
 |`mod`|Get the remainder of numeric arguments.|
+|`embed`|Generate embedded content using [oEmbed protocol](https://oembed.com/) and etc.|
+|`card`|Generate card-shaped content using [OGP metadata](https://ogp.me/) and etc.|
 
 #### format
 
@@ -855,9 +895,7 @@ Thus, if `metadata.json` contains:
 
 ```json
 {
-     :
-  "diary": "What happened today",
-     :
+  "diary": "What happened today"
 }
 ```
 
@@ -890,18 +928,14 @@ You can nest any number of parentheses.
 Parentheses can be applied and formatted as desired using the `format` function:
 
 ```html
-<p>1 / 3 = {format (div 1 3) 'F3'}</p>
+<p>1 + 3 = {format (add 1 3) 'D3'}</p>
 ```
 
 Result:
 
 ```html
-<p>1 / 3 = 0.333</p>
+<p>1 + 3 = 004</p>
 ```
-
-Results containing decimals may not always turn out as intended.
-It may be better to always use the `format` function to account for such possibilities.
-For information on how to specify formats that include decimals, [see here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f).
 
 The argument does not have to be a number,
 as long as the string can be regarded as a number:
@@ -917,6 +951,10 @@ If so, it will be treated as a calculation with decimals
 ```html
 <p>1 + 2.1 + 3 = {add 1 2.1 3}</p>
 ```
+
+Results containing decimals may not always turn out as intended.
+It may be better to always use the `format` function to account for such possibilities.
+For information on how to specify formats that include decimals, [see here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings#fixed-point-format-specifier-f).
 
 Here is a simple example of using the calculation.
 In enumeration, `item.index` is a number and starting from 0.
@@ -941,44 +979,166 @@ In such a case, you can use `add` function to get:
 <p>index/count = {add item.index 1}/{item.count}</p>
 ```
 
-Would result in a number from 1 to `count`, which is closer to a natural representation.
+Would result in a number from 1 to `count`,
+which is closer to a natural representation.
 
-----
+Result:
 
-## Replacing keywords in markdown
+```html
+<p>index/count = 1/3</p>
+<p>index/count = 2/3</p>
+<p>index/count = 3/3</p>
+```
 
-The keyword replacement described so far is for "Layout" files.
-It feature applies equally to markdown files.
-For example, the keyword replacement in:
+#### embed (Generates embedded content)
+
+The `embed` (and `card`, described below) functions are special,
+powerful functions that generate content by reference to external data,
+rather than performing simple calculations.
+It is a powerful function that generates content by referencing external data.
+
+Have you ever wanted to embed a YouTube video on your blog?
+Or perhaps you have wanted to display card-shaped content to external content,
+rather than just a link.
+
+The `embed` and `card` functions make such complex content embedding easy.
+For example, you could write the following in your document:
 
 ```markdown
----
-title: hoehoe
-tags: [foo,bar,baz]
----
+## Found a great video!
 
-Title: {title}
+One day, when I can travel freely, I would like to visit...
+
+{embed https://youtu.be/1La4QzGeaaQ}
 ```
 
-If you write such a markdown, `{title}` will be keyword-substituted in the same way.
-Of course, the function keyword calculations described so far are also possible.
+Then you will see the following:
 
-Keyword substitution on markdown does not work for code blocks:
+![embed-sample1-en](Images/embed-sample1-en.png)
 
-````markdown
----
-title: hoehoe
-tags: [foo,bar,baz]
----
+This image is not just a thumbnail.
+You can actually play the video on the page. Magic! Is it?
+This is made possible by using the standard [oEmbed protocol](https://oembed.com/)
+to this is achieved by automatically collecting content that should be embedded in HTML.
 
-Title: `{title}`
+The argument to the `embed` function is simply the "permalink" of the content,
+i.e., the URL that should be shared.
+In addition to YouTube, many other well-known content sites support this function, so:
 
+```markdown
+## Today's hacking
+
+{embed https://twitter.com/kozy_kekyo/status/1508078650499149827}
 ```
-{title}
-```
-````
 
-As shown above, `{...}` are not interpreted by MarkTheRipper and are output as is.
+![embed-sample2-en](Images/embed-sample2-en.png)
+
+Thus, other content, such as Twitter, can be easily embedded. To see which content sites are supported, please [directly refer to oEmbed's json metadata](https://oembed.com/providers.json). You will see that quite a few sites are already supported.
+
+However, one of the most useful sites we know of Amazon,
+to our surprise does not support oEmbed!
+Therefore, MarkTheRipper specifically recognizes Amazon's product links so that they can be embedded as well:
+
+```markdown
+## Learning from Failure
+
+{embed https://amzn.to/3USDXfp}
+```
+
+![embed-sample3-en](Images/embed-sample3-en.png)
+
+* This link can be obtained by activating Amazon associates.
+  Amazon associates can be activated by anyone with an Amazon account, but we won't go into details here.
+
+Now, a little preparation is required to use this handy function.
+Prepare a dedicated layout file `layouts/embed.html` to display this embedded content.
+The contents are only as follows:
+
+```html
+<div style="max-width:800px;margin:10px;">
+    {contentBody}
+</div>
+```
+
+As in the previous layout explanations,
+the `contentBody` will contain the actual oEmbed content to be embedded.
+The outer `div` tag determines the area of this embedded content.
+In the above, the body is 800px wide with some space around the perimeter.
+You may want to adjust this to fit your site's design.
+
+If you need a different layout for each content site,
+you can apply a file name like `layouts/embed-YouTube.html` that specifies the name of the oEmbed provider.
+
+By the way, the oEmbed protocol may not contain embedded content.
+In such a case, the oEmbed metadata that could be obtained together is used to generate content similar to the `card` function introduced next.
+
+#### card (Generate card-shaped content)
+
+The `embed` function directly displays embedded content provided by the content provider.
+The `card` function collects content metadata and displays it in a view provided by MarkTheRipper.
+
+Metadata is collected in the following way:
+
+* oEmbed: Using the accompanying metadata (including cases where embedded content was not provided by the `embed` function)
+* OGP (Open Graph protocol): Scraping the target page and collecting the OGP metadata contained in the page.
+* Amazon: Collect from Amazon associates page.
+
+Usage is exactly the same as the `embed` function:
+
+```markdown
+## Found a great video!
+
+One day, when I can travel freely, I would like to visit...
+
+{card https://youtu.be/1La4QzGeaaQ}
+```
+
+Then you will see the following :
+
+![card-sample1-en](Images/card-sample1-en.png)
+
+Unlike the `embed` function, it displays the additional information as content and links in a card-shaped format.
+Similarly:
+
+```markdown
+## Learning from Failure
+
+{card https://amzn.to/3USDXfp}
+```
+
+![card-sample3-en](Images/card-sample3-en.png)
+
+Various content can be displayed in card-shaped format.
+You can use either the embedded format or the card-shaped format as you like.
+
+Like the `embed` function, the `card` function also requires a dedicated layout file.
+The layout file `layouts/card.html` can be adapted to your site based on the following template:
+
+```html
+<div style="max-width:640px;margin:10px;">
+    <ul style="display:flex;padding:0;border:1px solid #e0e0e0;border-radius:5px;">
+        <li style="min-width:180px;max-width:180px;padding:0;list-style:none;">
+            <a href="{permaLink}" target="_blank" style="display:block;width:100%;height:auto;color:inherit;text-decoration:inherit;">
+                <img style="margin:10px;width:100%;height:auto;" src="{imageUrl}" alt="{title}">
+            </a>
+        </li>
+        <li style="flex-grow:1;margin:10px;list-style:none; ">
+            <a href="{permaLink}" target="_blank" style="display:block;width:100%;height:auto;color:inherit;text-decoration:inherit;">
+                <h5 style="font-weight:bold;">{title}</h5>
+                <p>{author}</p>
+                <p>{description}</p>
+                <p><small class="text-muted">{siteName}</small></p>
+            </a>
+        </li>
+    </ul>
+</div>
+```
+
+This template is completely independent HTML.
+If you wish to use it in conjunction with Bootstrap,
+please refer to the files included in the sample layouts generated by `mtr init standard` or `mtr init rich`.
+
+Even the `card` function can be customized to be site-specific by naming the file `layouts/card-YouTube.html`.
 
 ----
 
