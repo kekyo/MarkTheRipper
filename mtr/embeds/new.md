@@ -1,6 +1,7 @@
 ﻿---
 title: (Draft)
 tags: foo,bar
+published: false
 ---
 
 This is sample post.
