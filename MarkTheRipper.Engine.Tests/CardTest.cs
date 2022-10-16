@@ -124,7 +124,7 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -145,7 +145,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -201,7 +201,7 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -222,7 +222,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -278,7 +278,7 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -299,7 +299,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -354,7 +354,7 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -375,7 +375,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -430,9 +430,9 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
     <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
@@ -480,9 +480,9 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <title>Peru 8K HDR 60FPS (FUHD)</title>
     <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
@@ -530,9 +530,9 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <title>[AltTitle]</title>
     <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
@@ -581,9 +581,9 @@ new(("card", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"")));
         await Verifier.Verify(actual);
     }
@@ -625,13 +625,13 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <link type=""application/json+oembed"" href=""https://www.example.com/"" />
     </head><body /></html>"),
-    ("https://www.example.com/",
+    new("https://www.example.com/",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -686,13 +686,13 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <link type=""application/json+oembed"" href=""https://www.example.com/"" />
     </head><body /></html>"),
-    ("https://www.example.com/",
+    new("https://www.example.com/",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",

@@ -143,7 +143,7 @@ new(("embed-YouTube", @"<ul>
 <li>imageUrl: {imageUrl}</li>
 </ul>
 <div>contentBody: {contentBody}</div>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -164,7 +164,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -221,7 +221,7 @@ new(("embed-YouTube", @"<ul>
 <li>imageUrl: {imageUrl}</li>
 </ul>
 <div>contentBody: {contentBody}</div>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -242,7 +242,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -298,7 +298,7 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -319,7 +319,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -374,7 +374,7 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[
     {
         ""provider_name"": ""YouTube"",
@@ -395,7 +395,7 @@ new(("https://oembed.com/providers.json",
         ]
     }
 ]"),
-    ("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=1La4QzGeaaQ&format=json",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -450,9 +450,9 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
     <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
@@ -500,9 +500,9 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <title>Peru 8K HDR 60FPS (FUHD)</title>
     <meta property=""og:description"" content=""Jacob + Katie Schwarz"" />
@@ -550,9 +550,9 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <title>[AltTitle]</title>
     <meta property=""og:title"" content=""Peru 8K HDR 60FPS (FUHD)"" />
@@ -601,9 +601,9 @@ new(("card", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"")));
         await Verifier.Verify(actual);
     }
@@ -645,13 +645,13 @@ new(("card-YouTube", @"<ul>
 <li>type: {type}</li>
 <li>imageUrl: {imageUrl}</li>
 </ul>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <link type=""application/json+oembed"" href=""https://www.example.com/"" />
     </head><body /></html>"),
-    ("https://www.example.com/",
+    new("https://www.example.com/",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -707,13 +707,13 @@ new(("embed-YouTube", @"<ul>
 <li>imageUrl: {imageUrl}</li>
 </ul>
 <div>contentBody: {contentBody}</div>")),
-new(("https://oembed.com/providers.json",
+new(new("https://oembed.com/providers.json",
     @"[]"),
-    ("https://www.youtube.com/watch?v=1La4QzGeaaQ",
+    new("https://www.youtube.com/watch?v=1La4QzGeaaQ",
     @"<html><head>
     <link type=""application/json+oembed"" href=""https://www.example.com/"" />
     </head><body /></html>"),
-    ("https://www.example.com/",
+    new("https://www.example.com/",
     @"{
     ""title"": ""Peru 8K HDR 60FPS (FUHD)"",
     ""author_name"": ""Jacob + Katie Schwarz"",
@@ -854,8 +854,8 @@ new(("card-Amazon", @"<ul>
 <li>imageUrl: {imageUrl}</li>
 </ul>
 <div>contentBody: {contentBody}</div>")),
-new(("https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id=abcde1-1&language=en_US&marketplace=amazon&region=US&asins=B07X5FPP4P&show_border=false&link_opens_in_new_window=true",
-    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonComInCard.html")!).ReadToEnd())));
+new(new AssertionPair[] { new("https://ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ss&ref=as_ss_li_til&ad_type=product_link&tracking_id=abcde1-1&language=en_US&marketplace=amazon&region=US&asins=B07X5FPP4P&show_border=false&link_opens_in_new_window=true",
+    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonComInCard.html")!).ReadToEnd()) }));
         await Verifier.Verify(actual);
     }
 
@@ -897,10 +897,12 @@ new(("card-Amazon", @"<ul>
 <li>imageUrl: {imageUrl}</li>
 </ul>
 <div>contentBody: {contentBody}</div>")),
-new(("https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t=abcde1-1&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins=B07KQ25738",
-    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonCoJpInCard.html")!).ReadToEnd())));
+new(new AssertionPair[] { new("https://rcm-fe.amazon-adsystem.com/e/cm?lt1=_blank&t=abcde1-1&language=ja_JP&o=9&p=8&l=as4&m=amazon&f=ifr&ref=as_ss_li_til&asins=B07KQ25738",
+    new StreamReader(this.GetType().Assembly.GetManifestResourceStream("MarkTheRipper.Resources.RipOffoEmbedInAmazonCoJpInCard.html")!).ReadToEnd()) }));
         await Verifier.Verify(actual);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////
 
     [Test]
     public async Task RipOffoEmbedInAmazonComInShortLink()
@@ -940,8 +942,91 @@ new(("embed-Amazon", @"<ul>
 <li>imageUrl: {imageUrl}</li>
 </ul>
 <div>contentBody: {contentBody}</div>")),
-new(("https://amzn.to/3CpBGAX",
-    @"https://www.amazon.com/gp/product/B07X5FPP4P/")));
+new(new AssertionPair[] {
+    new("https://amzn.to/3CpBGAX",
+        new Uri(@"https://www.amazon.com/gp/product/B07X5FPP4P/")), }));
         await Verifier.Verify(actual);
     }
+
+    [Test]
+    public async Task RipOffoEmbedInShortLink()
+    {
+        var actual = await RipOffContentAsync(
+@"
+---
+title: hoehoe
+tags: foo,bar
+---
+
+Hello MarkTheRipper!
+This is test contents.
+",
+"page",
+@"<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <meta name=""keywords"" content=""{tags}"" />
+  </head>
+  <body>
+    {embed https://bit.ly/3gbo2ZM}
+
+{contentBody}</body>
+</html>
+",
+default,
+new(("embed-YouTube", @"<ul>
+<li>permaLink: {permaLink}</li>
+<li>siteName: {siteName}</li>
+<li>title: {title}</li>
+<li>altTitle: {altTitle}</li>
+<li>author: {author}</li>
+<li>description: {description}</li>
+<li>type: {type}</li>
+<li>imageUrl: {imageUrl}</li>
+</ul>
+<div>contentBody: {contentBody}</div>")),
+new(new("https://bit.ly/3gbo2ZM",
+        new Uri("https://www.youtube.com/watch?v=Crn-HCz7yKU")),
+    new("https://oembed.com/providers.json",
+    @"[
+    {
+        ""provider_name"": ""YouTube"",
+        ""provider_url"": ""https://www.youtube.com/"",
+        ""endpoints"": [
+            {
+                ""schemes"": [
+                    ""https://*.youtube.com/watch*"",
+                    ""https://*.youtube.com/v/*"",
+                    ""https://youtu.be/*"",
+                    ""https://*.youtube.com/playlist?list=*"",
+                    ""https://youtube.com/playlist?list=*"",
+                    ""https://*.youtube.com/shorts*""
+                ],
+                ""url"": ""https://www.youtube.com/oembed"",
+                ""discovery"": true
+            }
+        ]
+    }
+]"),
+    new("https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=Crn-HCz7yKU&format=json",
+    @"{
+    ""title"": ""Smooth Lounge"",
+    ""author_name"": ""Waderman - Topic"",
+    ""author_url"": ""https://www.youtube.com/channel/UCSmCQPA-rmQYkd_giaOSLJA"",
+    ""type"": ""video"",
+    ""height"": 150,
+    ""width"": 200,
+    ""version"": ""1.0"",
+    ""provider_name"": ""YouTube"",
+    ""provider_url"": ""https://www.youtube.com/"",
+    ""thumbnail_height"": 360,
+    ""thumbnail_width"": 480,
+    ""thumbnail_url"": ""https://i.ytimg.com/vi/Crn-HCz7yKU/hqdefault.jpg"",
+    ""html"": ""<iframe width=\""200\"" height=\""150\"" src=\""https://www.youtube.com/embed/Crn-HCz7yKU?feature=oembed\"" frameborder=\""0\"" allow=\""accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\"" allowfullscreen title=\""Smooth Lounge\""></iframe>""
+}
+")));
+        await Verifier.Verify(actual);
+    }
+
 }

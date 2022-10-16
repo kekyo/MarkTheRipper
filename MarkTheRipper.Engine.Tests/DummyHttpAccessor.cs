@@ -22,25 +22,57 @@ using static NUnit.Framework.Assert;
 
 namespace MarkTheRipper;
 
+internal sealed class AssertionPair
+{
+    public readonly Uri Url;
+    public readonly object Content;
+
+    public AssertionPair(string url, string content)
+    {
+        this.Url = new Uri(url, UriKind.Absolute);
+        this.Content = content;
+    }
+
+    public AssertionPair(string url, Uri redirectUrl)
+    {
+        this.Url = new Uri(url, UriKind.Absolute);
+        this.Content = redirectUrl;
+    }
+
+    public void Deconstruct(out Uri url, out object content)
+    {
+        url = this.Url;
+        content = this.Content;
+    }
+}
+
 internal sealed class DummyHttpAccessor : IHttpAccessor
 {
-    private readonly Queue<(Uri url, string content)> queue = new();
+    private readonly Queue<AssertionPair> queue = new();
 
-    public DummyHttpAccessor(params (string url, string content)[] entries)
+    public DummyHttpAccessor(params AssertionPair[] entries)
     {
         foreach (var entry in entries)
         {
-            this.queue.Enqueue(
-                (new Uri(entry.url, UriKind.RelativeOrAbsolute), entry.content));
+            this.queue.Enqueue(entry);
         }
     }
 
-    private (Uri url, string content) Dequeue()
+    private AssertionPair Dequeue()
     {
         lock (this.queue)
         {
             AreNotEqual(0, this.queue.Count);
             return this.queue.Dequeue();
+        }
+    }
+
+    private AssertionPair? Peek()
+    {
+        lock (this.queue)
+        {
+            return this.queue.Count >= 1 ?
+                this.queue.Peek() : null;
         }
     }
 
@@ -56,17 +88,19 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
     {
         var (u, c) = this.Dequeue();
         AreEqual(u, url);
+        IsTrue(c is string);
 
         var parser = new HtmlParser();
-        return new ValueTask<IHtmlDocument>(parser.ParseDocumentAsync(c));
+        return new ValueTask<IHtmlDocument>(parser.ParseDocumentAsync((string)c));
     }
 
     public ValueTask<JToken> FetchJsonAsync(Uri url, CancellationToken ct)
     {
         var (u, c) = this.Dequeue();
         AreEqual(u, url);
+        IsTrue(c is string);
 
-        var tr = new StringReader(c);
+        var tr = new StringReader((string)c);
         var jr = new JsonTextReader(tr);
         return new ValueTask<JToken>(JToken.ReadFrom(jr));
     }
@@ -79,8 +113,9 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
     {
         var (u, c) = this.Dequeue();
         AreEqual(u, url);
+        IsTrue(c is string);
 
-        var tr = new StringReader(c);
+        var tr = new StringReader((string)c);
         var jr = new JsonTextReader(tr);
         return new ValueTask<JToken>(JToken.ReadFrom(jr));
     }
@@ -88,11 +123,16 @@ internal sealed class DummyHttpAccessor : IHttpAccessor
     public ValueTask<Uri> ExamineShortUrlAsync(
         Uri url, CancellationToken ct)
     {
-        var (u, c) = this.Dequeue();
-        AreEqual(u, url);
+        if (this.Peek() is (var u, Uri expected))
+        {
+            this.Dequeue();
+            AreEqual(u, url);
 
-        return new ValueTask<Uri>(
-            Uri.TryCreate(c, UriKind.RelativeOrAbsolute, out var examined) ?
-                examined : url);
+            return new ValueTask<Uri>(expected);
+        }
+        else
+        {
+            return new ValueTask<Uri>(url);
+        }
     }
 }
