@@ -119,6 +119,21 @@ internal static class InternalUtilities
         }
     }
 
+    public static SortedDictionary<TKey, TValue> ToSortedDictionary<T, TKey, TValue>(
+        this IEnumerable<T> enumerable,
+        Func<T, TKey> keySelector, Func<T, TValue> valueSelector)
+        where TKey : IEquatable<TKey>
+    {
+        var sd = new SortedDictionary<TKey, TValue>();
+        foreach (var item in enumerable)
+        {
+            var key = keySelector(item);
+            var value = valueSelector(item);
+            sd.Add(key, value);
+        }
+        return sd;
+    }
+
     public static IEnumerable<T> Unfold<T>(this T value, Func<T, T?> selector)
     {
         var current = value;

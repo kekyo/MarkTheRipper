@@ -24,7 +24,7 @@ internal static class EntryAggregator
             dto :
             DateTimeOffset.MaxValue;
 
-    public static async ValueTask<Dictionary<string, TagEntry>> AggregateTagsAsync(
+    public static async ValueTask<IReadOnlyDictionary<string, TagEntry>> AggregateTagsAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
         IMetadataContext metadata,
         CancellationToken ct) =>
@@ -40,7 +40,7 @@ internal static class EntryAggregator
             ConfigureAwait(false)).
             SelectMany(entries => entries).
             GroupBy(entry => entry.tag.Name).
-            ToDictionary(
+            ToSortedDictionary(
                 g => g.Key,
                 g => new TagEntry(
                     g.Key,
@@ -78,7 +78,7 @@ internal static class EntryAggregator
                     ct).
                     ConfigureAwait(false)))).
             ConfigureAwait(false)).
-            ToDictionary(
+            ToSortedDictionary(
                 g => g.key,
                 g => g.values);
 
