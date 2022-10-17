@@ -4,12 +4,11 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net471</TargetFrameworks>
     <AssemblyName>mtr</AssemblyName>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Images\MarkTheRipper.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack.FullAuto" Condition="'$(Configuration)' == 'Release'" Version="0.1.0" PrivateAssets="All" />
+    <PackageReference Include="ILRepack.FullAuto" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
