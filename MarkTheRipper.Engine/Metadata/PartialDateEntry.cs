@@ -81,7 +81,7 @@ internal sealed class PartialDateEntry :
 
     public async ValueTask<object?> GetImplicitValueAsync(
         IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
-        (await GetDateTimeConverterAsync(metadata, reducer, ct).ConfigureAwait(false))(this.Date);
+        (await GetDateTimeConverterAsync(metadata, reducer, ct))(this.Date);
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>

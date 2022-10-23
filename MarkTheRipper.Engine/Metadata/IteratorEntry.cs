@@ -35,8 +35,7 @@ internal sealed class IteratorEntry :
     public async ValueTask<object?> GetPropertyValueAsync(
         string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         this.Value is IMetadataEntry entry &&
-        await entry.GetPropertyValueAsync(keyName, metadata, reducer, ct).
-            ConfigureAwait(false) is { } value ?
+        await entry.GetPropertyValueAsync(keyName, metadata, reducer, ct) is { } value ?
             value :
             keyName switch
             {

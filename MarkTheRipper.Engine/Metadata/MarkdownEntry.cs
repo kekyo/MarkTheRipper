@@ -88,8 +88,7 @@ public sealed class MarkdownEntry :
         IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
         this.headerMetadata.TryGetValue("title", out var valueExpression) &&
             await reducer.ReduceExpressionAndFormatAsync(
-                valueExpression, metadata, ct).
-                ConfigureAwait(false) is { } title ?
+                valueExpression, metadata, ct) is { } title ?
             title : null ?? "(Untitled)";
 
     public ValueTask<object?> GetPropertyValueAsync(
