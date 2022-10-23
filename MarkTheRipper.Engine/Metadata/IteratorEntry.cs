@@ -40,9 +40,9 @@ internal sealed class IteratorEntry :
             value :
             keyName switch
             {
-                "index" => new(this.Index),
-                "count" => new(this.Count),
-                _ => InternalUtilities.NullAsync,
+                "index" => this.Index,
+                "count" => this.Count,
+                _ => null,
             };
 
     public override string ToString() =>
