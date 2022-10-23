@@ -72,10 +72,10 @@ public sealed class ValueExpression : IExpression
     public override string ToString() =>
         this.Value switch
         {
-            string str => $"\"{str}\"",
-            char ch => $"'{ch}'",
-            IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
-            null => "(null)",
-            _ => this.Value.ToString() ?? string.Empty,
+            string str => $"Value: \"{str}\"",
+            char ch => $"Value: '{ch}'",
+            IFormattable f => $"Value: {f.ToString(null, CultureInfo.InvariantCulture)}",
+            null => "Value: (null)",
+            _ => $"Value: {this.Value}",
         };
 }

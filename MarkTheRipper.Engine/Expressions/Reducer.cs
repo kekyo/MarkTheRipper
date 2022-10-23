@@ -53,12 +53,24 @@ internal sealed class Reducer : IReducer
     private ValueTask<object?> ReducePropertiesAsync(
         string[] elements,
         IMetadataContext metadata,
-        CancellationToken ct) =>
-        metadata.Lookup(elements[0]) is { } expression ?
-            (expression is ValueExpression(var value) ?
-                this.ReducePropertyAsync(elements, 1, value, metadata, ct) :
-                new ValueTask<object?>(expression.ImplicitValue)) :
-            new ValueTask<object?>(elements[0]);
+        CancellationToken ct)
+    {
+        if (metadata.Lookup(elements[0]) is { } expression)
+        {
+            if (expression is ValueExpression(var value))
+            {
+                return this.ReducePropertyAsync(elements, 1, value, metadata, ct);
+            }
+            else
+            {
+                return new ValueTask<object?>(expression.ImplicitValue);
+            }
+        }
+        else
+        {
+            return new ValueTask<object?>(elements[0]);
+        }
+    }
 
 #if DEBUG
     private async ValueTask<object?[]> ReduceExpressionsAsync(

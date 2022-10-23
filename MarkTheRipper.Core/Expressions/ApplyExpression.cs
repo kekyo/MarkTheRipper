@@ -50,5 +50,5 @@ public sealed class ApplyExpression : IExpression
     }
 
     public override string ToString() =>
-        $"{this.Function} {string.Join(" ", (object[])this.Parameters)}";
+        $"Apply: {this.Function} {string.Join(" ", (object[])this.Parameters)}";
 }
