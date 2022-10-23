@@ -100,12 +100,10 @@ public sealed class Ripper
             return await Parser.ParseMarkdownHeaderAsync(
                 markdownPath,
                 ct => markdownReader.ReadLineAsync().WithCancellation(ct),
-                ct).
-                ConfigureAwait(false);
+                ct);
         }
 
-        var metadata = await ParseAsync().
-            ConfigureAwait(false);
+        var metadata = await ParseAsync();
 
         if (MarkdownEntry.GetPublishedState(metadata) &&
             !metadata.TryGetValue("date", out var _))
@@ -146,8 +144,7 @@ public sealed class Ripper
                     ct);
 
                 await markdownWriter.FlushAsync().
-                    WithCancellation(ct).
-                    ConfigureAwait(false);
+                    WithCancellation(ct);
             }
             catch
             {
@@ -202,8 +199,7 @@ public sealed class Ripper
             await Parser.ParseMarkdownBodyAsync(
                 markdownPath,
                 ct => markdownReader.ReadLineAsync().WithCancellation(ct),
-                ct).
-                ConfigureAwait(false);
+                ct);
 
         // Step 2: Parse markdown body to AST (ITextTreeNode).
         var tr = new StringReader(markdownBody);
@@ -221,8 +217,7 @@ public sealed class Ripper
 
         // Step 4: Render markdown with looking up metadata context.
         var renderedMarkdownBody = await markdownBodyTree.RenderOverallAsync(
-            mc, ct).
-            ConfigureAwait(false);
+            mc, ct);
 
         // Step 5: Parse renderred markdown to AST (MarkDig)
         var markdownDocument = MarkdownParser.Parse(
@@ -239,18 +234,15 @@ public sealed class Ripper
             new ValueExpression(new HtmlContentEntry(contentBodyWriter.ToString())));
 
         // Step 8: Get layout AST (ITextTreeNode).
-        var layoutNode = await mc.GetLayoutAsync(ct).
-            ConfigureAwait(false);
+        var layoutNode = await mc.GetLayoutAsync(ct);
 
         // Step 9: Render markdown from layout AST with overall metadata.
         var overallHtmlContent = await layoutNode.RenderOverallAsync(
-            mc, ct).
-            ConfigureAwait(false);
+            mc, ct);
 
         // Step 10: Final output.
         await outputHtmlWriter.WriteAsync(overallHtmlContent.ToString()).
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
 
         return layoutNode.Path;
     }
@@ -307,11 +299,9 @@ public sealed class Ripper
                 markdownReader,
                 metadata,
                 outputHtmlWriter,
-                ct).
-                ConfigureAwait(false);
+                ct);
 
-            await outputHtmlWriter.FlushAsync().
-                ConfigureAwait(false);
+            await outputHtmlWriter.FlushAsync();
         }
         catch
         {

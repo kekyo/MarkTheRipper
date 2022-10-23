@@ -45,8 +45,7 @@ public static class Driver
         return await ripper.ParseLayoutAsync(
             layoutPath,
             tr,
-            ct).
-            ConfigureAwait(false);
+            ct);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////
@@ -72,23 +71,18 @@ public static class Driver
 
         await output.WriteLineAsync(
             $"Contents base path: {contentsBasePath}").
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
         await output.WriteLineAsync(
             $"Layouts base path: {layoutsBasePath}").
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
         await output.WriteLineAsync(
             $"Extended metadata base path: {metadataBasePath}").
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
         await output.WriteLineAsync(
             $"Store to base path: {storeToBasePath}").
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
         await output.WriteLineAsync().
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
 
         var sw = new Stopwatch();
         sw.Start();
@@ -99,8 +93,7 @@ public static class Driver
             new[] { Path.Combine(basePath, "metadata.json") }.
             Concat(InternalUtilities.EnumerateAllFiles(
                 metadataBasePath, "*.json")).
-            Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask())).
-            ConfigureAwait(false)).
+            Select(metadataPath => MetadataUtilities.ReadMetadataAsync(metadataPath, ct).AsTask()))).
             SelectMany(metadata => metadata).
             DistinctBy(entry => entry.Key).
             ToArray();
@@ -108,11 +101,9 @@ public static class Driver
         {
             await output.WriteLineAsync(
                 $"Read metadata: {metadataList.Length}").
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
             await output.WriteLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
         }
 
         //////////////////////////////////////////////////////////////
@@ -126,21 +117,17 @@ public static class Driver
             {
                 var layoutName =
                     Path.GetFileNameWithoutExtension(layoutPath);
-                var layout = await ReadLayoutAsync(ripper, new PathEntry(layoutPath), ct).
-                    ConfigureAwait(false);
+                var layout = await ReadLayoutAsync(ripper, new PathEntry(layoutPath), ct);
                 return (layoutName, layout);
-            })).
-            ConfigureAwait(false)).
+            }))).
             ToDictionary(entry => entry.layoutName, entry => entry.layout);
         if (layoutList.Count >= 1)
         {
             await output.WriteLineAsync(
                 $"Read layouts: {string.Join(", ", layoutList.Keys)}").
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
             await output.WriteLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
         }
 
         //////////////////////////////////////////////////////////////
@@ -161,11 +148,9 @@ public static class Driver
 
             await output.WriteLineAsync(
                 $"Clean up store directory: {storeToBasePath}").
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
             await output.WriteLineAsync().
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
         }
 
         //////////////////////////////////////////////////////////////
@@ -188,31 +173,27 @@ public static class Driver
                 output.WriteLineAsync($"Generated: {layoutName}: {relativeContentsPath} ==> {relativeGeneratedPath}").
                 WithCancellation(ct),
             rootMetadata,
-            ct).
-            ConfigureAwait(false);
+            ct);
         
         //////////////////////////////////////////////////////////////
 
         sw.Stop();
 
         await output.WriteLineAsync().
-            WithCancellation(ct).
-            ConfigureAwait(false);
+            WithCancellation(ct);
 
         if (count >= 1)
         {
             var perContent = TimeSpan.FromTicks(sw.ElapsedTicks / count);
             await output.WriteLineAsync(
                 $"Finished: Contents={count}, Elapsed={sw.Elapsed}, PerContent={perContent}, Concurrent={maxConcurrentProcessing}").
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
         }
         else
         {
             await output.WriteLineAsync(
                 $"Finished: Contents=0, Elapsed={sw.Elapsed}").
-                WithCancellation(ct).
-                ConfigureAwait(false);
+                WithCancellation(ct);
         }
     }
 }

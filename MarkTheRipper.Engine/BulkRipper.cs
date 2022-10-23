@@ -76,19 +76,16 @@ public sealed class BulkRipper
         var buffer = new byte[65536];
         while (true)
         {
-            var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, ct).
-                ConfigureAwait(false);
+            var read = await contentStream.ReadAsync(buffer, 0, buffer.Length, ct);
             if (read <= 0)
             {
                 break;
             }
 
-            await storeToStream.WriteAsync(buffer, 0, read, ct).
-                ConfigureAwait(false);
+            await storeToStream.WriteAsync(buffer, 0, read, ct);
         }
 
-        await storeToStream.FlushAsync(ct).
-            ConfigureAwait(false);
+        await storeToStream.FlushAsync(ct);
     }
 
     private async ValueTask CopyRelativeContentAsync(
@@ -104,8 +101,7 @@ public sealed class BulkRipper
         using var cs = new FileStream(
             contentPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
 
-        await CopyContentToAsync(cs, storeToPath, ct).
-            ConfigureAwait(false);
+        await CopyContentToAsync(cs, storeToPath, ct);
     }
 
     /// <summary>
@@ -184,8 +180,7 @@ public sealed class BulkRipper
                 candidate.contentsBasePath,
                 candidate.relativeContentPath,
                 generatedDate,
-                ct).
-                ConfigureAwait(false);
+                ct);
             markdownEntries.Add(markdownEntry);
         }
 #else
@@ -198,8 +193,7 @@ public sealed class BulkRipper
                     candidate.relativeContentPath,
                     generatedDate,
                     ct).
-                AsTask())).
-            ConfigureAwait(false);
+                AsTask()));
 #endif
 
         var entriesByCandidate = markdownEntries.ToDictionary(
@@ -220,8 +214,7 @@ public sealed class BulkRipper
             var storeToPathElements = this.GetStoreToPathElements(
                 relativeContentPath);
 
-            await dc!.CreateIfNotExistAsync(storeToPathElements.DirPath, ct).
-                ConfigureAwait(false);
+            await dc!.CreateIfNotExistAsync(storeToPathElements.DirPath, ct);
 
             if (entriesByCandidate.TryGetValue(
                 (contentBasePath, relativeContentPath), out var markdownEntry))
@@ -232,22 +225,19 @@ public sealed class BulkRipper
                         markdownEntry,
                         mc,
                         this.storeToBasePath,
-                        ct).
-                        ConfigureAwait(false);
+                        ct);
 
                     await generated(
                         relativeContentPath.PhysicalPath,
                         storeToPathElements.RelativePath,
                         contentBasePath,
-                        appliedLayoutPath.PhysicalPath).
-                        ConfigureAwait(false);
+                        appliedLayoutPath.PhysicalPath);
                 }
             }
             else
             {
                 await this.CopyRelativeContentAsync(
-                    relativeContentPath.PhysicalPath, contentBasePath, ct).
-                    ConfigureAwait(false);
+                    relativeContentPath.PhysicalPath, contentBasePath, ct);
             }
         }
 
@@ -263,8 +253,7 @@ public sealed class BulkRipper
 
             try
             {
-                await RunOnceAsync(contentBasePath, relativeContentPath).
-                    ConfigureAwait(false);
+                await RunOnceAsync(contentBasePath, relativeContentPath);
             }
             catch
             {
@@ -279,14 +268,12 @@ public sealed class BulkRipper
         foreach (var candidate in candidates)
         {
             await RunOnceWithMeasurementAsync(
-                candidate.contentsBasePath, candidate.relativeContentPath).
-                ConfigureAwait(false);
+                candidate.contentsBasePath, candidate.relativeContentPath);
         }
 #else
         await Task.WhenAll(candidates.
             Select(candidate => RunOnceWithMeasurementAsync(
-                candidate.contentsBasePath, candidate.relativeContentPath))).
-            ConfigureAwait(false);
+                candidate.contentsBasePath, candidate.relativeContentPath)));
 #endif
 
         return (count, maxConcurrentProcessing);
