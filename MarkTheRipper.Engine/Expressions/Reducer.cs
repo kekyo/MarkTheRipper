@@ -11,7 +11,6 @@ using MarkTheRipper.Functions;
 using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,25 +27,36 @@ internal sealed class Reducer : IReducer
     private async ValueTask<object?> ReducePropertyAsync(
         string[] elements,
         int index,
-        IExpression currentExpression,
+        object? currentValue,
         IMetadataContext metadata,
-        CancellationToken ct) =>
-        currentExpression is ValueExpression(var currentValue) ?
-            index < elements.Length &&
-            currentValue is IMetadataEntry entry &&
-            await entry.GetPropertyValueAsync(elements[index++], metadata, this, ct).
-                ConfigureAwait(false) is { } value ?
-                value :
-                currentValue :
-            currentExpression.ImplicitValue;
+        CancellationToken ct)
+    {
+        if (index < elements.Length)
+        {
+            if (currentValue is IMetadataEntry entry &&
+                await entry.GetPropertyValueAsync(elements[index], metadata, this, ct) is { } childValue)
+            {
+                return childValue;
+            }
+            else
+            {
+                return elements[index];
+            }
+        }
+        else
+        {
+            return currentValue;
+        }
+    }
 
     private ValueTask<object?> ReducePropertiesAsync(
         string[] elements,
         IMetadataContext metadata,
         CancellationToken ct) =>
-        0 < elements.Length &&
         metadata.Lookup(elements[0]) is { } expression ?
-            this.ReducePropertyAsync(elements, 1, expression, metadata, ct) :
+            (expression is ValueExpression(var value) ?
+                this.ReducePropertyAsync(elements, 1, value, metadata, ct) :
+                new ValueTask<object?>(expression.ImplicitValue)) :
             new ValueTask<object?>(elements[0]);
 
 #if DEBUG
@@ -58,8 +68,7 @@ internal sealed class Reducer : IReducer
         var results = new List<object?>();
         foreach (var expression in expressions)
         {
-            var result = await this.ReduceExpressionAsync(expression, metadata, ct).
-                ConfigureAwait(false);
+            var result = await this.ReduceExpressionAsync(expression, metadata, ct);
             results.Add(result);
         }
         return results.ToArray();
@@ -78,42 +87,36 @@ internal sealed class Reducer : IReducer
         IExpression[] elements,
         IMetadataContext metadata,
         CancellationToken ct) =>
-        await this.ReduceExpressionsAsync(elements, metadata, ct).
-            ConfigureAwait(false);
+        await this.ReduceExpressionsAsync(elements, metadata, ct);
 
     private async ValueTask<object?> ReduceApplyAsync(
-        IExpression function,
+        IExpression functionExpression,
         IExpression[] parameters,
         IMetadataContext metadata,
         CancellationToken ct)
     {
-        var f = await this.ReduceExpressionAsync(function, metadata, ct).
-            ConfigureAwait(false);
-        return f switch
+        var function = await this.ReduceExpressionAsync(
+            functionExpression, metadata, ct);
+        return function switch
         {
             FunctionDelegate func => await this.ReduceExpressionAsync(
-                await func(parameters, metadata, this, ct).ConfigureAwait(false),
-                metadata, ct).
-                ConfigureAwait(false),
+                await func(parameters, metadata, this, ct),
+                metadata, ct),
             SimpleFunctionDelegate func =>
                 await func(
-                    await this.ReduceExpressionsAsync(parameters, metadata, ct).
-                        ConfigureAwait(false),
+                    await this.ReduceExpressionsAsync(parameters, metadata, ct),
                     keyName => metadata.Lookup(keyName) is { } valueExpression ?
                         this.ReduceExpressionAsync(valueExpression, metadata, ct) :
                         default,
-                    await metadata.GetLanguageAsync(ct).
-                        ConfigureAwait(false),
+                    await metadata.GetLanguageAsync(ct),
                     ct),
             Func<object?[], Func<string, Task<object?>>, IFormatProvider, CancellationToken, Task<object?>> func =>
                 await func(
-                    await this.ReduceExpressionsAsync(parameters, metadata, ct).
-                        ConfigureAwait(false),
+                    await this.ReduceExpressionsAsync(parameters, metadata, ct),
                     keyName => metadata.Lookup(keyName) is { } valueExpression ?
                         this.ReduceExpressionAsync(valueExpression, metadata, ct).AsTask() :
                         Task.FromResult(default(object)),
-                    await metadata.GetLanguageAsync(ct).
-                        ConfigureAwait(false),
+                    await metadata.GetLanguageAsync(ct),
                     ct),
             _ => throw new InvalidOperationException("Could not apply non-function object."),
         };
@@ -148,10 +151,8 @@ internal sealed class Reducer : IReducer
         IMetadataContext metadata,
         CancellationToken ct)
     {
-        var reduced = await this.ReduceExpressionAsync(expression, metadata, ct).
-            ConfigureAwait(false);
-        return await MetadataUtilities.FormatValueAsync(reduced, metadata, ct).
-            ConfigureAwait(false);
+        var reduced = await this.ReduceExpressionAsync(expression, metadata, ct);
+        return await MetadataUtilities.FormatValueAsync(reduced, metadata, ct);
     }
 
     internal string UnsafeReduceExpressionAndFormat(

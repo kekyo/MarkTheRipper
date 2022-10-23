@@ -238,7 +238,7 @@ This is test contents.
   </head>
   <body>
     <ul>
-      {foreach category.breadcrumb}
+      {foreach category.breadcrumbs}
       <li>{item.name}</li>
       {end}
     </ul>
