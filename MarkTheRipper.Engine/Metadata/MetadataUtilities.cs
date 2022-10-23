@@ -51,6 +51,9 @@ public static class MetadataUtilities
         metadata.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
         metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
 
+        metadata.SetValue("older", FunctionFactory.CastTo(Navigate.OlderAsync));
+        metadata.SetValue("newer", FunctionFactory.CastTo(Navigate.NewerAsync));
+
         metadata.SetValue("embed", FunctionFactory.CastTo(oEmbed.EmbedAsync));
         metadata.SetValue("card", FunctionFactory.CastTo(oEmbed.CardAsync));
 

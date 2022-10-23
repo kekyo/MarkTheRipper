@@ -50,15 +50,13 @@ public sealed class MarkdownEntry :
     internal PathEntry MarkdownPath =>
         this.headerMetadata.TryGetValue("markdownPath", out var markdownPathExpression) &&
         Reducer.Instance.UnsafeReduceExpression(
-            markdownPathExpression, MetadataContext.Empty) is { } value &&
-            value is PathEntry markdownPath ?
+            markdownPathExpression, MetadataContext.Empty) is PathEntry markdownPath ?
             markdownPath : PathEntry.Unknown;
 
     internal PathEntry StoreToPath =>
         this.headerMetadata.TryGetValue("path", out var pathExpression) &&
         Reducer.Instance.UnsafeReduceExpression(
-            pathExpression, MetadataContext.Empty) is { } value &&
-            value is PathEntry path ?
+            pathExpression, MetadataContext.Empty) is PathEntry path ?
             path : PathEntry.Unknown;
 
     internal static bool GetPublishedState(
@@ -81,7 +79,7 @@ public sealed class MarkdownEntry :
     internal DateTimeOffset? Date =>
         this.headerMetadata.TryGetValue("date", out var dateExpression) &&
         Reducer.Instance.UnsafeReduceExpression(
-            dateExpression, MetadataContext.Empty) is DateTimeOffset date ?
+            dateExpression, MetadataContext.Empty) is PartialDateEntry(var date) ?
             date : null;
 
     public async ValueTask<object?> GetImplicitValueAsync(

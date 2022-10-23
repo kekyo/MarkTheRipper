@@ -14,7 +14,8 @@ using System.Linq;
 
 namespace MarkTheRipper.Metadata;
 
-public sealed class MetadataContext : IMetadataContext
+public sealed class MetadataContext :
+    IMetadataContext
 {
     private readonly MetadataContext? parent;
     private readonly Dictionary<string, IExpression> metadata = new();

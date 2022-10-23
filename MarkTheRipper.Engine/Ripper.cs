@@ -294,10 +294,14 @@ public sealed class Ripper
                 Utilities.UTF8);
             outputHtmlWriter.NewLine = Environment.NewLine;
 
+            // Can access self MarkdownEntry in this document.
+            var mc = metadata.Spawn();
+            mc.SetValue("self", markdownEntry);
+
             appliedLayoutPath = await this.RenderContentAsync(
                 markdownEntry.MarkdownPath,
                 markdownReader,
-                metadata,
+                mc,
                 outputHtmlWriter,
                 ct);
 

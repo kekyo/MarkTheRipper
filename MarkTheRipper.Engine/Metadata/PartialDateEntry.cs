@@ -90,4 +90,7 @@ internal sealed class PartialDateEntry :
 
     public string ToString(string? format, IFormatProvider? formatProvider) =>
         this.Date.ToString(format, formatProvider);
+
+    public void Deconstruct(out DateTimeOffset date) =>
+        date = this.Date;
 }
