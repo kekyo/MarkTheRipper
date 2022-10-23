@@ -33,8 +33,7 @@ internal sealed class PartialDateEntry :
         CancellationToken ct)
     {
         var timezoneValue = metadata.Lookup("timezone") is { } timezoneExpression ?
-            await reducer.ReduceExpressionAsync(timezoneExpression, metadata, ct).
-                ConfigureAwait(false) : null;
+            await reducer.ReduceExpressionAsync(timezoneExpression, metadata, ct) : null;
         if (timezoneValue != null)
         {
             if (timezoneValue is TimeZoneInfo tzi)
@@ -43,8 +42,7 @@ internal sealed class PartialDateEntry :
             }
 
             var timezoneString = await MetadataUtilities.FormatValueAsync(
-                timezoneValue, metadata, ct).
-                ConfigureAwait(false);
+                timezoneValue, metadata, ct);
 
             if (TimeSpan.TryParse(timezoneString, out var timezoneDifference))
             {

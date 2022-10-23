@@ -29,10 +29,8 @@ internal static class Lookup
                 $"Invalid lookup function arguments: Count={parameters.Length}");
         }
 
-        var name = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
-            ConfigureAwait(false);
-        var nameString = await MetadataUtilities.FormatValueAsync(name, metadata, ct).
-            ConfigureAwait(false);
+        var name = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct);
+        var nameString = await MetadataUtilities.FormatValueAsync(name, metadata, ct);
 
         return metadata.Lookup(nameString) is { } resolvedExpression ?
             resolvedExpression : new ValueExpression(name);

@@ -36,24 +36,22 @@ internal static class Formula
         }
 
         var values = await Task.WhenAll(
-            parameters.Select(p => reducer.ReduceExpressionAsync(p, metadata, ct).AsTask())).
-            ConfigureAwait(false);
+            parameters.Select(p => reducer.ReduceExpressionAsync(p, metadata, ct).AsTask()));
 
-        var ci = await metadata.GetLanguageAsync(ct).
-            ConfigureAwait(false);
+        var cultureInfo = await metadata.GetLanguageAsync(ct);
 
         if (values.All(v => v is int || v is long ||
             (v is string s && long.TryParse(s, out var _))))
         {
             var result = values.
-                Select(v => Convert.ToInt64(v, ci)).
+                Select(v => Convert.ToInt64(v, cultureInfo)).
                 Aggregate(int64Accumrator);
             return new ValueExpression(result);
         }
         else
         {
             var result = values.
-                Select(v => Convert.ToDouble(v, ci)).
+                Select(v => Convert.ToDouble(v, cultureInfo)).
                 Aggregate(doubleAccumrator);
             return new ValueExpression(result);
         }

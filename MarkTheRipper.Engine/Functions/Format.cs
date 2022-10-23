@@ -27,21 +27,17 @@ internal static class Format
                 $"Invalid format function arguments: Count={parameters.Length}");
         }
 
-        var value = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
-            ConfigureAwait(false);
+        var value = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct);
 
         var formatExpression = parameters.ElementAtOrDefault(1);
         var format = formatExpression != null ?
-            await reducer.ReduceExpressionAndFormatAsync(formatExpression, metadata, ct).
-                ConfigureAwait(false) :
+            await reducer.ReduceExpressionAndFormatAsync(formatExpression, metadata, ct) :
             null;
-
-        var ci = await metadata.GetLanguageAsync(ct).
-            ConfigureAwait(false);
 
         return value switch
         {
-            IFormattable formattable => new ValueExpression(formattable.ToString(format, ci)),
+            IFormattable formattable => new ValueExpression(
+                formattable.ToString(format, await metadata.GetLanguageAsync(ct))),
             _ => parameters[0],
         };
     }
