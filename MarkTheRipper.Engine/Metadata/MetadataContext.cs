@@ -8,7 +8,9 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using MarkTheRipper.Internal;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MarkTheRipper.Metadata;
 
@@ -34,6 +36,14 @@ public sealed class MetadataContext : IMetadataContext
 
     public IMetadataContext Spawn() =>
         new MetadataContext(this);
+
+    public override string ToString() =>
+        string.Join(",",
+            this.metadata.Concat(this.parent.
+                Unfold(mc => mc.parent).
+                SelectMany(mc => mc.metadata)).
+            Distinct(KeyComparer<string, IExpression>.Instance).
+            Select(kv => $"{kv.Key}=[{kv.Value}]"));
 
     public static readonly MetadataContext Empty =
         new MetadataContext();

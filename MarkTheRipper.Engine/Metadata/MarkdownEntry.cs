@@ -20,42 +20,42 @@ namespace MarkTheRipper.Metadata;
 public sealed class MarkdownEntry :
     IMetadataEntry, IEquatable<MarkdownEntry>
 {
-    private readonly IReadOnlyDictionary<string, IExpression> metadata;
+    private readonly IReadOnlyDictionary<string, IExpression> headerMetadata;
 
     internal readonly string contentBasePath;
 
     public MarkdownEntry(
-        IReadOnlyDictionary<string, IExpression> metadata,
+        IReadOnlyDictionary<string, IExpression> headerMetadata,
         string contentBasePath)
     {
-        this.metadata = metadata;
+        this.headerMetadata = headerMetadata;
         this.contentBasePath = contentBasePath;
     }
 
     public MarkdownEntry(
-        IReadOnlyDictionary<string, object?> metadata,
+        IReadOnlyDictionary<string, object?> headerMetadata,
         string contentBasePath)
     {
-        this.metadata = metadata.ToDictionary(
+        this.headerMetadata = headerMetadata.ToDictionary(
             entry => entry.Key,
             entry => (IExpression)new ValueExpression(entry.Value));
         this.contentBasePath = contentBasePath;
     }
 
-    public IReadOnlyDictionary<string, object?> Metadata =>
-        this.metadata.ToDictionary(
+    public IReadOnlyDictionary<string, object?> HeaderMetadata =>
+        this.headerMetadata.ToDictionary(
             entry => entry.Key,
             entry => entry.Value.ImplicitValue);
 
     internal PathEntry MarkdownPath =>
-        this.metadata.TryGetValue("markdownPath", out var markdownPathExpression) &&
+        this.headerMetadata.TryGetValue("markdownPath", out var markdownPathExpression) &&
         Reducer.Instance.UnsafeReduceExpression(
             markdownPathExpression, MetadataContext.Empty) is { } value &&
             value is PathEntry markdownPath ?
             markdownPath : PathEntry.Unknown;
 
     internal PathEntry StoreToPath =>
-        this.metadata.TryGetValue("path", out var pathExpression) &&
+        this.headerMetadata.TryGetValue("path", out var pathExpression) &&
         Reducer.Instance.UnsafeReduceExpression(
             pathExpression, MetadataContext.Empty) is { } value &&
             value is PathEntry path ?
@@ -70,23 +70,23 @@ public sealed class MarkdownEntry :
         true;
 
     internal bool DoesNotPublish =>
-        !GetPublishedState(this.metadata);
+        !GetPublishedState(this.headerMetadata);
 
     internal string Title =>
-        this.metadata.TryGetValue("title", out var titleExpression) &&
+        this.headerMetadata.TryGetValue("title", out var titleExpression) &&
         Reducer.Instance.UnsafeReduceExpressionAndFormat(
             titleExpression, MetadataContext.Empty) is { } title ? 
             title : "(Untitled)";
 
     internal DateTimeOffset? Date =>
-        this.metadata.TryGetValue("date", out var dateExpression) &&
+        this.headerMetadata.TryGetValue("date", out var dateExpression) &&
         Reducer.Instance.UnsafeReduceExpression(
             dateExpression, MetadataContext.Empty) is DateTimeOffset date ?
             date : null;
 
     public async ValueTask<object?> GetImplicitValueAsync(
         IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
-        this.metadata.TryGetValue("title", out var valueExpression) &&
+        this.headerMetadata.TryGetValue("title", out var valueExpression) &&
             await reducer.ReduceExpressionAndFormatAsync(
                 valueExpression, metadata, ct).
                 ConfigureAwait(false) is { } title ?
@@ -94,22 +94,22 @@ public sealed class MarkdownEntry :
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
-        this.metadata.TryGetValue(keyName, out var valueExpression) ?
+        this.headerMetadata.TryGetValue(keyName, out var valueExpression) ?
             reducer.ReduceExpressionAsync(valueExpression, metadata, ct) :
             InternalUtilities.NullAsync;
 
     public bool Equals(MarkdownEntry? other) =>
         other is { } rhs &&
-        this.metadata.
+        this.headerMetadata.
             OrderBy(m => m.Key).
-            SequenceEqual(rhs.metadata.OrderBy(m => m.Key));
+            SequenceEqual(rhs.headerMetadata.OrderBy(m => m.Key));
 
     public override bool Equals(object? obj) =>
         obj is MarkdownEntry rhs &&
         Equals(rhs);
 
     public override int GetHashCode() =>
-        this.metadata.Aggregate(0, 
+        this.headerMetadata.Aggregate(0, 
             (agg, v) => agg ^ v.Key.GetHashCode() ^ v.Value.GetHashCode());
 
     public override string ToString() =>

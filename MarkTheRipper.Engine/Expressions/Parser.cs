@@ -505,7 +505,7 @@ public static class Parser
             }
         }
 
-        var markdownMetadata = new Dictionary<string, IExpression>();
+        var headerMetadata = new Dictionary<string, IExpression>();
 
         // `title: Hello world`
         while (true)
@@ -530,7 +530,7 @@ public static class Parser
                         ConfigureAwait(false);
                     if (valueExpression != null)
                     {
-                        markdownMetadata[keyName] = valueExpression;
+                        headerMetadata[keyName] = valueExpression;
                     }
                 }
                 else
@@ -549,7 +549,7 @@ public static class Parser
             }
         }
 
-        return markdownMetadata;
+        return headerMetadata;
     }
 
     internal static async ValueTask ParseAndAppendMarkdownHeaderAsync(
@@ -678,12 +678,12 @@ public static class Parser
         }
     }
 
-    internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody, Func<int, int, bool>[] inCodeFragments)> ParseMarkdownBodyAsync(
+    internal static async ValueTask<(Dictionary<string, IExpression> headerMetadata, string markdownBody, Func<int, int, bool>[] inCodeFragments)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         Func<CancellationToken, ValueTask<string?>> markdownReader,
         CancellationToken ct)
     {
-        var markdownMetadata = await ParseMarkdownHeaderAsync(
+        var headerMetadata = await ParseMarkdownHeaderAsync(
             relativeContentPathHint, markdownReader, ct);
 
         var markdownBody = new StringBuilder();
@@ -795,6 +795,6 @@ public static class Parser
             }
         }
 
-        return (markdownMetadata, markdownBody.ToString(), inCodeFragments.ToArray());
+        return (headerMetadata, markdownBody.ToString(), inCodeFragments.ToArray());
     }
 }

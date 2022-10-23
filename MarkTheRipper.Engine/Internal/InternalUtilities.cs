@@ -134,7 +134,7 @@ internal static class InternalUtilities
         return sd;
     }
 
-    public static IEnumerable<T> Unfold<T>(this T value, Func<T, T?> selector)
+    public static IEnumerable<T> Unfold<T>(this T? value, Func<T, T?> selector)
     {
         var current = value;
         while (current != null)

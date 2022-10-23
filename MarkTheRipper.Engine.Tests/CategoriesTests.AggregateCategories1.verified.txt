@@ -5,7 +5,7 @@
       Name: cat1,
       Entries: [
         {
-          Metadata: {
+          HeaderMetadata: {
             category: {
               Name: cat1,
               Parent: {

@@ -40,7 +40,7 @@ public sealed class Ripper
             ct);
 
     private static void InjectAdditionalMetadata(
-        Dictionary<string, IExpression> markdownMetadata,
+        Dictionary<string, IExpression> headerMetadata,
         PathEntry markdownPath)
     {
         var storeToPathHint = new PathEntry(
@@ -48,17 +48,17 @@ public sealed class Ripper
                 Utilities.GetDirectoryPath(markdownPath.PhysicalPath),
                 Path.GetFileNameWithoutExtension(markdownPath.PhysicalPath) + ".html"));
 
-        markdownMetadata["markdownPath"] = new ValueExpression(markdownPath);
-        markdownMetadata["path"] = new ValueExpression(storeToPathHint);
+        headerMetadata["markdownPath"] = new ValueExpression(markdownPath);
+        headerMetadata["path"] = new ValueExpression(storeToPathHint);
 
         // Special: Automatic insertion for category when not available.
-        if (!markdownMetadata.ContainsKey("category"))
+        if (!headerMetadata.ContainsKey("category"))
         {
             var relativeDirectoryPath =
                 Utilities.GetDirectoryPath(markdownPath.PhysicalPath);
             var pathElements = relativeDirectoryPath.
                 Split(Utilities.PathSeparators, StringSplitOptions.RemoveEmptyEntries);
-            markdownMetadata.Add("category", new ValueExpression(
+            headerMetadata.Add("category", new ValueExpression(
                 pathElements.Aggregate(
                     new PartialCategoryEntry(),
                     (agg, v) => new PartialCategoryEntry(v, agg))));
@@ -165,15 +165,15 @@ public sealed class Ripper
     }
 
     private static IMetadataContext SpawnWithAdditionalMetadata(
-        Dictionary<string, IExpression> markdownMetadata,
+        Dictionary<string, IExpression> headerMetadata,
         IMetadataContext parentMetadata,
         PathEntry markdownPath)
     {
         var mc = parentMetadata.Spawn();
 
-        InjectAdditionalMetadata(markdownMetadata, markdownPath);
+        InjectAdditionalMetadata(headerMetadata, markdownPath);
 
-        foreach (var kv in markdownMetadata)
+        foreach (var kv in headerMetadata)
         {
             mc.Set(kv.Key, kv.Value);
         }
@@ -198,7 +198,7 @@ public sealed class Ripper
         CancellationToken ct)
     {
         // Step 1: Parse markdown metadata and code fragment locations.
-        var (markdownMetadata, markdownBody, inCodeFragments) =
+        var (headerMetadata, markdownBody, inCodeFragments) =
             await Parser.ParseMarkdownBodyAsync(
                 markdownPath,
                 ct => markdownReader.ReadLineAsync().WithCancellation(ct),
@@ -215,7 +215,7 @@ public sealed class Ripper
 
         // Step 3: Spawn new metadata context derived parent.
         var mc = SpawnWithAdditionalMetadata(
-            markdownMetadata,
+            headerMetadata,
             metadata,
             markdownPath);
 
