@@ -8,6 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ internal sealed class ExpressionNode : ITextTreeNode
         IMetadataContext metadata,
         CancellationToken ct)
     {
-        var reduced = await Reducer.Instance.ReduceExpressionAsync(
+        var reduced = await Reducer.Instance.ReduceExpressionAndFinalApplyAsync(
             expression, metadata, ct);
         if (reduced is HtmlContentEntry(var contentString))
         {
