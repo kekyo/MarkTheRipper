@@ -42,15 +42,18 @@ public static class MetadataUtilities
         metadata.SetValue("timezone", TimeZoneInfo.Local);
         metadata.SetValue("layout", "page");
 
-        metadata.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
-        metadata.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
-        metadata.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));
         metadata.SetValue("add", FunctionFactory.CastTo(Formula.AddAsync));
         metadata.SetValue("sub", FunctionFactory.CastTo(Formula.SubtractAsync));
         metadata.SetValue("mul", FunctionFactory.CastTo(Formula.MultipleAsync));
         metadata.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
         metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
 
+        metadata.SetValue("take", FunctionFactory.CastTo(Iterator.TakeAsync));
+
+        metadata.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));
+
+        metadata.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
+        metadata.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
         metadata.SetValue("older", FunctionFactory.CastTo(Navigate.OlderAsync));
         metadata.SetValue("newer", FunctionFactory.CastTo(Navigate.NewerAsync));
 

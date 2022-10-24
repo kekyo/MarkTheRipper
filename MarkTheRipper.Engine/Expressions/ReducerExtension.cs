@@ -87,4 +87,16 @@ public static class ReducerExtension
         {
             (_, var result) => result,
         };
+
+    public static async ValueTask<long?> ReduceIntegerExpressionAsync(
+        this IReducer reducer,
+        IExpression expression,
+        IMetadataContext metadata,
+        CancellationToken ct) =>
+        await reducer.ReduceExpressionAsync(expression, metadata, ct) switch
+        {
+            int value => value,
+            long value => value,
+            _ => null,
+        };
 }
