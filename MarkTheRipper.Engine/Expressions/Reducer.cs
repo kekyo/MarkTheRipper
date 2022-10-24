@@ -22,71 +22,50 @@ internal sealed class Reducer : IReducer
     {
     }
 
-    private async ValueTask<object?> ReducePropertyAsync(
+    private async ValueTask<object?> ReducePropertiesAsync(
         string[] elements,
-        int index,
-        object? currentValue,
+        object? value0,
         IMetadataContext metadata,
         CancellationToken ct)
     {
-        if (index < elements.Length)
+        var currentValue = value0;
+        for (var index = 1; index < elements.Length; index++)
         {
             if (currentValue is IMetadataEntry entry &&
-                await entry.GetPropertyValueAsync(elements[index], metadata, this, ct) is { } childValue)
+                await entry.GetPropertyValueAsync(
+                    elements[index], metadata, this, ct) is { } childValue)
             {
-                return childValue;
+                currentValue = childValue;
             }
             else
             {
                 return elements[index];
             }
         }
-        else
-        {
-            return currentValue;
-        }
+        return currentValue;
     }
 
     private ValueTask<object?> ReducePropertiesAsync(
         string[] elements,
         IMetadataContext metadata,
-        CancellationToken ct)
-    {
-        if (metadata.Lookup(elements[0]) is { } expression)
-        {
-            if (expression is ValueExpression(var value))
-            {
-                return this.ReducePropertyAsync(elements, 1, value, metadata, ct);
-            }
-            else
-            {
-                return new ValueTask<object?>(expression.ImplicitValue);
-            }
-        }
-        else
-        {
-            return new ValueTask<object?>(elements[0]);
-        }
-    }
+        CancellationToken ct) =>
+        metadata.Lookup(elements[0]) is { } expression ?
+            (expression is ValueExpression(var value) ?
+                this.ReducePropertiesAsync(elements, value, metadata, ct) :
+                new ValueTask<object?>(expression.ImplicitValue)) :
+            new ValueTask<object?>(elements[0]);
 
     private async ValueTask<object?> ReduceApplyAsync(
         IExpression functionExpression,
         IExpression[] parameterExpressions,
         IMetadataContext metadata,
-        CancellationToken ct)
-    {
-        var function = await this.ReduceExpressionAsync(
-            functionExpression, metadata, ct);
-        if (await this.InvokeFunctionAsync(
-            function, parameterExpressions, metadata, ct) is (true, var result))
-        {
-            return result;
-        }
-        else
-        {
-            throw new InvalidOperationException("Could not apply non-function object.");
-        }
-    }
+        CancellationToken ct) =>
+        await this.InvokeFunctionAsync(
+            await this.ReduceExpressionAsync(
+                functionExpression, metadata, ct),
+            parameterExpressions, metadata, ct) is (true, var result) ?
+                result :
+                throw new InvalidOperationException("Could not apply non-function object.");
 
     private async ValueTask<object?> ReduceArrayAsync(
         IExpression[] elements,

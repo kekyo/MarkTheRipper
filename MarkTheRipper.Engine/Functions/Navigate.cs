@@ -10,6 +10,7 @@
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Metadata;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace MarkTheRipper.Functions;
 internal static class Navigate
 {
     private static async ValueTask<IExpression> GetNextToEntryAsync(
-        int offset,
+        bool forward,
         IExpression[] parameters,
         IMetadataContext metadata,
         IReducer reducer,
@@ -37,11 +38,24 @@ internal static class Navigate
                     entry => entry.MarkdownPath.Equals(markdownPath));
                 if (currentIndex >= 0)
                 {
-                    var targetIndex = currentIndex + offset;
-                    if (targetIndex >= 0 && targetIndex < entries.Length)
+                    static IEnumerable IterateEntries(int offset, MarkdownEntry[] entries, bool forward)
                     {
-                        return new ValueExpression(entries[targetIndex]);
+                        if (forward)
+                        {
+                            for (var index = offset + 1; index < entries.Length; index++)
+                            {
+                                yield return entries[index];
+                            }
+                        }
+                        else
+                        {
+                            for (var index = offset - 1; index >= 0; index--)
+                            {
+                                yield return entries[index];
+                            }
+                        }
                     }
+                    return new ValueExpression(IterateEntries(currentIndex, entries, forward));
                 }
             }
 
@@ -67,12 +81,12 @@ internal static class Navigate
         IMetadataContext metadata,
         IReducer reducer,
         CancellationToken ct) =>
-        GetNextToEntryAsync(-1, parameters, metadata, reducer, ct);
+        GetNextToEntryAsync(false, parameters, metadata, reducer, ct);
 
     public static ValueTask<IExpression> NewerAsync(
         IExpression[] parameters,
         IMetadataContext metadata,
         IReducer reducer,
         CancellationToken ct) =>
-        GetNextToEntryAsync(1, parameters, metadata, reducer, ct);
+        GetNextToEntryAsync(true, parameters, metadata, reducer, ct);
 }
