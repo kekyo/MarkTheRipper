@@ -22,25 +22,15 @@ public sealed class MarkdownEntry :
 {
     private readonly IReadOnlyDictionary<string, IExpression> headerMetadata;
 
-    internal readonly string contentBasePath;
-
     public MarkdownEntry(
-        IReadOnlyDictionary<string, IExpression> headerMetadata,
-        string contentBasePath)
-    {
+        IReadOnlyDictionary<string, IExpression> headerMetadata) =>
         this.headerMetadata = headerMetadata;
-        this.contentBasePath = contentBasePath;
-    }
 
     public MarkdownEntry(
-        IReadOnlyDictionary<string, object?> headerMetadata,
-        string contentBasePath)
-    {
+        IReadOnlyDictionary<string, object?> headerMetadata) =>
         this.headerMetadata = headerMetadata.ToDictionary(
             entry => entry.Key,
             entry => (IExpression)new ValueExpression(entry.Value));
-        this.contentBasePath = contentBasePath;
-    }
 
     public IReadOnlyDictionary<string, object?> HeaderMetadata =>
         this.headerMetadata.ToDictionary(

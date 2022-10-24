@@ -103,10 +103,10 @@ public sealed class Ripper
                 ct);
         }
 
-        var metadata = await ParseAsync();
+        var headerMetadata = await ParseAsync();
 
-        if (MarkdownEntry.GetPublishedState(metadata) &&
-            !metadata.TryGetValue("date", out var _))
+        if (MarkdownEntry.GetPublishedState(headerMetadata) &&
+            !headerMetadata.TryGetValue("date", out var _))
         {
             try
             {
@@ -156,9 +156,9 @@ public sealed class Ripper
             File.Move(path + ".tmp", path);
         }
 
-        InjectAdditionalMetadata(metadata, markdownPath);
+        InjectAdditionalMetadata(headerMetadata, markdownPath);
 
-        return new(metadata, contentsBasePath);
+        return new(headerMetadata);
     }
 
     private static IMetadataContext SpawnWithAdditionalMetadata(
@@ -166,14 +166,12 @@ public sealed class Ripper
         IMetadataContext parentMetadata,
         PathEntry markdownPath)
     {
-        var mc = parentMetadata.Spawn();
-
         InjectAdditionalMetadata(headerMetadata, markdownPath);
 
-        foreach (var kv in headerMetadata)
-        {
-            mc.Set(kv.Key, kv.Value);
-        }
+        var mc = parentMetadata.InsertAndSpawn(headerMetadata);
+
+        // Can access self MarkdownEntry in this document.
+        mc.SetValue("self", new MarkdownEntry(headerMetadata));
 
         return mc;
     }
@@ -250,12 +248,14 @@ public sealed class Ripper
     /// <summary>
     /// Render markdown content.
     /// </summary>
+    /// <param name="contentsBasePath">Content base path</param>
     /// <param name="markdownEntry">Markdown entry</param>
     /// <param name="metadata">Metadata context</param>
     /// <param name="storeToBasePath">Generated html content base path</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>Applied layout path.</returns>
     public async ValueTask<PathEntry> RenderContentAsync(
+        string contentsBasePath,
         MarkdownEntry markdownEntry,
         IMetadataContext metadata,
         string storeToBasePath,
@@ -263,7 +263,7 @@ public sealed class Ripper
     {
         using var markdownStream = new FileStream(
             Path.Combine(
-                markdownEntry.contentBasePath,
+                contentsBasePath,
                 markdownEntry.MarkdownPath.PhysicalPath),
             FileMode.Open,
             FileAccess.Read,
@@ -294,14 +294,10 @@ public sealed class Ripper
                 Utilities.UTF8);
             outputHtmlWriter.NewLine = Environment.NewLine;
 
-            // Can access self MarkdownEntry in this document.
-            var mc = metadata.Spawn();
-            mc.SetValue("self", markdownEntry);
-
             appliedLayoutPath = await this.RenderContentAsync(
                 markdownEntry.MarkdownPath,
                 markdownReader,
-                mc,
+                metadata,
                 outputHtmlWriter,
                 ct);
 

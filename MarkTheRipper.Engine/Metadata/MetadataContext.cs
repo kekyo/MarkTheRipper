@@ -9,6 +9,7 @@
 
 using MarkTheRipper.Expressions;
 using MarkTheRipper.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,14 +19,18 @@ public sealed class MetadataContext :
     IMetadataContext
 {
     private readonly MetadataContext? parent;
-    private readonly Dictionary<string, IExpression> metadata = new();
+    private readonly Dictionary<string, IExpression> metadata;
 
-    public MetadataContext()
+    public MetadataContext() =>
+        this.metadata = new();
+
+    private MetadataContext(
+        MetadataContext parent,
+        Dictionary<string, IExpression> metadata)
     {
-    }
-
-    private MetadataContext(MetadataContext parent) =>
         this.parent = parent;
+        this.metadata = metadata;
+    }
 
     public void Set(string keyName, IExpression expression) =>
         this.metadata[keyName] = expression;
@@ -36,7 +41,11 @@ public sealed class MetadataContext :
             this.parent?.Lookup(keyName);
 
     public IMetadataContext Spawn() =>
-        new MetadataContext(this);
+        new MetadataContext(this, new());
+
+    public IMetadataContext InsertAndSpawn(
+        Dictionary<string, IExpression> metadata) =>
+        new MetadataContext(this, metadata).Spawn();
 
     public override string ToString() =>
         string.Join(",",

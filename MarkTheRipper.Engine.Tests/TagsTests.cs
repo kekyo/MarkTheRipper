@@ -32,8 +32,7 @@ public sealed class TagsTests
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
@@ -54,8 +53,7 @@ public sealed class TagsTests
                     new PartialTagEntry("tag1"),
                     new PartialTagEntry("tag2"),
                 } },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
@@ -75,8 +73,7 @@ public sealed class TagsTests
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -84,8 +81,7 @@ public sealed class TagsTests
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
@@ -105,8 +101,7 @@ public sealed class TagsTests
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -115,8 +110,7 @@ public sealed class TagsTests
                     new PartialTagEntry("tag1"),
                     new PartialTagEntry("tag2"),
                 } },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
@@ -136,8 +130,7 @@ public sealed class TagsTests
                 { "tags", new[] {
                     new PartialTagEntry("tag1"),
                 } },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -146,8 +139,7 @@ public sealed class TagsTests
                     new PartialTagEntry("tag1"),
                     new PartialTagEntry("tag2"),
                 } },
-            },
-            null!);
+            });
         var mh3 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -155,8 +147,7 @@ public sealed class TagsTests
                 { "tags", new[] {
                     new PartialTagEntry("tag3"),
                 } },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {
@@ -173,8 +164,7 @@ public sealed class TagsTests
             new Dictionary<string, object?>()
             {
                 { "path", "content1" },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateTagsAsync(new[]
         {

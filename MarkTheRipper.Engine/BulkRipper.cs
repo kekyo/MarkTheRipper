@@ -197,7 +197,7 @@ public sealed class BulkRipper
 #endif
 
         var entriesByCandidate = markdownEntries.ToDictionary(
-            markdownEntry => (markdownEntry.contentBasePath, markdownEntry.MarkdownPath));
+            markdownEntry => markdownEntry.MarkdownPath);
 
         var tagList = await EntryAggregator.AggregateTagsAsync(
             markdownEntries.Where(entry => !entry.DoesNotPublish), metadata, ct);
@@ -217,11 +217,12 @@ public sealed class BulkRipper
             await dc!.CreateIfNotExistAsync(storeToPathElements.DirPath, ct);
 
             if (entriesByCandidate.TryGetValue(
-                (contentBasePath, relativeContentPath), out var markdownEntry))
+                relativeContentPath, out var markdownEntry))
             {
                 if (!markdownEntry.DoesNotPublish)
                 {
                     var appliedLayoutPath = await this.ripper.RenderContentAsync(
+                        contentBasePath,
                         markdownEntry,
                         mc,
                         this.storeToBasePath,
