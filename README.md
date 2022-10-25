@@ -1235,4 +1235,16 @@ Apache-v2.
 
 ## History
 
-TODO:
+* 0.4.0:
+  * Can be paging navigation. #20
+* 0.3.0:
+  * Ready to use oEmbed. #18
+* 0.2.0:
+  * Keyword expansion can be applied to the markdown document itself. #3
+* 0.1.0:
+  * Automatically inserted date metadata into markdown file when lacked. #13
+  * Function calls can be made. #2
+  * Aggregated categories and tags from entire content markdowns. #14
+  * Bracket characters are supported. #6
+  * Can use the generator keyword. #5
+  * Automatic category collection is possible. #1
