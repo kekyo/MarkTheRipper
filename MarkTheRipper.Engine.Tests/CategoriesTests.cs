@@ -33,8 +33,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -56,8 +55,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -78,8 +76,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -88,8 +85,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -110,8 +106,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -121,8 +116,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -143,8 +137,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -154,8 +147,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
         var mh3 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -164,8 +156,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat3",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -182,8 +173,7 @@ public sealed class CategoriesTests
             new Dictionary<string, object?>
             {
                 { "path", "content1" },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -204,8 +194,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null))
                 },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -215,8 +204,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
         var mh3 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -226,8 +214,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {
@@ -249,8 +236,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat1",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
         var mh2 = new MarkdownEntry(
             new Dictionary<string, object?>()
             {
@@ -260,8 +246,7 @@ public sealed class CategoriesTests
                     new PartialCategoryEntry("cat3",
                     new PartialCategoryEntry("(root)", null)))
                 },
-            },
-            null!);
+            });
 
         var actual = await EntryAggregator.AggregateCategoriesAsync(new[]
         {

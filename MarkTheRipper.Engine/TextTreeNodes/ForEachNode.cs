@@ -37,8 +37,7 @@ internal sealed class ForEachNode : ITextTreeNode
         CancellationToken ct)
     {
         if (this.parameters.FirstOrDefault() is { } expression0 &&
-            await Reducer.Instance.ReduceExpressionAsync(expression0, metadata, ct).
-                ConfigureAwait(false) is { } rawValue &&
+            await Reducer.Instance.ReduceExpressionAsync(expression0, metadata, ct) is { } rawValue &&
             MetadataUtilities.EnumerateValue(rawValue, metadata) is { } enumerable)
         {
             var iterationMetadata = metadata.Spawn();
@@ -65,8 +64,7 @@ internal sealed class ForEachNode : ITextTreeNode
 
                 foreach (var childNode in childNodes)
                 {
-                    await childNode.RenderAsync(writer, iterationMetadata, ct).
-                        ConfigureAwait(false);
+                    await childNode.RenderAsync(writer, iterationMetadata, ct);
                 }
 
                 index++;

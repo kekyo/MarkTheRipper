@@ -61,10 +61,8 @@ internal sealed class PartialCategoryEntry :
 
     public async ValueTask<object?> GetPropertyValueAsync(
         string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
-        await this.GetRealCategoryEntryAsync(metadata, reducer, ct).
-            ConfigureAwait(false) is { } entry &&
-        await entry.GetPropertyValueAsync(keyName, metadata, reducer, ct).
-            ConfigureAwait(false) is { } value ?
+        await this.GetRealCategoryEntryAsync(metadata, reducer, ct) is { } entry &&
+        await entry.GetPropertyValueAsync(keyName, metadata, reducer, ct) is { } value ?
             value :
             keyName switch
             {

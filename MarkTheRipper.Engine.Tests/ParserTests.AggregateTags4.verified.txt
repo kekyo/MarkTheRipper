@@ -3,7 +3,7 @@
     Name: tag1,
     Entries: [
       {
-        Metadata: {
+        HeaderMetadata: {
           path: content1,
           tags: [
             {
@@ -13,7 +13,7 @@
         }
       },
       {
-        Metadata: {
+        HeaderMetadata: {
           path: content2,
           tags: [
             {
@@ -31,7 +31,7 @@
     Name: tag2,
     Entries: [
       {
-        Metadata: {
+        HeaderMetadata: {
           path: content2,
           tags: [
             {

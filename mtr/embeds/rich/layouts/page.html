@@ -74,7 +74,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li style="padding-right: 0.5em;">Category:</li>
-                    {foreach category.breadcrumb}
+                    {foreach category.breadcrumbs}
                     <li class="breadcrumb-item"><span aria-label="category" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span></li>
                     {end}
                 </ol>
@@ -82,6 +82,10 @@
             <!-- Tags use Bootstrap badge -->
             <nav aria-label="tags">
                 Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span>{end}
+            </nav>
+            <nav aria-label="navigation">
+                {foreach (take (older self) 1)}<a href="{relative item.path}">Older</a>{end}
+                {foreach (take (newer self) 1)}<a href="{relative item.path}">Newer</a>{end}
             </nav>
         </header>
         <hr />

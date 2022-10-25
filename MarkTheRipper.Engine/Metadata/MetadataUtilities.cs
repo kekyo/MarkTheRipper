@@ -42,14 +42,20 @@ public static class MetadataUtilities
         metadata.SetValue("timezone", TimeZoneInfo.Local);
         metadata.SetValue("layout", "page");
 
-        metadata.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
-        metadata.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
-        metadata.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));
         metadata.SetValue("add", FunctionFactory.CastTo(Formula.AddAsync));
         metadata.SetValue("sub", FunctionFactory.CastTo(Formula.SubtractAsync));
         metadata.SetValue("mul", FunctionFactory.CastTo(Formula.MultipleAsync));
         metadata.SetValue("div", FunctionFactory.CastTo(Formula.DivideAsync));
         metadata.SetValue("mod", FunctionFactory.CastTo(Formula.ModuloAsync));
+
+        metadata.SetValue("take", FunctionFactory.CastTo(Iterator.TakeAsync));
+
+        metadata.SetValue("format", FunctionFactory.CastTo(Format.FormatAsync));
+
+        metadata.SetValue("relative", FunctionFactory.CastTo(Relative.RelativeAsync));
+        metadata.SetValue("lookup", FunctionFactory.CastTo(Lookup.LookupAsync));
+        metadata.SetValue("older", FunctionFactory.CastTo(Navigate.OlderAsync));
+        metadata.SetValue("newer", FunctionFactory.CastTo(Navigate.NewerAsync));
 
         metadata.SetValue("embed", FunctionFactory.CastTo(oEmbed.EmbedAsync));
         metadata.SetValue("card", FunctionFactory.CastTo(oEmbed.CardAsync));
@@ -91,17 +97,14 @@ public static class MetadataUtilities
             {
                 JValue v when v.Value?.ToString() is var sv =>
                     sv != null ?
-                        await Parser.ParseKeywordExpressionAsync(keyNameHint, sv, ct).
-                            ConfigureAwait(false) :
+                        await Parser.ParseKeywordExpressionAsync(keyNameHint, sv, ct) :
                         new ValueExpression(null),
                 JArray a => new ArrayExpression(
-                    await Task.WhenAll(a.Select(e => ToExpressionAsync("", e, ct).AsTask())).
-                        ConfigureAwait(false)),
+                    await Task.WhenAll(a.Select(e => ToExpressionAsync("", e, ct).AsTask()))),
                 null => new ValueExpression(null),
                 _ => token.Value<string>() is { } sv ?
                     await Parser.ParseKeywordExpressionAsync(
-                        keyNameHint, sv, ct).
-                        ConfigureAwait(false) :
+                        keyNameHint, sv, ct) :
                     new ValueExpression(null),
             };
 
@@ -109,9 +112,7 @@ public static class MetadataUtilities
             (jt.ToObject<Dictionary<string, JToken?>>(s) ?? new()).
              Select(async entry =>
                 (entry.Key,
-                 Value: await ToExpressionAsync(entry.Key, entry.Value, ct).
-                    ConfigureAwait(false)))).
-             ConfigureAwait(false)).
+                 Value: await ToExpressionAsync(entry.Key, entry.Value, ct))))).
             ToDictionary(
                 entry => entry.Key,
                 entry => entry.Value);
@@ -134,8 +135,7 @@ public static class MetadataUtilities
             await Reducer.Instance.ReduceExpressionAsync(langExpression, metadata, ct) is { } langValue ?
                 langValue is CultureInfo ci ?
                     ci :
-                    Utilities.GetLocale(await FormatValueAsync(langValue, metadata, ct).
-                        ConfigureAwait(false)) :
+                    Utilities.GetLocale(await FormatValueAsync(langValue, metadata, ct)) :
             CultureInfo.InvariantCulture;
 
     /////////////////////////////////////////////////////////////////////
@@ -173,24 +173,20 @@ public static class MetadataUtilities
                 string.Empty,
             IMetadataEntry entry =>
                 await FormatValueAsync(
-                    await entry.GetImplicitValueAsync(metadata, Reducer.Instance, ct).
-                        ConfigureAwait(false),
+                    await entry.GetImplicitValueAsync(metadata, Reducer.Instance, ct),
                     metadata,
-                    ct).
-                    ConfigureAwait(false),
+                    ct),
             string str =>
                 str,
             IEnumerable enumerable =>
                 string.Join(",",
                     await Task.WhenAll(
                         enumerable.Cast<object?>().
-                        Select(v => FormatValueAsync(v, metadata, ct).AsTask())).
-                        ConfigureAwait(false)),
+                        Select(v => FormatValueAsync(v, metadata, ct).AsTask()))),
             IFormattable formattable =>
                 formattable.ToString(
                     null,
-                    await GetLanguageAsync(metadata, ct).
-                        ConfigureAwait(false)) ??
+                    await GetLanguageAsync(metadata, ct)) ??
                 string.Empty,
             _ =>
                 value.ToString() ??
@@ -210,8 +206,7 @@ public static class MetadataUtilities
     public static async ValueTask<TValue> LookupValueAsync<TValue>(
         this IMetadataContext metadata, string keyName, TValue defaultValue, CancellationToken ct) =>
         metadata.Lookup(keyName) is { } expression &&
-        await Reducer.Instance.ReduceExpressionAsync(expression, metadata, ct).
-            ConfigureAwait(false) is TValue value ?
+        await Reducer.Instance.ReduceExpressionAsync(expression, metadata, ct) is TValue value ?
             value : defaultValue;
 
     /////////////////////////////////////////////////////////////////////
@@ -222,8 +217,7 @@ public static class MetadataUtilities
     {
         if (metadata.Lookup("layoutList") is { } layoutListExpression &&
             await Reducer.Instance.ReduceExpressionAsync(
-                layoutListExpression, metadata, ct).
-                ConfigureAwait(false) is IReadOnlyDictionary<string, RootTextNode> tl)
+                layoutListExpression, metadata, ct) is IReadOnlyDictionary<string, RootTextNode> tl)
         {
             if (tl.TryGetValue(layoutName, out var layout))
             {
@@ -259,8 +253,7 @@ public static class MetadataUtilities
     {
         if (metadata.Lookup("layout") is { } layoutExpression &&
             await Reducer.Instance.ReduceExpressionAsync(
-                layoutExpression, metadata, ct).
-                ConfigureAwait(false) is { } layoutValue)
+                layoutExpression, metadata, ct) is { } layoutValue)
         {
             if (layoutValue is RootTextNode layout)
             {
@@ -268,8 +261,7 @@ public static class MetadataUtilities
             }
             else if (layoutValue is PartialLayoutEntry entry)
             {
-                return await metadata.GetLayoutAsync(entry.Name, "page", ct).
-                    ConfigureAwait(false);
+                return await metadata.GetLayoutAsync(entry.Name, "page", ct);
             }
             else
             {

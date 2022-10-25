@@ -24,23 +24,21 @@ internal static class EntryAggregator
             dto :
             DateTimeOffset.MaxValue;
 
-    public static async ValueTask<Dictionary<string, TagEntry>> AggregateTagsAsync(
+    public static async ValueTask<IReadOnlyDictionary<string, TagEntry>> AggregateTagsAsync(
         IEnumerable<MarkdownEntry> markdownEntries,
         IMetadataContext metadata,
         CancellationToken ct) =>
         (await Task.WhenAll(markdownEntries.Select(async markdownEntry =>
-            await markdownEntry.GetPropertyValueAsync("tags", metadata, Reducer.Instance, ct).
-                ConfigureAwait(false) is { } tagsValue ?
+            await markdownEntry.GetPropertyValueAsync("tags", metadata, Reducer.Instance, ct) is { } tagsValue ?
                 MetadataUtilities.EnumerateValue(tagsValue, metadata).
                     OfType<PartialTagEntry>().
                     Select(tag => (tag, markdownEntry)).
                     Where(entry => !string.IsNullOrWhiteSpace(entry.tag.Name)).
                     ToArray() :
-                InternalUtilities.Empty<(PartialTagEntry tag, MarkdownEntry markdownEntry)>())).
-            ConfigureAwait(false)).
+                InternalUtilities.Empty<(PartialTagEntry tag, MarkdownEntry markdownEntry)>()))).
             SelectMany(entries => entries).
             GroupBy(entry => entry.tag.Name).
-            ToDictionary(
+            ToSortedDictionary(
                 g => g.Key,
                 g => new TagEntry(
                     g.Key,
@@ -61,11 +59,9 @@ internal static class EntryAggregator
             Select(async markdownEntry =>
                 (markdownEntry,
                  categoryList:
-                    await markdownEntry.GetPropertyValueAsync("category", metadata, Reducer.Instance, ct).
-                        ConfigureAwait(false) is PartialCategoryEntry entry ?
+                    await markdownEntry.GetPropertyValueAsync("category", metadata, Reducer.Instance, ct) is PartialCategoryEntry entry ?
                     entry.Unfold(e => e.Parent).Reverse().Skip(1).ToArray() :
-                    InternalUtilities.Empty<PartialCategoryEntry>()))).
-            ConfigureAwait(false);
+                    InternalUtilities.Empty<PartialCategoryEntry>())));
 
         var childCategoryEntries = (await Task.WhenAll(categoryLists.
             Where(entry => entry.categoryList.Length > levelIndex).
@@ -75,10 +71,8 @@ internal static class EntryAggregator
                     g.Select(entry => entry.markdownEntry),
                     levelIndex + 1,
                     metadata,
-                    ct).
-                    ConfigureAwait(false)))).
-            ConfigureAwait(false)).
-            ToDictionary(
+                    ct))))).
+            ToSortedDictionary(
                 g => g.key,
                 g => g.values);
 

@@ -93,6 +93,10 @@ H3 body.
         <h1>{title}</h1>
         <p>Category:{foreach category.breadcrumbs} {item.name}{end}</p>
         <p>Tags:{foreach tags} {item.name}{end}</p>
+        <p>
+            {foreach (take (older self) 1)}<a href="{relative item.path}">Older</a>{end}
+            {foreach (take (newer self) 1)}<a href="{relative item.path}">Newer</a>{end}
+        </p>
     </header>
     <hr />
     <article>
@@ -775,6 +779,9 @@ Here is a list of built-in functions, including the functions that have appeared
 |`format`|Format arguments into strings. |
 |`relative`|Convert argument paths to relative paths. |
 |`lookup`|Draws a metadata dictionary based on the results given by the `argument`. |
+|`older`|Enumerates articles older than the argument indicates. |
+|`newer`|Enumerates articles newer than the argument indicates. |
+|`take`|Limit the number of items that can be enumerated. |
 |`add`|Add numeric arguments.|
 |`sub`|Subtract numeric arguments.|
 |`mul`|Multiply numeric arguments.|
@@ -906,6 +913,76 @@ so even if you want to output a fixed string, you can use:
 ```html
 <p>Tag: {lookup 'diary'}</p>
 ```
+
+#### older, newer (Article navigation)
+
+You can use `older` and `newer` function to enumerate articles.
+For example, to enumerate articles newer than the current article, use the following expression:
+
+```html
+{foreach (newer self)}<p>{item.title}</p>{end}
+```
+
+where `self` represents the current article (the markdown article currently using this layout) and the individual elements enumerated by `foreach` represent newer articles.
+Thus, you can create links by referencing properties and applying the `relative` function as follows:
+
+``html
+{foreach (newer self)}<p><a href="{relative item.path}">{item.title}</a></p>{end}
+```
+
+Note the position of the parentheses.
+In the above, the parentheses are used to specify `self` as an argument to the `newer` function.
+Without the parentheses,
+you have specified `foreach` with `newer` and `self` as arguments,
+which will not work correctly.
+
+The enumerated articles are obtained in date order.
+Therefore, MarkTheRipper recommends that blog like post which are date-oriented;
+to group them into category such as `blog` and use this function to navigate within those category.
+
+`older` and `newer` function arguments can be expressions that indicate any articles.
+An enumerated value of the `entries` property is equivalent.
+
+#### take (enumeration operation)
+
+`take` limits the number of possible enumerations of values.
+For example, `tag.entries` will enumerate all articles with that tag:
+
+```html
+{foreach tags tag}
+<h2>{tag}</h2>
+{foreach tag.entries}<p>{item.title}</p>{end}
+{end}
+```
+
+However, you may want to limit this to a few pieces:
+
+```html
+{foreach tags tag}
+<h2>{tag}</h2>
+{foreach (take tag.entries 3)}<p>{item.title}</p>{end}
+{end}
+```
+
+The `take` function takes two arguments:
+The first is the enumeration target and the second is the number of enumerations to limit.
+The above expression limits the number to a maximum of 3.
+
+There is a neat little technique using this `take` function and `foreach`.
+It is applied in combination with the `newer` function in the previous section:
+
+``html
+{foreach (take (newer self) 1)}<a href="{relative item.path}">Newer: {item.title}</a>{end}
+```
+
+Limiting the number of articles to be enumerated to one means that if there are zero articles,
+they will not be enumerated at all.
+In other words, if there are no articles to enumerate,
+the `foreach` will not be output, and therefore will not be displayed.
+This means that if there are no articles newer than the current article,
+the link will not be displayed.
+
+This expression is almost identical to the sample layout.
 
 #### add, sub, mul, div, mod (Numerical calculation)
 
@@ -1158,4 +1235,16 @@ Apache-v2.
 
 ## History
 
-TODO:
+* 0.4.0:
+  * Can be paging navigation. #20
+* 0.3.0:
+  * Ready to use oEmbed. #18
+* 0.2.0:
+  * Keyword expansion can be applied to the markdown document itself. #3
+* 0.1.0:
+  * Automatically inserted date metadata into markdown file when lacked. #13
+  * Function calls can be made. #2
+  * Aggregated categories and tags from entire content markdowns. #14
+  * Bracket characters are supported. #6
+  * Can use the generator keyword. #5
+  * Automatic category collection is possible. #1
