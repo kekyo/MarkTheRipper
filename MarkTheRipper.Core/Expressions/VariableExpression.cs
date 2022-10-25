@@ -41,5 +41,5 @@ public sealed class VariableExpression : IExpression
         name = this.Name;
 
     public override string ToString() =>
-        this.Name;
+        $"Variable: {this.Name}";
 }

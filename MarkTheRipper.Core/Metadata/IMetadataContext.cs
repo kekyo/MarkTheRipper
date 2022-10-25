@@ -8,8 +8,7 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
-using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace MarkTheRipper.Metadata;
 
@@ -20,4 +19,5 @@ public interface IMetadataContext
     IExpression? Lookup(string keyName);
 
     IMetadataContext Spawn();
+    IMetadataContext InsertAndSpawn(Dictionary<string, IExpression> metadata);
 }

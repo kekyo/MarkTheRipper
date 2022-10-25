@@ -2,7 +2,7 @@
   Name: (root),
   Entries: [
     {
-      Metadata: {
+      HeaderMetadata: {
         path: content1
       }
     }

@@ -8,31 +8,40 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 using MarkTheRipper.Expressions;
+using MarkTheRipper.Internal;
 using MarkTheRipper.Metadata;
 using System;
+using System.Collections;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MarkTheRipper.Functions;
 
-internal static class Lookup
+internal static class Iterator
 {
-    public static async ValueTask<IExpression> LookupAsync(
+    public static async ValueTask<IExpression> TakeAsync(
         IExpression[] parameters,
         IMetadataContext metadata,
         IReducer reducer,
         CancellationToken ct)
     {
-        if (parameters.Length != 1)
+        if (parameters.Length != 2)
         {
             throw new ArgumentException(
-                $"Invalid lookup function arguments: Count={parameters.Length}");
+                $"Invalid take function arguments: Count={parameters.Length}");
         }
 
-        var name = await reducer.ReduceExpressionAsync(parameters[0], metadata, ct);
-        var nameString = await MetadataUtilities.FormatValueAsync(name, metadata, ct);
-
-        return metadata.Lookup(nameString) is { } resolvedExpression ?
-            resolvedExpression : new ValueExpression(name);
+        if (await reducer.ReduceIntegerExpressionAsync(
+            parameters[1], metadata, ct) is { } count &&
+            await reducer.ReduceExpressionAsync(
+            parameters[0], metadata, ct) is IEnumerable enumerable)
+        {
+            return new ValueExpression(enumerable.Cast<object?>().Take((int)count));
+        }
+        else
+        {
+            return new ValueExpression(InternalUtilities.Empty<object?>());
+        }
     }
 }

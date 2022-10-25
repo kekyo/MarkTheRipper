@@ -44,8 +44,7 @@ public static class HttpAccessorExtension
         CancellationToken ct)
     {
         var jt = await httpAccess.PostJsonAsync(
-            url, requestJson, headers, cacheKeyValues, ct).
-            ConfigureAwait(false);
+            url, requestJson, headers, cacheKeyValues, ct);
         return jt.ToObject<T>()!;
     }
 }

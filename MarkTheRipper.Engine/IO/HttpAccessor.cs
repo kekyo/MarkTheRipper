@@ -98,8 +98,7 @@ public sealed class HttpAccessor : IHttpAccessor
                         cachedContentStream = new FileStream(
                             targetPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
                         return cachedContentStream;
-                    }).
-                    ConfigureAwait(false);
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -132,8 +131,7 @@ public sealed class HttpAccessor : IHttpAccessor
                 try
                 {
                     var sectionString = await tr.ReadLineAsync().
-                        WithCancellation(ct).
-                        ConfigureAwait(false);
+                        WithCancellation(ct);
                     if (sectionString != "[InternetShortcut]")
                     {
                         throw new FormatException(
@@ -141,8 +139,7 @@ public sealed class HttpAccessor : IHttpAccessor
                     }
 
                     var kvString = (await tr.ReadLineAsync().
-                        WithCancellation(ct).
-                        ConfigureAwait(false))?.
+                        WithCancellation(ct))?.
                         Trim();
                     var separatorIndex = kvString?.IndexOf('=') ?? -1;
                     if (separatorIndex == -1)
@@ -184,8 +181,7 @@ public sealed class HttpAccessor : IHttpAccessor
             var dirPath = Utilities.GetDirectoryPath(temporaryPath);
 
             // Construct sub directory.
-            await this.safeDirectoryCreator.CreateIfNotExistAsync(dirPath, ct).
-                ConfigureAwait(false);
+            await this.safeDirectoryCreator.CreateIfNotExistAsync(dirPath, ct);
 
             // Enter asynchronous critical section by target path.
             using var _ = await this.cs.EnterAsync(targetPath, ct);
@@ -219,8 +215,7 @@ public sealed class HttpAccessor : IHttpAccessor
                 }
 
                 // Connect HTTP server and send.
-                using var response = await httpClientFactory.Value.SendAsync(request, ct).
-                    ConfigureAwait(false);
+                using var response = await httpClientFactory.Value.SendAsync(request, ct);
 
                 // Needed redirection:
                 if (((int)response.StatusCode / 100) == 3)
@@ -234,12 +229,9 @@ public sealed class HttpAccessor : IHttpAccessor
                         UriKind.Absolute);
 
                     // Save into cache file.
-                    await tw.WriteLineAsync("[InternetShortcut]").
-                        ConfigureAwait(false);
-                    await tw.WriteLineAsync($"URL={currentUrl}").
-                        ConfigureAwait(false);
-                    await tw.FlushAsync().
-                        ConfigureAwait(false);
+                    await tw.WriteLineAsync("[InternetShortcut]");
+                    await tw.WriteLineAsync($"URL={currentUrl}");
+                    await tw.FlushAsync();
 
                     temporaryStream.Close();
 
@@ -254,10 +246,8 @@ public sealed class HttpAccessor : IHttpAccessor
                     response.EnsureSuccessStatusCode();
 
                     await response.Content.CopyToAsync(temporaryStream).
-                        WithCancellation(ct).
-                        ConfigureAwait(false);
-                    await temporaryStream.FlushAsync().
-                        ConfigureAwait(false);
+                        WithCancellation(ct);
+                    await temporaryStream.FlushAsync();
 
                     temporaryStream.Close();
 
@@ -280,8 +270,7 @@ public sealed class HttpAccessor : IHttpAccessor
                             cachedContentStream = new FileStream(
                                 exactTargetPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
                             return cachedContentStream;
-                        }).
-                        ConfigureAwait(false);
+                        });
                     }
                     finally
                     {

@@ -273,15 +273,13 @@ public static class Parser
             "layout" => new ValueExpression(new PartialLayoutEntry(
                 await Reducer.Instance.ReduceExpressionAndFormatAsync(
                     ParseExpression(expressionString, ListTypes.SingleValue),
-                    MetadataContext.Empty, ct).
-                    ConfigureAwait(false))),
+                    MetadataContext.Empty, ct))),
             "category" => new ValueExpression(
                 ParseExpression(expressionString, ListTypes.StrictArray) switch
                 {
                     ArrayExpression(var elements) =>
                         (await Task.WhenAll(elements.Select(element =>
-                            Reducer.Instance.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).AsTask())).
-                            ConfigureAwait(false)).
+                            Reducer.Instance.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).AsTask()))).
                         SelectMany(categoryName => categoryName.
                             Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).
                             Where(categoryName => categoryName.Trim().Length >= 1)).
@@ -295,9 +293,7 @@ public static class Parser
                 ParseExpression(expressionString, ListTypes.StrictArray) is ArrayExpression(var elements) ?
                     await Task.WhenAll(elements.Select(async element =>
                         new PartialTagEntry(
-                            await Reducer.Instance.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct).
-                                ConfigureAwait(false)))).
-                        ConfigureAwait(false) :
+                            await Reducer.Instance.ReduceExpressionAndFormatAsync(element, MetadataContext.Empty, ct)))) :
                     InternalUtilities.Empty<PartialTagEntry>()),
             "date" => ParseExpression(expressionString, ListTypes.SingleValue),
             _ => ParseExpression(expressionString, ListTypes.Array),
@@ -320,8 +316,7 @@ public static class Parser
 
         while (true)
         {
-            var line = await textReader(ct).
-                ConfigureAwait(false);
+            var line = await textReader(ct);
             if (line == null)
             {
                 break;
@@ -488,8 +483,7 @@ public static class Parser
         // `---`
         while (true)
         {
-            var line = await markdownReader(ct).
-                ConfigureAwait(false);
+            var line = await markdownReader(ct);
             if (line == null)
             {
                 throw new FormatException(
@@ -505,13 +499,12 @@ public static class Parser
             }
         }
 
-        var markdownMetadata = new Dictionary<string, IExpression>();
+        var headerMetadata = new Dictionary<string, IExpression>();
 
         // `title: Hello world`
         while (true)
         {
-            var line = await markdownReader(ct).
-                ConfigureAwait(false);
+            var line = await markdownReader(ct);
             if (line == null)
             {
                 throw new FormatException(
@@ -526,11 +519,10 @@ public static class Parser
                     var keyName = line.Substring(0, keyIndex).Trim();
                     var valueText = line.Substring(keyIndex + 1).Trim();
                     var valueExpression = await ParseKeywordExpressionAsync(
-                        keyName, valueText, ct).
-                        ConfigureAwait(false);
+                        keyName, valueText, ct);
                     if (valueExpression != null)
                     {
-                        markdownMetadata[keyName] = valueExpression;
+                        headerMetadata[keyName] = valueExpression;
                     }
                 }
                 else
@@ -549,7 +541,7 @@ public static class Parser
             }
         }
 
-        return markdownMetadata;
+        return headerMetadata;
     }
 
     internal static async ValueTask ParseAndAppendMarkdownHeaderAsync(
@@ -566,15 +558,13 @@ public static class Parser
             // `---`
             while (true)
             {
-                var line = await markdownReader(ct).
-                    ConfigureAwait(false);
+                var line = await markdownReader(ct);
                 if (line == null)
                 {
                     throw new InvalidOperationException();
                 }
 
-                await writingTask.
-                    ConfigureAwait(false);
+                await writingTask;
 
                 writingTask = markdownWriter(line, ct);
 
@@ -590,8 +580,7 @@ public static class Parser
             // `title: Hello world`
             while (true)
             {
-                var line = await markdownReader(ct).
-                    ConfigureAwait(false);
+                var line = await markdownReader(ct);
                 if (line == null)
                 {
                     throw new InvalidOperationException();
@@ -605,13 +594,11 @@ public static class Parser
                         // `---`
                         if (line.Trim().StartsWith("---"))
                         {
-                            await writingTask.
-                                ConfigureAwait(false);
+                            await writingTask;
 
                             foreach (var entry in values)
                             {
-                                await markdownWriter($"{entry.Key}: {entry.Value}", ct).
-                                    ConfigureAwait(false);
+                                await markdownWriter($"{entry.Key}: {entry.Value}", ct);
                             }
 
                             writingTask = markdownWriter(line, ct);
@@ -624,17 +611,13 @@ public static class Parser
                     }
                 }
 
-                await writingTask.
-                    ConfigureAwait(false);
-
-                await markdownWriter(line, ct).
-                    ConfigureAwait(false);
+                await writingTask;
+                await markdownWriter(line, ct);
             }
 
             while (true)
             {
-                var line = await markdownReader(ct).
-                    ConfigureAwait(false);
+                var line = await markdownReader(ct);
 
                 // EOF
                 if (line == null)
@@ -642,9 +625,7 @@ public static class Parser
                     break;
                 }
 
-                await writingTask.
-                    ConfigureAwait(false);
-
+                await writingTask;
                 writingTask = markdownWriter(line, ct);
             }
         }
@@ -652,8 +633,7 @@ public static class Parser
         {
             try
             {
-                await writingTask.
-                    ConfigureAwait(false);
+                await writingTask;
             }
             catch
             {
@@ -678,12 +658,12 @@ public static class Parser
         }
     }
 
-    internal static async ValueTask<(Dictionary<string, IExpression> markdownMetadata, string markdownBody, Func<int, int, bool>[] inCodeFragments)> ParseMarkdownBodyAsync(
+    internal static async ValueTask<(Dictionary<string, IExpression> headerMetadata, string markdownBody, Func<int, int, bool>[] inCodeFragments)> ParseMarkdownBodyAsync(
         PathEntry relativeContentPathHint,
         Func<CancellationToken, ValueTask<string?>> markdownReader,
         CancellationToken ct)
     {
-        var markdownMetadata = await ParseMarkdownHeaderAsync(
+        var headerMetadata = await ParseMarkdownHeaderAsync(
             relativeContentPathHint, markdownReader, ct);
 
         var markdownBody = new StringBuilder();
@@ -692,8 +672,7 @@ public static class Parser
 
         while (true)
         {
-            var line = await markdownReader(ct).
-                ConfigureAwait(false);
+            var line = await markdownReader(ct);
             if (line == null)
             {
                 break;
@@ -781,8 +760,7 @@ public static class Parser
                     markdownBody.AppendLine(line);
                     lineIndex++;
 
-                    line = await markdownReader(ct).
-                        ConfigureAwait(false);
+                    line = await markdownReader(ct);
 
                     // EOF
                     if (line == null)
@@ -795,6 +773,6 @@ public static class Parser
             }
         }
 
-        return (markdownMetadata, markdownBody.ToString(), inCodeFragments.ToArray());
+        return (headerMetadata, markdownBody.ToString(), inCodeFragments.ToArray());
     }
 }

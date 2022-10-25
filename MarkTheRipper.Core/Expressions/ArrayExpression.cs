@@ -42,5 +42,5 @@ public sealed class ArrayExpression : IExpression
         elements = this.Elements;
 
     public override string ToString() =>
-        $"[{string.Join(",", (object[])this.Elements)}]";
+        $"Array: [{string.Join(",", (object[])this.Elements)}]";
 }

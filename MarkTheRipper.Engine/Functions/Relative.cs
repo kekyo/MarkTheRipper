@@ -50,29 +50,24 @@ internal static class Relative
 
         if (metadata.Lookup("path") is { } currentPathExpression)
         {
-            if (await reducer.ReduceExpressionAsync(currentPathExpression, metadata, ct).
-                ConfigureAwait(false) is { } currentPathValue &&
-                await reducer.ReduceExpressionAsync(parameters[0], metadata, ct).
-                ConfigureAwait(false) is { } targetPathValue)
+            if (await reducer.ReduceExpressionAsync(currentPathExpression, metadata, ct) is { } currentPathValue &&
+                await reducer.ReduceExpressionAsync(parameters[0], metadata, ct) is { } targetPathValue)
             {
                 var relativePath = (currentPathValue, targetPathValue) switch
                 {
                     (PathEntry cpe, PathEntry tpe) =>
                         InternalCalculate(cpe, tpe),
-                    (PathEntry cpe, { } tp) =>
-                        InternalCalculate(cpe, new PathEntry(
-                            await MetadataUtilities.FormatValueAsync(tp, metadata, ct).
-                                ConfigureAwait(false))),
-                    (string cp, PathEntry tpe) =>
-                        InternalCalculate(new PathEntry(
-                            await MetadataUtilities.FormatValueAsync(cp, metadata, ct).
-                                ConfigureAwait(false)), tpe),
-                    (string cp, string tp) =>
-                        InternalCalculate(new PathEntry(
-                            await MetadataUtilities.FormatValueAsync(cp, metadata, ct).
-                                ConfigureAwait(false)), new PathEntry(
-                            await MetadataUtilities.FormatValueAsync(tp, metadata, ct).
-                                ConfigureAwait(false))),
+                    (PathEntry cpe, { } tp) => InternalCalculate(cpe,
+                        new PathEntry(
+                            await MetadataUtilities.FormatValueAsync(tp, metadata, ct))),
+                    (string cp, PathEntry tpe) => InternalCalculate(
+                        new PathEntry(
+                            await MetadataUtilities.FormatValueAsync(cp, metadata, ct)), tpe),
+                    (string cp, string tp) => InternalCalculate(
+                        new PathEntry(
+                            await MetadataUtilities.FormatValueAsync(cp, metadata, ct)),
+                        new PathEntry(
+                            await MetadataUtilities.FormatValueAsync(tp, metadata, ct))),
                     _ => throw new InvalidOperationException(
                         "Could not calculate relative path"),
                 };

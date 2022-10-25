@@ -2,7 +2,7 @@
   tag1: [
     {
       RelativeContentPath: content1,
-      Metadata: {
+      HeaderMetadata: {
         tags: [
           tag1
         ]
@@ -10,7 +10,7 @@
     },
     {
       RelativeContentPath: content2,
-      Metadata: {
+      HeaderMetadata: {
         tags: [
           tag1,
           tag2
@@ -21,7 +21,7 @@
   tag2: [
     {
       RelativeContentPath: content2,
-      Metadata: {
+      HeaderMetadata: {
         tags: [
           tag1,
           tag2

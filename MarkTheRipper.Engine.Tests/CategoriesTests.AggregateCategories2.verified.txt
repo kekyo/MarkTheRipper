@@ -8,7 +8,7 @@
           Name: cat2,
           Entries: [
             {
-              Metadata: {
+              HeaderMetadata: {
                 category: {
                   Name: cat2,
                   Parent: {

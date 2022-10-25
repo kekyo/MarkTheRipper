@@ -51,8 +51,7 @@ public sealed class RootTextNode :
     {
         foreach (var node in nodes)
         {
-            await node.RenderAsync(writer, metadata, ct).
-                ConfigureAwait(false);
+            await node.RenderAsync(writer, metadata, ct);
         }
     }
 
@@ -69,8 +68,7 @@ public sealed class RootTextNode :
         // Render markdown from layout AST with overall metadata.
         var overallHtmlContent = new StringBuilder();
         await this.RenderAsync(
-            text => overallHtmlContent.Append(text), mc, ct).
-            ConfigureAwait(false);
+            text => overallHtmlContent.Append(text), mc, ct);
 
         // Replace all contains if required.
         foreach (var entry in htmlContents)

@@ -137,8 +137,7 @@ internal sealed class AsyncResourceCriticalSection
             using var _ = ct.Register(() => waiter.SetCanceled());
             try
             {
-                await allocator().
-                    ConfigureAwait(false);
+                await allocator();
             }
             finally
             {
@@ -147,8 +146,7 @@ internal sealed class AsyncResourceCriticalSection
         }
         else
         {
-            await waiter.WaitAsync().
-                ConfigureAwait(false);
+            await waiter.WaitAsync();
         }
     }
 
@@ -163,8 +161,7 @@ internal sealed class AsyncResourceCriticalSection
         }
         else
         {
-            await waiter.WaitAsync().
-                ConfigureAwait(false);
+            await waiter.WaitAsync();
             return NopContinuation.Instance;
         }
     }

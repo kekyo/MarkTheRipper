@@ -33,12 +33,10 @@ internal static class oEmbedUtilities
         htmlMetadata.SiteName is { } siteName ?
             // `{layoutInfix}-{siteName}.html` ==> `{layoutInfix}.html`
             await metadata.GetLayoutAsync(
-                $"{layoutInfix}-{siteName}", $"{layoutInfix}", ct).
-                ConfigureAwait(false) :
+                $"{layoutInfix}-{siteName}", $"{layoutInfix}", ct) :
             // `{layoutInfix}.html`
             await metadata.GetLayoutAsync(
-                layoutInfix, null, ct).
-                ConfigureAwait(false);
+                layoutInfix, null, ct);
 
     public static async ValueTask<RootTextNode> Get_oEmbedLayoutAsync(
         this IMetadataContext metadata,
@@ -47,8 +45,7 @@ internal static class oEmbedUtilities
         // Get layout AST (ITextTreeNode).
         // `{layoutInfix}.html`
         await metadata.GetLayoutAsync(
-            layoutInfix, null, ct).
-            ConfigureAwait(false);
+            layoutInfix, null, ct);
 
     //////////////////////////////////////////////////////////////////////////////
 
@@ -188,8 +185,7 @@ internal static class oEmbedUtilities
 
         // Parse oEmbed metadata `html` value.
         var parser = new HtmlParser();
-        var html = await parser.ParseDocumentAsync(sanitizedHtmlString, ct).
-            ConfigureAwait(false);
+        var html = await parser.ParseDocumentAsync(sanitizedHtmlString, ct);
 
         // Will patch HTML attributes because makes helping responsive design.
         var width = -1;

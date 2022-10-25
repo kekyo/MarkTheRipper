@@ -33,8 +33,7 @@ internal sealed class PartialDateEntry :
         CancellationToken ct)
     {
         var timezoneValue = metadata.Lookup("timezone") is { } timezoneExpression ?
-            await reducer.ReduceExpressionAsync(timezoneExpression, metadata, ct).
-                ConfigureAwait(false) : null;
+            await reducer.ReduceExpressionAsync(timezoneExpression, metadata, ct) : null;
         if (timezoneValue != null)
         {
             if (timezoneValue is TimeZoneInfo tzi)
@@ -43,8 +42,7 @@ internal sealed class PartialDateEntry :
             }
 
             var timezoneString = await MetadataUtilities.FormatValueAsync(
-                timezoneValue, metadata, ct).
-                ConfigureAwait(false);
+                timezoneValue, metadata, ct);
 
             if (TimeSpan.TryParse(timezoneString, out var timezoneDifference))
             {
@@ -81,7 +79,7 @@ internal sealed class PartialDateEntry :
 
     public async ValueTask<object?> GetImplicitValueAsync(
         IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
-        (await GetDateTimeConverterAsync(metadata, reducer, ct).ConfigureAwait(false))(this.Date);
+        (await GetDateTimeConverterAsync(metadata, reducer, ct))(this.Date);
 
     public ValueTask<object?> GetPropertyValueAsync(
         string keyName, IMetadataContext metadata, IReducer reducer, CancellationToken ct) =>
@@ -92,4 +90,7 @@ internal sealed class PartialDateEntry :
 
     public string ToString(string? format, IFormatProvider? formatProvider) =>
         this.Date.ToString(format, formatProvider);
+
+    public void Deconstruct(out DateTimeOffset date) =>
+        date = this.Date;
 }
