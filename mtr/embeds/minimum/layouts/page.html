@@ -10,6 +10,10 @@
         <h1>{title}</h1>
         <p>Category:{foreach category.breadcrumbs} {item.name}{end}</p>
         <p>Tags:{foreach tags} {item.name}{end}</p>
+        <p>
+            {foreach (take (older self) 1)}<a href="{relative item.path}">Older</a>{end}
+            {foreach (take (newer self) 1)}<a href="{relative item.path}">Newer</a>{end}
+        </p>
     </header>
     <hr />
     <article>

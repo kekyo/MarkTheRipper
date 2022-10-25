@@ -80,6 +80,10 @@
             <nav aria-label="tags">
                 Tags:{foreach tags} <span aria-label="tag" class="badge rounded-pill bg-light text-dark">{lookup item.name}</span>{end}
             </nav>
+            <nav aria-label="navigation">
+                {foreach (take (older self) 1)}<a href="{relative item.path}">Older</a>{end}
+                {foreach (take (newer self) 1)}<a href="{relative item.path}">Newer</a>{end}
+            </nav>
         </header>
         <hr />
         <!-- Contents body -->
