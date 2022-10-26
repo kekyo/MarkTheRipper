@@ -39,6 +39,8 @@ dotnet tool install -g MarkTheRipper
 
 とするだけでインストールできます。または、.NET Framework 4.71以上に対応した、[ビルド済みのバイナリをダウンロードする事もできます。](https://github.com/kekyo/MarkTheRipper/releases)
 
+* 0.4.0現在、dotnet toolingでのインストールは、正しくないバージョンがインストールされる問題があり、[修正中です。](https://github.com/kekyo/MarkTheRipper/issues/27)
+
 初めて使う場合は、
 
 ```bash

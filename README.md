@@ -42,6 +42,8 @@ dotnet tool install -g MarkTheRipper
 
 Alternatively, [you can download a binary distribution](https://github.com/kekyo/MarkTheRipper/releases) that is compatible with .NET Framework 4.71 or higher.
 
+* Important as of 0.4.0, installation with dotnet tooling has a problem where the incorrect version is installed [(being fixed.)](https://github.com/kekyo/MarkTheRipper/issues/27)
+
 Then at first time, you will need to run:
 
 ```bash
