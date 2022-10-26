@@ -722,7 +722,12 @@ public static class Parser
                                 escapeChars, codeEscapeEndIndex);
                             if (codeEscapeStartIndex >= 0)
                             {
+                                codeStartIndex = line.IndexOfNot(
+                                    codeEscapeChar, codeEscapeStartIndex + 1) is { } i3 && i3 >= 0 ?
+                                    i3 : line.Length;
+
                                 codeEscapeLength = codeStartIndex - codeEscapeStartIndex;
+
                                 codeEndIndex = line.IndexOf(
                                     codeEscapeChar, codeStartIndex);
                                 if (codeEndIndex >= 0)
