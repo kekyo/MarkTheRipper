@@ -1,7 +1,8 @@
 {
   "profiles": {
     "mtr": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "workingDirectory": "C:\\Projects\\MarkTheRipper"
     }
   }
 }

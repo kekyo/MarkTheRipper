@@ -27,6 +27,28 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mtr-cli", "mtr-cli\mtr-cli.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkTheRipper.Core", "MarkTheRipper.Core\MarkTheRipper.Core.csproj", "{BE7E95D5-B414-4BF4-849D-94D31CB76D74}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "contents", "contents", "{3806AC43-8831-41AA-AADE-6C12142957D5}"
+	ProjectSection(SolutionItems) = preProject
+		contents\index_en.md = contents\index_en.md
+		contents\index_ja.md = contents\index_ja.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "users_guide_ja", "users_guide_ja", "{4C4F0E0B-5A51-44FD-AA45-7F8EF7EFE22F}"
+	ProjectSection(SolutionItems) = preProject
+		contents\users_guide_ja\first_step.md = contents\users_guide_ja\first_step.md
+		contents\users_guide_ja\functions.md = contents\users_guide_ja\functions.md
+		contents\users_guide_ja\layout_basics.md = contents\users_guide_ja\layout_basics.md
+		contents\users_guide_ja\tags_and_categories.md = contents\users_guide_ja\tags_and_categories.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "users_guide_en", "users_guide_en", "{1A8D8AEC-6227-4A37-AD28-68FF5163A1B4}"
+	ProjectSection(SolutionItems) = preProject
+		contents\users_guide_en\first_step.md = contents\users_guide_en\first_step.md
+		contents\users_guide_en\functions.md = contents\users_guide_en\functions.md
+		contents\users_guide_en\layout_basics.md = contents\users_guide_en\layout_basics.md
+		contents\users_guide_en\tags_and_categories.md = contents\users_guide_en\tags_and_categories.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +78,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3806AC43-8831-41AA-AADE-6C12142957D5} = {F3017D42-FC5F-4ED3-AEBA-EAEF8B943863}
+		{4C4F0E0B-5A51-44FD-AA45-7F8EF7EFE22F} = {3806AC43-8831-41AA-AADE-6C12142957D5}
+		{1A8D8AEC-6227-4A37-AD28-68FF5163A1B4} = {3806AC43-8831-41AA-AADE-6C12142957D5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7416A5E-1F3A-4F7C-9866-9FDADEBA56EE}
