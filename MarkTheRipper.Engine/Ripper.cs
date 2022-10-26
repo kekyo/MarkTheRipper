@@ -7,6 +7,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////
 
+using Markdig;
 using Markdig.Parsers;
 using Markdig.Renderers;
 using MarkTheRipper.Expressions;
@@ -18,7 +19,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +29,16 @@ namespace MarkTheRipper;
 /// </summary>
 public sealed class Ripper
 {
+    private static readonly MarkdownPipeline markdownPipeline =
+        new MarkdownPipelineBuilder().
+            UseAutoIdentifiers().
+            UseAutoLinks().
+            UseTaskLists().
+            UseListExtras().
+            UseBootstrap().
+            UsePipeTables().
+            Build();
+
     public ValueTask<RootTextNode> ParseLayoutAsync(
         PathEntry layoutPathHint,
         TextReader layoutReader,
@@ -219,7 +229,8 @@ public sealed class Ripper
 
         // Step 5: Parse renderred markdown to AST (MarkDig)
         var markdownDocument = MarkdownParser.Parse(
-            renderedMarkdownBody);
+            renderedMarkdownBody,
+            markdownPipeline);
 
         // Step 6: Render HTML from AST.
         var contentBodyWriter = new StringWriter();
