@@ -24,9 +24,9 @@ MarkTheRipper - マークダウンで書く事が出来る、静的サイトの�
 
 [English is here](https://github.com/kekyo/MarkTheRipper)
 
-## これは何？
+ご注意: ** MarkTheRipperはリタイアしました。** よりブラッシュアップした [a-terra-forge](https://github.com/kekyo/a-terra-forge/) を開発中で、まもなく完成します。
 
-TODO: 最終的にこのドキュメントは、MarkTheRipper自身で変換する予定です。
+## これは何？
 
 MarkTheRipperは、非常にシンプルかつ高速な静的サイトジェネレータで、コンテンツをマークダウンで書くことができます。
 主に想定される用途はブログサイトですが、まるでGitHub Gistで記事を書いているかのように、とにかく複雑な構造やツールの要求、というものを排除しました。

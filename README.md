@@ -24,9 +24,9 @@ MarkTheRipper - Fantastic faster generates static site comes from simply Markdow
 
 [![Japanese language](Images/Japanese.256.png)](https://github.com/kekyo/MarkTheRipper/blob/main/README_ja.md)
 
-## What is this?
+Please note: **MarkTheRipper has been retired.** A more refined version, [a-terra-forge](https://github.com/kekyo/a-terra-forge/), is currently under development and will be completed soon.
 
-TODO: Eventually this document will be converted by MarkTheRipper itself.
+## What is this?
 
 MarkTheRipper is a very simple and fast static site generator
 that allows you to write content in markdown.
